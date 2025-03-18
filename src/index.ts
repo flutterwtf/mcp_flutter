@@ -271,6 +271,9 @@ class FlutterInspectorServer {
   }
 
   private setupToolHandlers() {
+    // Default port for Flutter/Dart processes
+    const DEFAULT_FLUTTER_PORT = 8181;
+
     this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
       tools: [
         {
@@ -291,10 +294,11 @@ class FlutterInspectorServer {
             properties: {
               port: {
                 type: "number",
-                description: "Port number where the Flutter app is running",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
               },
             },
-            required: ["port"],
+            required: [],
           },
         },
         {
@@ -305,10 +309,11 @@ class FlutterInspectorServer {
             properties: {
               port: {
                 type: "number",
-                description: "Port number where the Flutter app is running",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
               },
             },
-            required: ["port"],
+            required: [],
           },
         },
         {
@@ -319,10 +324,11 @@ class FlutterInspectorServer {
             properties: {
               port: {
                 type: "number",
-                description: "Port number where the Flutter app is running",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
               },
             },
-            required: ["port"],
+            required: [],
           },
         },
         {
@@ -333,10 +339,11 @@ class FlutterInspectorServer {
             properties: {
               port: {
                 type: "number",
-                description: "Port number where the Flutter app is running",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
               },
             },
-            required: ["port"],
+            required: [],
           },
         },
         {
@@ -347,10 +354,11 @@ class FlutterInspectorServer {
             properties: {
               port: {
                 type: "number",
-                description: "Port number where the Flutter app is running",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
               },
             },
-            required: ["port"],
+            required: [],
           },
         },
         {
@@ -361,14 +369,15 @@ class FlutterInspectorServer {
             properties: {
               port: {
                 type: "number",
-                description: "Port number where the Flutter app is running",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
               },
               enabled: {
                 type: "boolean",
                 description: "Whether to enable or disable debug paint",
               },
             },
-            required: ["port", "enabled"],
+            required: ["enabled"],
           },
         },
         {
@@ -379,10 +388,11 @@ class FlutterInspectorServer {
             properties: {
               port: {
                 type: "number",
-                description: "Port number where the Flutter app is running",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
               },
             },
-            required: ["port"],
+            required: [],
           },
         },
         {
@@ -393,7 +403,8 @@ class FlutterInspectorServer {
             properties: {
               port: {
                 type: "number",
-                description: "Port number where the Flutter app is running",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
               },
               streamId: {
                 type: "string",
@@ -410,7 +421,7 @@ class FlutterInspectorServer {
                 ],
               },
             },
-            required: ["port", "streamId"],
+            required: ["streamId"],
           },
         },
       ],
@@ -418,14 +429,14 @@ class FlutterInspectorServer {
 
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const handlePortParam = () => {
-        const { port } = request.params.arguments as { port: number };
-        if (!port || typeof port !== "number") {
+        const { port } = (request.params.arguments as { port?: number }) || {};
+        if (port && typeof port !== "number") {
           throw new McpError(
             ErrorCode.InvalidParams,
-            "Port number is required and must be a number"
+            "Port number must be a number when provided"
           );
         }
-        return port;
+        return port || DEFAULT_FLUTTER_PORT;
       };
 
       const wrapResponse = (promise: Promise<unknown>) => {
@@ -489,8 +500,8 @@ class FlutterInspectorServer {
         }
 
         case "toggle_debug_paint": {
-          const { port, enabled } = request.params.arguments as {
-            port: number;
+          const port = handlePortParam();
+          const { enabled } = request.params.arguments as {
             enabled: boolean;
           };
           if (typeof enabled !== "boolean") {
@@ -514,8 +525,8 @@ class FlutterInspectorServer {
         }
 
         case "stream_listen": {
-          const { port, streamId } = request.params.arguments as {
-            port: number;
+          const port = handlePortParam();
+          const { streamId } = request.params.arguments as {
             streamId: string;
           };
           return wrapResponse(

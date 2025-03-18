@@ -176,6 +176,8 @@ LOG_LEVEL=info        # Logging level (error, warn, info, debug)
 
 ## 📚 Available Tools
 
+All tools default to using port 8181 if no port is specified. You can override this by providing a specific port number.
+
 - `get_active_ports`: Lists all Flutter/Dart processes listening on ports
 - `get_supported_protocols`: Retrieves supported protocols from a Flutter app
 - `get_vm_info`: Gets detailed VM information from a running Flutter app
@@ -213,6 +215,11 @@ Each tool serves a specific debugging or inspection purpose:
   - Logging
   - Service events
   - Heap snapshots
+
+2. **Method Not Found Errors**
+   - Ensure your Flutter app is running in debug mode
+   - Some methods may only be available in certain Flutter versions
+   - Check if the method is supported using `get_supported_protocols`
 
 ## 🤝 Contributing
 
