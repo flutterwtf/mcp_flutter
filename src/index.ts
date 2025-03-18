@@ -669,6 +669,22 @@ class FlutterInspectorServer {
           },
         },
         {
+          name: "debug_dump_semantics_tree_inverse",
+          description:
+            "RPC: Dump the semantics tree in inverse hit test order (ext.flutter.debugDumpSemanticsTreeInInverseHitTestOrder)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
+        {
           name: "debug_paint_baselines_enabled",
           description:
             "RPC: Toggle baseline paint debugging (ext.flutter.debugPaintBaselinesEnabled)",
@@ -1201,6 +1217,17 @@ class FlutterInspectorServer {
           await this.verifyFlutterDebugMode(port);
           return wrapResponse(
             this.invokeFlutterExtension(port, FlutterRPC.Debug.DUMP_SEMANTICS)
+          );
+        }
+
+        case "debug_dump_semantics_tree_inverse": {
+          const port = handlePortParam();
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Debug.DUMP_SEMANTICS_INVERSE
+            )
           );
         }
 
