@@ -198,6 +198,7 @@ const FlutterRPC = {
       RPCPrefix.FLUTTER,
       "debugDisableOpacityLayers"
     ),
+    DEBUG_ALLOW_BANNER: createRPCMethod(RPCPrefix.FLUTTER, "debugAllowBanner"),
   },
   Inspector: {
     SCREENSHOT: createRPCMethod(RPCPrefix.INSPECTOR, "screenshot"),
@@ -891,6 +892,25 @@ class FlutterInspectorServer {
             required: ["enabled"],
           },
         },
+        {
+          name: "debug_allow_banner",
+          description: "RPC: Toggle the debug banner in the Flutter app",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              enabled: {
+                type: "boolean",
+                description: "Whether to show or hide the debug banner",
+              },
+            },
+            required: ["enabled"],
+          },
+        },
       ],
     }));
 
@@ -1448,6 +1468,27 @@ class FlutterInspectorServer {
             this.invokeFlutterExtension(
               port,
               FlutterRPC.Core.INVERT_OVERSIZED_IMAGES,
+              {
+                enabled,
+              }
+            )
+          );
+        }
+
+        case "debug_allow_banner": {
+          const port = handlePortParam();
+          const { enabled } = request.params.arguments as { enabled: boolean };
+          if (typeof enabled !== "boolean") {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "enabled parameter must be a boolean"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Debug.DEBUG_ALLOW_BANNER,
               {
                 enabled,
               }

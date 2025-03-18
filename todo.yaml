@@ -1,12 +1,5 @@
 missing_rpc_implementations:
   flutter_core:
-    - method: "debugAllowBanner"
-      steps:
-        - Add RPC method to Debug group in FlutterRPC
-        - Add tool definition with boolean parameter
-        - Implement handler in CallToolRequestSchema
-        - Add parameter validation
-        - Add error handling
     - method: "didSendFirstFrameEvent"
       steps:
         - Add RPC method to Core group in FlutterRPC
