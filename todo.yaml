@@ -1,12 +1,5 @@
 missing_rpc_implementations:
   dart_io:
-    - method: "httpEnableTimelineLogging"
-      steps:
-        - Add RPC method to DartIO group in FlutterRPC
-        - Add tool definition in ListToolsRequestSchema
-        - Implement handler in CallToolRequestSchema
-        - Add parameter validation
-        - Add error handling
     - method: "socketProfilingEnabled"
       steps:
         - Add RPC method to DartIO group in FlutterRPC
@@ -26,6 +19,12 @@ missing_rpc_implementations:
         - Add tool definition with fileId parameter
         - Implement handler in CallToolRequestSchema
         - Add parameter validation
+        - Add error handling
+    - method: "getHttpProfileRequest"
+      steps:
+        - Add RPC method to DartIO group in FlutterRPC
+        - Add tool definition in ListToolsRequestSchema
+        - Implement handler in CallToolRequestSchema
         - Add error handling
 
   flutter_core:
@@ -54,6 +53,77 @@ missing_rpc_implementations:
         - Add RPC method to Core group in FlutterRPC
         - Add tool definition in ListToolsRequestSchema
         - Implement handler in CallToolRequestSchema
+        - Add error handling
+    - method: "platformOverride"
+      steps:
+        - Add RPC method to Core group in FlutterRPC
+        - Add tool definition with platform parameter
+        - Implement handler in CallToolRequestSchema
+        - Add parameter validation
+        - Add error handling
+    - method: "brightnessOverride"
+      steps:
+        - Add RPC method to Core group in FlutterRPC
+        - Add tool definition with brightness parameter
+        - Implement handler in CallToolRequestSchema
+        - Add parameter validation
+        - Add error handling
+    - method: "timeDilation"
+      steps:
+        - Add RPC method to Core group in FlutterRPC
+        - Add tool definition with dilation parameter
+        - Implement handler in CallToolRequestSchema
+        - Add parameter validation
+        - Add error handling
+    - method: "evict"
+      steps:
+        - Add RPC method to Core group in FlutterRPC
+        - Add tool definition with asset parameter
+        - Implement handler in CallToolRequestSchema
+        - Add parameter validation
+        - Add error handling
+    - method: "profilePlatformChannels"
+      steps:
+        - Add RPC method to Core group in FlutterRPC
+        - Add tool definition with boolean parameter
+        - Implement handler in CallToolRequestSchema
+        - Add parameter validation
+        - Add error handling
+
+  debug:
+    - method: "debugDisableClipLayers"
+      steps:
+        - Add RPC method to Debug group in FlutterRPC
+        - Add tool definition with boolean parameter
+        - Implement handler in CallToolRequestSchema
+        - Add parameter validation
+        - Add error handling
+    - method: "debugDisablePhysicalShapeLayers"
+      steps:
+        - Add RPC method to Debug group in FlutterRPC
+        - Add tool definition with boolean parameter
+        - Implement handler in CallToolRequestSchema
+        - Add parameter validation
+        - Add error handling
+    - method: "debugDisableOpacityLayers"
+      steps:
+        - Add RPC method to Debug group in FlutterRPC
+        - Add tool definition with boolean parameter
+        - Implement handler in CallToolRequestSchema
+        - Add parameter validation
+        - Add error handling
+    - method: "debugDumpSemanticsTreeInInverseHitTestOrder"
+      steps:
+        - Add RPC method to Debug group in FlutterRPC
+        - Add tool definition in ListToolsRequestSchema
+        - Implement handler in CallToolRequestSchema
+        - Add error handling
+    - method: "repaintRainbow"
+      steps:
+        - Add RPC method to Debug group in FlutterRPC
+        - Add tool definition with boolean parameter
+        - Implement handler in CallToolRequestSchema
+        - Add parameter validation
         - Add error handling
 
   inspector:
@@ -121,6 +191,130 @@ missing_rpc_implementations:
         - Add RPC method to Inspector group in FlutterRPC
         - Add tool definition in ListToolsRequestSchema
         - Implement handler in CallToolRequestSchema
+        - Add error handling
+    - method: "structuredErrors"
+      steps:
+        - Add RPC method to Inspector group in FlutterRPC
+        - Add tool definition with boolean parameter
+        - Implement handler in CallToolRequestSchema
+        - Add parameter validation
+        - Add error handling
+    - method: "show"
+      steps:
+        - Add RPC method to Inspector group in FlutterRPC
+        - Add tool definition with options parameter
+        - Implement handler in CallToolRequestSchema
+        - Add parameter validation
+        - Add error handling
+    - method: "trackRebuildDirtyWidgets"
+      steps:
+        - Add RPC method to Inspector group in FlutterRPC
+        - Add tool definition with boolean parameter
+        - Implement handler in CallToolRequestSchema
+        - Add parameter validation
+        - Add error handling
+    - method: "widgetLocationIdMap"
+      steps:
+        - Add RPC method to Inspector group in FlutterRPC
+        - Add tool definition in ListToolsRequestSchema
+        - Implement handler in CallToolRequestSchema
+        - Add error handling
+    - method: "trackRepaintWidgets"
+      steps:
+        - Add RPC method to Inspector group in FlutterRPC
+        - Add tool definition with boolean parameter
+        - Implement handler in CallToolRequestSchema
+        - Add parameter validation
+        - Add error handling
+    - method: "disposeAllGroups"
+      steps:
+        - Add RPC method to Inspector group in FlutterRPC
+        - Add tool definition in ListToolsRequestSchema
+        - Implement handler in CallToolRequestSchema
+        - Add error handling
+    - method: "disposeGroup"
+      steps:
+        - Add RPC method to Inspector group in FlutterRPC
+        - Add tool definition with groupId parameter
+        - Implement handler in CallToolRequestSchema
+        - Add parameter validation
+        - Add error handling
+    - method: "isWidgetTreeReady"
+      steps:
+        - Add RPC method to Inspector group in FlutterRPC
+        - Add tool definition in ListToolsRequestSchema
+        - Implement handler in CallToolRequestSchema
+        - Add error handling
+    - method: "disposeId"
+      steps:
+        - Add RPC method to Inspector group in FlutterRPC
+        - Add tool definition with id parameter
+        - Implement handler in CallToolRequestSchema
+        - Add parameter validation
+        - Add error handling
+    - method: "setPubRootDirectories"
+      steps:
+        - Add RPC method to Inspector group in FlutterRPC
+        - Add tool definition with directories parameter
+        - Implement handler in CallToolRequestSchema
+        - Add parameter validation
+        - Add error handling
+    - method: "addPubRootDirectories"
+      steps:
+        - Add RPC method to Inspector group in FlutterRPC
+        - Add tool definition with directories parameter
+        - Implement handler in CallToolRequestSchema
+        - Add parameter validation
+        - Add error handling
+    - method: "removePubRootDirectories"
+      steps:
+        - Add RPC method to Inspector group in FlutterRPC
+        - Add tool definition with directories parameter
+        - Implement handler in CallToolRequestSchema
+        - Add parameter validation
+        - Add error handling
+    - method: "getPubRootDirectories"
+      steps:
+        - Add RPC method to Inspector group in FlutterRPC
+        - Add tool definition in ListToolsRequestSchema
+        - Implement handler in CallToolRequestSchema
+        - Add error handling
+    - method: "setFlexFit"
+      steps:
+        - Add RPC method to Inspector group in FlutterRPC
+        - Add tool definition with fit parameter
+        - Implement handler in CallToolRequestSchema
+        - Add parameter validation
+        - Add error handling
+    - method: "setFlexFactor"
+      steps:
+        - Add RPC method to Inspector group in FlutterRPC
+        - Add tool definition with factor parameter
+        - Implement handler in CallToolRequestSchema
+        - Add parameter validation
+        - Add error handling
+    - method: "setFlexProperties"
+      steps:
+        - Add RPC method to Inspector group in FlutterRPC
+        - Add tool definition with properties parameter
+        - Implement handler in CallToolRequestSchema
+        - Add parameter validation
+        - Add error handling
+
+  performance:
+    - method: "profileRenderObjectPaints"
+      steps:
+        - Add RPC method to Performance group in FlutterRPC
+        - Add tool definition with boolean parameter
+        - Implement handler in CallToolRequestSchema
+        - Add parameter validation
+        - Add error handling
+    - method: "profileRenderObjectLayouts"
+      steps:
+        - Add RPC method to Performance group in FlutterRPC
+        - Add tool definition with boolean parameter
+        - Implement handler in CallToolRequestSchema
+        - Add parameter validation
         - Add error handling
 
 refactoring_needed:

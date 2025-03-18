@@ -725,6 +725,26 @@ class FlutterInspectorServer {
 
         // DartIO Methods (ext.dart.io.*)
         {
+          name: "dart_io_http_enable_timeline_logging",
+          description: "RPC: Enable or disable HTTP timeline logging",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              enabled: {
+                type: "boolean",
+                description:
+                  "Whether to enable or disable HTTP timeline logging",
+              },
+            },
+            required: ["enabled"],
+          },
+        },
+        {
           name: "dart_io_get_version",
           description:
             "RPC: Get Flutter version information (ext.dart.io.getVersion)",
@@ -1085,6 +1105,26 @@ class FlutterInspectorServer {
         }
 
         // New handlers for DartIO methods
+        case "dart_io_http_enable_timeline_logging": {
+          const port = handlePortParam();
+          const { enabled } = request.params.arguments as { enabled: boolean };
+          if (typeof enabled !== "boolean") {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "enabled parameter must be a boolean"
+            );
+          }
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.DartIO.HTTP_TIMELINE_LOGGING,
+              {
+                enabled,
+              }
+            )
+          );
+        }
+
         case "get_socket_profile": {
           const port = handlePortParam();
           return wrapResponse(
