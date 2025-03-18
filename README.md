@@ -147,6 +147,11 @@ Parameters:
 
 - `port` (number, required): The port number where the Flutter app is running
 
+## Documentation
+
+- Dart VM RPC protocol: https://github.com/dart-lang/sdk/blob/main/runtime/vm/service/service.md
+- Devtools: https://github.com/flutter/devtools/blob/master/packages/devtools_app/lib/src/shared/server/server_api_client.dart
+
 ## Contributing
 
 We welcome contributions! Please feel free to submit a Pull Request.
@@ -154,3 +159,5 @@ We welcome contributions! Please feel free to submit a Pull Request.
 ## License
 
 MIT
+
+Dart VM and Flutter are trademarks of Google LLC.
