@@ -80,6 +80,27 @@ interface WebSocketResponse {
 
 type LogLevel = "error" | "warn" | "info" | "debug";
 
+interface IsolateInfo {
+  id: string;
+  name?: string;
+  number?: string;
+  isSystemIsolate?: boolean;
+  isolateGroupId?: string;
+  extensionRPCs?: string[];
+}
+
+interface VMInfo {
+  isolates: IsolateInfo[];
+  version?: string;
+  pid?: number;
+  // Add other VM info fields as needed
+}
+
+interface IsolateResponse extends IsolateInfo {
+  extensionRPCs?: string[];
+  // Add other isolate response fields as needed
+}
+
 class FlutterInspectorServer {
   private server: Server;
   private port: number;
@@ -267,6 +288,58 @@ class FlutterInspectorServer {
     } catch (error) {
       this.log("error", `Error invoking Flutter method ${method}:`, error);
       throw error;
+    }
+  }
+
+  private async getFlutterIsolate(port: number): Promise<string> {
+    const vmInfo = (await this.invokeFlutterMethod(port, "getVM")) as VMInfo;
+    const isolates = vmInfo.isolates;
+
+    // Find Flutter isolate by checking for Flutter extension RPCs
+    for (const isolateRef of isolates) {
+      const isolate = (await this.invokeFlutterMethod(port, "getIsolate", {
+        isolateId: isolateRef.id,
+      })) as IsolateResponse;
+
+      // Check if this isolate has Flutter extensions
+      const extensionRPCs = isolate.extensionRPCs || [];
+      if (extensionRPCs.some((ext: string) => ext.startsWith("ext.flutter"))) {
+        return isolateRef.id;
+      }
+    }
+
+    throw new McpError(
+      ErrorCode.InternalError,
+      "No Flutter isolate found in the application"
+    );
+  }
+
+  private async invokeFlutterExtension(
+    port: number,
+    method: string,
+    params?: Record<string, unknown>
+  ): Promise<unknown> {
+    const isolateId = await this.getFlutterIsolate(port);
+    return this.invokeFlutterMethod(port, method, {
+      ...params,
+      isolateId,
+    });
+  }
+
+  private async verifyFlutterDebugMode(port: number): Promise<void> {
+    const vmInfo = (await this.invokeFlutterMethod(port, "getVM")) as VMInfo;
+    const isolateId = await this.getFlutterIsolate(port);
+    const isolateInfo = (await this.invokeFlutterMethod(port, "getIsolate", {
+      isolateId,
+    })) as IsolateResponse;
+
+    if (
+      !isolateInfo.extensionRPCs?.includes("ext.flutter.debugDumpRenderTree")
+    ) {
+      throw new McpError(
+        ErrorCode.InternalError,
+        "Flutter app must be running in debug mode to inspect the render tree"
+      );
     }
   }
 
@@ -477,8 +550,9 @@ class FlutterInspectorServer {
 
         case "get_render_tree": {
           const port = handlePortParam();
+          await this.verifyFlutterDebugMode(port);
           return wrapResponse(
-            this.invokeFlutterMethod(port, "ext.flutter.debugDumpRenderTree")
+            this.invokeFlutterExtension(port, "ext.flutter.debugDumpRenderTree")
           );
         }
 
