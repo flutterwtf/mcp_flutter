@@ -1,13 +1,4 @@
 missing_rpc_implementations:
-  flutter_core:
-    - method: "profilePlatformChannels"
-      steps:
-        - Add RPC method to Core group in FlutterRPC
-        - Add tool definition with boolean parameter
-        - Implement handler in CallToolRequestSchema
-        - Add parameter validation
-        - Add error handling
-
   debug:
     - method: "debugDisableClipLayers"
       steps:

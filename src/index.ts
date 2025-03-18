@@ -174,6 +174,10 @@ const FlutterRPC = {
       RPCPrefix.FLUTTER,
       "didSendFirstFrameRasterizedEvent"
     ),
+    PROFILE_PLATFORM_CHANNELS: createRPCMethod(
+      RPCPrefix.FLUTTER,
+      "profilePlatformChannels"
+    ),
   },
   Debug: {
     DUMP_APP: createRPCMethod(RPCPrefix.FLUTTER, "debugDumpApp"),
@@ -1040,6 +1044,26 @@ class FlutterInspectorServer {
             required: ["asset"],
           },
         },
+        {
+          name: "flutter_core_profile_platform_channels",
+          description: "RPC: Enable or disable profiling of platform channels",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              enabled: {
+                type: "boolean",
+                description:
+                  "Whether to enable or disable platform channel profiling",
+              },
+            },
+            required: ["enabled"],
+          },
+        },
       ],
     }));
 
@@ -1731,6 +1755,27 @@ class FlutterInspectorServer {
             this.invokeFlutterExtension(port, FlutterRPC.Core.EVICT, {
               asset,
             })
+          );
+        }
+
+        case "flutter_core_profile_platform_channels": {
+          const port = handlePortParam();
+          const { enabled } = request.params.arguments as { enabled: boolean };
+          if (typeof enabled !== "boolean") {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "enabled parameter must be a boolean"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Core.PROFILE_PLATFORM_CHANNELS,
+              {
+                enabled,
+              }
+            )
           );
         }
 
