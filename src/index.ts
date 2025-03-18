@@ -211,6 +211,10 @@ const FlutterRPC = {
       "debugDisableOpacityLayers"
     ),
     DEBUG_ALLOW_BANNER: createRPCMethod(RPCPrefix.FLUTTER, "debugAllowBanner"),
+    DISABLE_PHYSICAL_SHAPE_LAYERS: createRPCMethod(
+      RPCPrefix.FLUTTER,
+      "debugDisablePhysicalShapeLayers"
+    ),
   },
   Inspector: {
     SCREENSHOT: createRPCMethod(RPCPrefix.INSPECTOR, "screenshot"),
@@ -699,6 +703,27 @@ class FlutterInspectorServer {
               },
             },
             required: [],
+          },
+        },
+        {
+          name: "debug_disable_physical_shape_layers",
+          description:
+            "RPC: Toggle physical shape layers debugging (ext.flutter.debugDisablePhysicalShapeLayers)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              enabled: {
+                type: "boolean",
+                description:
+                  "Whether to enable or disable physical shape layers",
+              },
+            },
+            required: ["enabled"],
           },
         },
 
@@ -1813,6 +1838,27 @@ class FlutterInspectorServer {
             this.invokeFlutterExtension(
               port,
               FlutterRPC.Debug.DEBUG_DISABLE_CLIP_LAYERS,
+              {
+                enabled,
+              }
+            )
+          );
+        }
+
+        case "debug_disable_physical_shape_layers": {
+          const port = handlePortParam();
+          const { enabled } = request.params.arguments as { enabled: boolean };
+          if (typeof enabled !== "boolean") {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "enabled parameter must be a boolean"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Debug.DISABLE_PHYSICAL_SHAPE_LAYERS,
               {
                 enabled,
               }
