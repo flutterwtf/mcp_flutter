@@ -178,48 +178,89 @@ LOG_LEVEL=info        # Logging level (error, warn, info, debug)
 
 All tools default to using port 8181 if no port is specified. You can override this by providing a specific port number.
 
+### Utility Methods (Not Direct RPC Calls)
+
+These are helper methods that provide additional functionality beyond direct Flutter RPC calls:
+
 - `get_active_ports`: Lists all Flutter/Dart processes listening on ports
 - `get_supported_protocols`: Retrieves supported protocols from a Flutter app
 - `get_vm_info`: Gets detailed VM information from a running Flutter app
-- `get_render_tree`: Fetches the render tree structure from your Flutter app
-- `get_layer_tree`: Retrieves the layer tree information for debugging rendering
-- `get_semantics_tree`: Gets the semantics tree for accessibility debugging
-- `toggle_debug_paint`: Enables/disables debug paint mode in the Flutter app
-- `get_flutter_version`: Retrieves Flutter version information
+- `get_extension_rpcs`: Lists all available extension RPCs in the Flutter app
+
+### Debug Methods (ext.flutter.debug\*)
+
+Direct RPC methods for debugging Flutter applications:
+
+- `debug_dump_render_tree`: Dumps the render tree structure
+- `debug_dump_layer_tree`: Dumps the layer tree for rendering analysis
+- `debug_dump_semantics_tree`: Dumps the semantics tree for accessibility analysis
+- `debug_paint_baselines_enabled`: Toggles baseline paint debugging
+- `debug_dump_focus_tree`: Dumps the focus tree for input handling analysis
+
+### Inspector Methods (ext.flutter.inspector.\*)
+
+Direct RPC methods for inspecting Flutter widget trees and layout:
+
+- `inspector_screenshot`: Takes a screenshot of the Flutter app
+- `inspector_get_layout_explorer_node`: Gets layout information for a specific widget
+
+### DartIO Methods (ext.dart.io.\*)
+
+Direct RPC methods for Dart I/O operations:
+
+- `dart_io_get_version`: Gets Flutter version information
+
+### Stream Methods
+
+Methods for handling event streams:
+
 - `stream_listen`: Subscribes to Flutter event streams (Debug, Isolate, VM, GC, Timeline, Logging, Service, HeapSnapshot)
 
-Each tool serves a specific debugging or inspection purpose:
+### Method Categories
 
-### Core Tools
+1. **Direct RPC Methods**
+   These methods map directly to Flutter's extension RPCs:
 
-- `get_active_ports`: Find all Flutter/Dart processes and their ports
-- `get_flutter_version`: Check Flutter version and configuration
+   - All methods prefixed with `debug_`, `inspector_`, or `dart_io_`
+   - Each method corresponds to a specific Flutter RPC endpoint
+   - Parameters and return values match Flutter's specifications
 
-### Debugging Tools
+2. **Utility Methods**
+   These are helper methods that provide additional functionality:
 
-- `toggle_debug_paint`: Visualize layout bounds and padding
-- `get_render_tree`: Analyze widget rendering structure
-- `get_layer_tree`: Debug rendering performance issues
-- `get_semantics_tree`: Test accessibility implementation
+   - Process discovery (`get_active_ports`)
+   - Protocol inspection (`get_supported_protocols`)
+   - VM interaction (`get_vm_info`)
+   - RPC discovery (`get_extension_rpcs`)
 
-### Advanced Tools
+3. **Stream Methods**
+   Special methods for handling event streams:
+   - Real-time monitoring capabilities
+   - Event-based debugging features
 
-- `get_supported_protocols`: Check available debugging protocols
-- `get_vm_info`: Access Dart VM details and metrics
-- `stream_listen`: Subscribe to real-time events for:
-  - Debug events
-  - Isolate lifecycle
-  - VM events
-  - Garbage collection
-  - Timeline events
-  - Logging
-  - Service events
-  - Heap snapshots
+### Method Naming Convention
 
-2. **Method Not Found Errors**
-   - Ensure your Flutter app is running in debug mode
-   - Some methods may only be available in certain Flutter versions
-   - Check if the method is supported using `get_supported_protocols`
+All methods follow a consistent naming pattern:
+
+- Utility methods: descriptive_name
+- Debug methods: debug\_\*
+- Inspector methods: inspector\_\*
+- DartIO methods: dart*io*\*
+- Stream methods: stream\_\*
+
+Each method name indicates its category and functionality, making it easier to understand its purpose and capabilities.
+
+### Method Documentation Format
+
+Each method includes:
+
+- Clear description of functionality
+- Required and optional parameters
+- Return value format
+- Category indication (RPC vs Utility)
+- Corresponding Flutter RPC endpoint (if applicable)
+
+For detailed implementation instructions, see the "Implementing New RPC Methods" section.
 
 ## 🔧 Implementing New RPC Methods
 

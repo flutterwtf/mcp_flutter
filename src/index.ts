@@ -533,10 +533,11 @@ class FlutterInspectorServer {
 
     this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
       tools: [
+        // Utility Methods (Not direct RPC calls)
         {
           name: "get_active_ports",
           description:
-            "Get list of ports where Flutter/Dart processes are listening",
+            "Utility: Get list of ports where Flutter/Dart processes are listening. This is a local utility, not a Flutter RPC method.",
           inputSchema: {
             type: "object",
             properties: {},
@@ -545,7 +546,8 @@ class FlutterInspectorServer {
         },
         {
           name: "get_supported_protocols",
-          description: "Get supported protocols from a Flutter app",
+          description:
+            "Utility: Get supported protocols from a Flutter app. This is a VM service method, not a Flutter RPC.",
           inputSchema: {
             type: "object",
             properties: {
@@ -560,7 +562,8 @@ class FlutterInspectorServer {
         },
         {
           name: "get_vm_info",
-          description: "Get VM information from a Flutter app",
+          description:
+            "Utility: Get VM information from a Flutter app. This is a VM service method, not a Flutter RPC.",
           inputSchema: {
             type: "object",
             properties: {
@@ -574,8 +577,32 @@ class FlutterInspectorServer {
           },
         },
         {
-          name: "get_render_tree",
-          description: "Get render tree from a Flutter app",
+          name: "get_extension_rpcs",
+          description:
+            "Utility: List all available extension RPCs in the Flutter app. This is a helper tool for discovering available methods.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              isolateId: {
+                type: "string",
+                description:
+                  "Optional specific isolate ID to check. If not provided, checks all isolates",
+              },
+            },
+            required: [],
+          },
+        },
+
+        // Debug Methods (ext.flutter.debug*)
+        {
+          name: "debug_dump_render_tree",
+          description:
+            "RPC: Dump the render tree (ext.flutter.debugDumpRenderTree)",
           inputSchema: {
             type: "object",
             properties: {
@@ -589,8 +616,9 @@ class FlutterInspectorServer {
           },
         },
         {
-          name: "get_layer_tree",
-          description: "Get layer tree from a Flutter app",
+          name: "debug_dump_layer_tree",
+          description:
+            "RPC: Dump the layer tree (ext.flutter.debugDumpLayerTree)",
           inputSchema: {
             type: "object",
             properties: {
@@ -604,8 +632,9 @@ class FlutterInspectorServer {
           },
         },
         {
-          name: "get_semantics_tree",
-          description: "Get semantics tree from a Flutter app",
+          name: "debug_dump_semantics_tree",
+          description:
+            "RPC: Dump the semantics tree (ext.flutter.debugDumpSemanticsTreeInTraversalOrder)",
           inputSchema: {
             type: "object",
             properties: {
@@ -619,8 +648,9 @@ class FlutterInspectorServer {
           },
         },
         {
-          name: "toggle_debug_paint",
-          description: "Toggle debug paint in Flutter app",
+          name: "debug_paint_baselines_enabled",
+          description:
+            "RPC: Toggle baseline paint debugging (ext.flutter.debugPaintBaselinesEnabled)",
           inputSchema: {
             type: "object",
             properties: {
@@ -631,15 +661,35 @@ class FlutterInspectorServer {
               },
               enabled: {
                 type: "boolean",
-                description: "Whether to enable or disable debug paint",
+                description:
+                  "Whether to enable or disable baseline paint debugging",
               },
             },
             required: ["enabled"],
           },
         },
         {
-          name: "get_flutter_version",
-          description: "Get Flutter version information",
+          name: "debug_dump_focus_tree",
+          description:
+            "RPC: Dump the focus tree (ext.flutter.debugDumpFocusTree)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
+
+        // Inspector Methods (ext.flutter.inspector.*)
+        {
+          name: "inspector_screenshot",
+          description:
+            "RPC: Take a screenshot of the Flutter app (ext.flutter.inspector.screenshot)",
           inputSchema: {
             type: "object",
             properties: {
@@ -653,8 +703,49 @@ class FlutterInspectorServer {
           },
         },
         {
+          name: "inspector_get_layout_explorer_node",
+          description:
+            "RPC: Get layout explorer information for a widget (ext.flutter.inspector.getLayoutExplorerNode)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              objectId: {
+                type: "string",
+                description: "ID of the widget to inspect",
+              },
+            },
+            required: ["objectId"],
+          },
+        },
+
+        // DartIO Methods (ext.dart.io.*)
+        {
+          name: "dart_io_get_version",
+          description:
+            "RPC: Get Flutter version information (ext.dart.io.getVersion)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
+
+        // Stream Methods
+        {
           name: "stream_listen",
-          description: "Subscribe to a Flutter event stream",
+          description:
+            "RPC: Subscribe to a Flutter event stream. This is a VM service method for event monitoring.",
           inputSchema: {
             type: "object",
             properties: {
@@ -679,417 +770,6 @@ class FlutterInspectorServer {
               },
             },
             required: ["streamId"],
-          },
-        },
-        {
-          name: "get_widget_tree",
-          description: "Get widget tree from a Flutter app",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-            },
-            required: [],
-          },
-        },
-        {
-          name: "get_widget_details",
-          description: "Get details for a specific widget",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-              objectId: {
-                type: "string",
-                description: "ID of the widget to inspect",
-              },
-            },
-            required: ["objectId"],
-          },
-        },
-        {
-          name: "get_performance_stats",
-          description: "Get Flutter performance statistics",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-            },
-            required: [],
-          },
-        },
-        {
-          name: "debug_paint_size",
-          description: "Toggle paint size debugging",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-              enabled: {
-                type: "boolean",
-                description:
-                  "Whether to enable or disable paint size debugging",
-              },
-            },
-            required: ["enabled"],
-          },
-        },
-        {
-          name: "debug_paint_baselines",
-          description: "Toggle baseline paint debugging",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-              enabled: {
-                type: "boolean",
-                description:
-                  "Whether to enable or disable baseline paint debugging",
-              },
-            },
-            required: ["enabled"],
-          },
-        },
-        {
-          name: "get_extension_rpcs",
-          description: "Get list of available Flutter extension RPCs",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-              isolateId: {
-                type: "string",
-                description:
-                  "Optional specific isolate ID to check. If not provided, checks all isolates",
-              },
-            },
-            required: [],
-          },
-        },
-        {
-          name: "take_screenshot",
-          description: "Take a screenshot of the Flutter app",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-            },
-            required: [],
-          },
-        },
-        {
-          name: "get_focus_tree",
-          description: "Get the focus tree of the Flutter app",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-            },
-            required: [],
-          },
-        },
-        {
-          name: "profile_user_widgets",
-          description: "Profile user widget builds",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-              enabled: {
-                type: "boolean",
-                description: "Whether to enable or disable profiling",
-              },
-            },
-            required: ["enabled"],
-          },
-        },
-        {
-          name: "get_layout_explorer",
-          description: "Get layout explorer information for a widget",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-              objectId: {
-                type: "string",
-                description: "ID of the widget to inspect",
-              },
-            },
-            required: ["objectId"],
-          },
-        },
-        {
-          name: "schedule_frame",
-          description: "Schedule a new frame in the Flutter app",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-            },
-            required: [],
-          },
-        },
-        {
-          name: "reinitialize_shader",
-          description: "Reinitialize shaders in the Flutter app",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-            },
-            required: [],
-          },
-        },
-        {
-          name: "impeller_enabled",
-          description: "Check if Impeller is enabled in the Flutter app",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-            },
-            required: [],
-          },
-        },
-        {
-          name: "get_socket_profile",
-          description: "Get socket profiling information",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-            },
-            required: [],
-          },
-        },
-        {
-          name: "clear_socket_profile",
-          description: "Clear socket profiling data",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-            },
-            required: [],
-          },
-        },
-        {
-          name: "get_http_profile",
-          description: "Get HTTP profiling information",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-            },
-            required: [],
-          },
-        },
-        {
-          name: "clear_http_profile",
-          description: "Clear HTTP profiling data",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-            },
-            required: [],
-          },
-        },
-        {
-          name: "list_isar_instances",
-          description: "List all Isar database instances",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-            },
-            required: [],
-          },
-        },
-        {
-          name: "get_isar_schemas",
-          description: "Get schemas for all Isar collections",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-            },
-            required: [],
-          },
-        },
-        {
-          name: "watch_isar_instance",
-          description: "Watch changes in an Isar instance",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-              instanceId: {
-                type: "string",
-                description: "ID of the Isar instance to watch",
-              },
-            },
-            required: ["instanceId"],
-          },
-        },
-        {
-          name: "execute_isar_query",
-          description: "Execute a query on an Isar database",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-              query: {
-                type: "string",
-                description: "Query to execute",
-              },
-            },
-            required: ["query"],
-          },
-        },
-        {
-          name: "delete_isar_query",
-          description: "Delete a saved Isar query",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-              queryId: {
-                type: "string",
-                description: "ID of the query to delete",
-              },
-            },
-            required: ["queryId"],
-          },
-        },
-        {
-          name: "import_isar_json",
-          description: "Import JSON data into an Isar database",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-              json: {
-                type: "string",
-                description: "JSON data to import",
-              },
-            },
-            required: ["json"],
-          },
-        },
-        {
-          name: "edit_isar_property",
-          description: "Edit a property in an Isar database",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-              property: {
-                type: "string",
-                description: "Property to edit",
-              },
-              value: {
-                type: "object",
-                description: "New value for the property",
-              },
-            },
-            required: ["property"],
           },
         },
       ],
