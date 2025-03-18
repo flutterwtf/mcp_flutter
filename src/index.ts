@@ -170,6 +170,10 @@ const FlutterRPC = {
       RPCPrefix.FLUTTER,
       "didSendFirstFrameEvent"
     ),
+    DID_SEND_FIRST_FRAME_RASTERIZED_EVENT: createRPCMethod(
+      RPCPrefix.FLUTTER,
+      "didSendFirstFrameRasterizedEvent"
+    ),
   },
   Debug: {
     DUMP_APP: createRPCMethod(RPCPrefix.FLUTTER, "debugDumpApp"),
@@ -930,6 +934,21 @@ class FlutterInspectorServer {
             required: [],
           },
         },
+        {
+          name: "flutter_core_did_send_first_frame_rasterized_event",
+          description: "RPC: Check if the first frame has been rasterized",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
       ],
     }));
 
@@ -1522,6 +1541,17 @@ class FlutterInspectorServer {
             this.invokeFlutterExtension(
               port,
               FlutterRPC.Core.DID_SEND_FIRST_FRAME_EVENT
+            )
+          );
+        }
+
+        case "flutter_core_did_send_first_frame_rasterized_event": {
+          const port = handlePortParam();
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Core.DID_SEND_FIRST_FRAME_RASTERIZED_EVENT
             )
           );
         }
