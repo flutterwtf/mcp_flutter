@@ -1,4 +1,4 @@
-# Flutter Inspector for AI-Powered Development
+# Flutter Inspector MCP Server for AI-Powered Development
 
 [GitHub Repository](https://github.com/Arenukvern/mcp_flutter)
 
