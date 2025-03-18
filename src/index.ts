@@ -7,10 +7,10 @@ import {
   ListToolsRequestSchema,
   McpError,
 } from "@modelcontextprotocol/sdk/types.js";
-import axios from "axios";
 import { exec } from "child_process";
 import * as dotenv from "dotenv";
 import { promisify } from "util";
+import WebSocket from "ws";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 
@@ -55,16 +55,26 @@ interface IsolatesResponse {
   }>;
 }
 
-interface WidgetTreeResponse {
-  result: {
-    [key: string]: unknown;
-  };
+interface FlutterMethodResponse {
+  type?: string;
+  result: unknown;
 }
 
-interface RouteResponse {
-  result: {
-    route?: string;
-    [key: string]: unknown;
+interface WebSocketRequest {
+  jsonrpc: "2.0";
+  id: string;
+  method: string;
+  params?: Record<string, unknown>;
+}
+
+interface WebSocketResponse {
+  jsonrpc: "2.0";
+  id: string;
+  result?: unknown;
+  error?: {
+    code: number;
+    message: string;
+    data?: unknown;
   };
 }
 
@@ -74,6 +84,12 @@ class FlutterInspectorServer {
   private server: Server;
   private port: number;
   private logLevel: LogLevel;
+  private wsConnections: Map<number, WebSocket> = new Map();
+  private pendingRequests: Map<
+    string,
+    { resolve: Function; reject: Function; method: string }
+  > = new Map();
+  private messageId = 0;
 
   constructor() {
     this.port = argv.port;
@@ -95,10 +111,92 @@ class FlutterInspectorServer {
     this.setupErrorHandling();
   }
 
+  private generateId(): string {
+    return `${Date.now()}_${this.messageId++}`;
+  }
+
+  private async connectWebSocket(port: number): Promise<WebSocket> {
+    if (this.wsConnections.has(port)) {
+      const ws = this.wsConnections.get(port)!;
+      if (ws.readyState === WebSocket.OPEN) {
+        return ws;
+      }
+      this.wsConnections.delete(port);
+    }
+
+    return new Promise((resolve, reject) => {
+      const wsUrl = `ws://localhost:${port}/ws`;
+      const ws = new WebSocket(wsUrl);
+
+      ws.onopen = () => {
+        this.log("debug", `WebSocket connected to ${wsUrl}`);
+        this.wsConnections.set(port, ws);
+        resolve(ws);
+      };
+
+      ws.onerror = (error) => {
+        this.log("error", `WebSocket error for ${wsUrl}:`, error);
+        reject(error);
+      };
+
+      ws.onclose = () => {
+        this.log("debug", `WebSocket closed for ${wsUrl}`);
+        this.wsConnections.delete(port);
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const response = JSON.parse(
+            event.data.toString()
+          ) as WebSocketResponse;
+
+          if (response.id) {
+            const request = this.pendingRequests.get(response.id);
+            if (request) {
+              if (response.error) {
+                request.reject(new Error(response.error.message));
+              } else {
+                request.resolve(response.result);
+              }
+              this.pendingRequests.delete(response.id);
+            }
+          }
+        } catch (error) {
+          this.log("error", "Error parsing WebSocket message:", error);
+        }
+      };
+    });
+  }
+
+  private async sendWebSocketRequest(
+    port: number,
+    method: string,
+    params: Record<string, unknown> = {}
+  ): Promise<unknown> {
+    const ws = await this.connectWebSocket(port);
+    const id = this.generateId();
+
+    const request: WebSocketRequest = {
+      jsonrpc: "2.0",
+      id,
+      method,
+      params,
+    };
+
+    return new Promise((resolve, reject) => {
+      this.pendingRequests.set(id, { resolve, reject, method });
+      ws.send(JSON.stringify(request));
+    });
+  }
+
   private setupErrorHandling() {
     this.server.onerror = (error) => this.log("error", "[MCP Error]", error);
 
     process.on("SIGINT", async () => {
+      // Close all WebSocket connections
+      for (const ws of this.wsConnections.values()) {
+        ws.close();
+      }
       await this.server.close();
       process.exit(0);
     });
@@ -126,14 +224,11 @@ class FlutterInspectorServer {
 
   private async getActivePorts(): Promise<FlutterPort[]> {
     try {
-      // Use lsof to find processes listening on ports
       const { stdout } = await execAsync("lsof -i -P -n | grep LISTEN");
-
       const ports: FlutterPort[] = [];
       const lines = stdout.split("\n");
 
       for (const line of lines) {
-        // Look for Flutter/Dart processes
         if (
           line.toLowerCase().includes("dart") ||
           line.toLowerCase().includes("flutter")
@@ -156,110 +251,22 @@ class FlutterInspectorServer {
 
       return ports;
     } catch (error) {
-      console.error("Error getting active ports:", error);
+      this.log("error", "Error getting active ports:", error);
       return [];
     }
   }
 
-  private async getWidgetTree(port: number): Promise<string> {
+  private async invokeFlutterMethod(
+    port: number,
+    method: string,
+    params: Record<string, unknown> = {}
+  ): Promise<unknown> {
     try {
-      const baseUrl = `http://127.0.0.1:${port}`;
-      this.log("debug", `Connecting to VM service at ${baseUrl}`);
-
-      const vmResponse = await axios.get(`${baseUrl}/json`);
-      this.log("debug", "VM response:", vmResponse.data);
-
-      const isolatesResponse = await axios.get<IsolatesResponse>(
-        `${baseUrl}/json/list`
-      );
-      this.log("debug", "Isolates response:", isolatesResponse.data);
-
-      if (!isolatesResponse.data.isolates?.length) {
-        throw new Error("No isolates found in response");
-      }
-
-      const isolateId = isolatesResponse.data.isolates[0].id;
-      this.log("debug", `Using isolate ID: ${isolateId}`);
-
-      const groupName = "my-widget-tree-group";
-      const widgetTreeResponse = await axios.post<WidgetTreeResponse>(
-        `${baseUrl}/json/invoke`,
-        {
-          isolateId,
-          target: "ext.flutter.inspector.getRootWidgetSummaryTree",
-          args: {
-            objectGroup: groupName,
-          },
-        },
-        {
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      await axios.post(
-        `${baseUrl}/json/invoke`,
-        {
-          isolateId,
-          target: "ext.flutter.inspector.disposeGroup",
-          args: {
-            objectGroup: groupName,
-          },
-        },
-        {
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      return JSON.stringify(widgetTreeResponse.data.result, null, 2);
-    } catch (error: unknown) {
-      this.log("error", "Error getting widget tree:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error";
-      throw new Error(`Failed to get widget tree: ${errorMessage}`);
-    }
-  }
-
-  private async getCurrentRoute(port: number): Promise<string> {
-    try {
-      const baseUrl = `http://127.0.0.1:${port}`;
-      this.log("debug", `Getting current route from ${baseUrl}`);
-
-      const isolatesResponse = await axios.get<IsolatesResponse>(
-        `${baseUrl}/json/list`
-      );
-
-      if (!isolatesResponse.data.isolates?.length) {
-        throw new Error("No isolates found");
-      }
-
-      const isolateId = isolatesResponse.data.isolates[0].id;
-
-      const routeResponse = await axios.post<RouteResponse>(
-        `${baseUrl}/json/invoke`,
-        {
-          isolateId,
-          target: "ext.flutter.navigator.currentRoute",
-          args: {},
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      return JSON.stringify(routeResponse.data.result, null, 2);
-    } catch (error: unknown) {
-      this.log("error", "Error getting current route:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error";
-      throw new Error(`Failed to get current route: ${errorMessage}`);
+      const result = await this.sendWebSocketRequest(port, method, params);
+      return result;
+    } catch (error) {
+      this.log("error", `Error invoking Flutter method ${method}:`, error);
+      throw error;
     }
   }
 
@@ -277,9 +284,8 @@ class FlutterInspectorServer {
           },
         },
         {
-          name: "get_widget_tree",
-          description:
-            "Get widget tree from a Flutter app running on specified port",
+          name: "get_supported_protocols",
+          description: "Get supported protocols from a Flutter app",
           inputSchema: {
             type: "object",
             properties: {
@@ -292,8 +298,8 @@ class FlutterInspectorServer {
           },
         },
         {
-          name: "get_current_route",
-          description: "Get the current route/page of the Flutter app",
+          name: "get_vm_info",
+          description: "Get VM information from a Flutter app",
           inputSchema: {
             type: "object",
             properties: {
@@ -305,10 +311,60 @@ class FlutterInspectorServer {
             required: ["port"],
           },
         },
+        {
+          name: "stream_listen",
+          description: "Subscribe to a Flutter event stream",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description: "Port number where the Flutter app is running",
+              },
+              streamId: {
+                type: "string",
+                description: "Stream ID to subscribe to",
+                enum: [
+                  "Debug",
+                  "Isolate",
+                  "VM",
+                  "GC",
+                  "Timeline",
+                  "Logging",
+                  "Service",
+                  "HeapSnapshot",
+                ],
+              },
+            },
+            required: ["port", "streamId"],
+          },
+        },
       ],
     }));
 
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+      const handlePortParam = () => {
+        const { port } = request.params.arguments as { port: number };
+        if (!port || typeof port !== "number") {
+          throw new McpError(
+            ErrorCode.InvalidParams,
+            "Port number is required and must be a number"
+          );
+        }
+        return port;
+      };
+
+      const wrapResponse = (promise: Promise<unknown>) => {
+        return promise
+          .then((result) => ({
+            content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+          }))
+          .catch((error: Error) => ({
+            content: [{ type: "text", text: `Error: ${error.message}` }],
+            isError: true,
+          }));
+      };
+
       switch (request.params.name) {
         case "get_active_ports": {
           const ports = await this.getActivePorts();
@@ -322,72 +378,26 @@ class FlutterInspectorServer {
           };
         }
 
-        case "get_widget_tree": {
-          const { port } = request.params.arguments as { port: number };
-          if (!port || typeof port !== "number") {
-            throw new McpError(
-              ErrorCode.InvalidParams,
-              "Port number is required and must be a number"
-            );
-          }
-
-          try {
-            const widgetTree = await this.getWidgetTree(port);
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: widgetTree,
-                },
-              ],
-            };
-          } catch (error: unknown) {
-            const errorMessage =
-              error instanceof Error ? error.message : "Unknown error";
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: `Error: ${errorMessage}`,
-                },
-              ],
-              isError: true,
-            };
-          }
+        case "get_supported_protocols": {
+          const port = handlePortParam();
+          return wrapResponse(
+            this.invokeFlutterMethod(port, "getSupportedProtocols")
+          );
         }
 
-        case "get_current_route": {
-          const { port } = request.params.arguments as { port: number };
-          if (!port || typeof port !== "number") {
-            throw new McpError(
-              ErrorCode.InvalidParams,
-              "Port number is required and must be a number"
-            );
-          }
+        case "get_vm_info": {
+          const port = handlePortParam();
+          return wrapResponse(this.invokeFlutterMethod(port, "getVM"));
+        }
 
-          try {
-            const currentRoute = await this.getCurrentRoute(port);
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: currentRoute,
-                },
-              ],
-            };
-          } catch (error: unknown) {
-            const errorMessage =
-              error instanceof Error ? error.message : "Unknown error";
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: `Error: ${errorMessage}`,
-                },
-              ],
-              isError: true,
-            };
-          }
+        case "stream_listen": {
+          const { port, streamId } = request.params.arguments as {
+            port: number;
+            streamId: string;
+          };
+          return wrapResponse(
+            this.invokeFlutterMethod(port, "streamListen", { streamId })
+          );
         }
 
         default:
