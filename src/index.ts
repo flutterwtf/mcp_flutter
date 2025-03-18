@@ -949,6 +949,35 @@ class FlutterInspectorServer {
             required: [],
           },
         },
+        {
+          name: "flutter_core_platform_override",
+          description: "RPC: Override the platform for the Flutter app",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              platform: {
+                type: "string",
+                description:
+                  "Platform to override to (android, ios, fuchsia, linux, macOS, windows, or null to reset)",
+                enum: [
+                  "android",
+                  "ios",
+                  "fuchsia",
+                  "linux",
+                  "macOS",
+                  "windows",
+                  null,
+                ],
+              },
+            },
+            required: ["platform"],
+          },
+        },
       ],
     }));
 
@@ -1552,6 +1581,39 @@ class FlutterInspectorServer {
             this.invokeFlutterExtension(
               port,
               FlutterRPC.Core.DID_SEND_FIRST_FRAME_RASTERIZED_EVENT
+            )
+          );
+        }
+
+        case "flutter_core_platform_override": {
+          const port = handlePortParam();
+          const { platform } = request.params.arguments as {
+            platform: string | null;
+          };
+          if (
+            platform !== null &&
+            ![
+              "android",
+              "ios",
+              "fuchsia",
+              "linux",
+              "macOS",
+              "windows",
+            ].includes(platform)
+          ) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "platform must be one of: android, ios, fuchsia, linux, macOS, windows, or null to reset"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Core.PLATFORM_OVERRIDE,
+              {
+                platform,
+              }
             )
           );
         }
