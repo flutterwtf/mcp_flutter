@@ -558,15 +558,17 @@ class FlutterInspectorServer {
 
         case "get_layer_tree": {
           const port = handlePortParam();
+          await this.verifyFlutterDebugMode(port);
           return wrapResponse(
-            this.invokeFlutterMethod(port, "ext.flutter.debugDumpLayerTree")
+            this.invokeFlutterExtension(port, "ext.flutter.debugDumpLayerTree")
           );
         }
 
         case "get_semantics_tree": {
           const port = handlePortParam();
+          await this.verifyFlutterDebugMode(port);
           return wrapResponse(
-            this.invokeFlutterMethod(
+            this.invokeFlutterExtension(
               port,
               "ext.flutter.debugDumpSemanticsTreeInTraversalOrder"
             )
@@ -584,8 +586,9 @@ class FlutterInspectorServer {
               "enabled parameter must be a boolean"
             );
           }
+          await this.verifyFlutterDebugMode(port);
           return wrapResponse(
-            this.invokeFlutterMethod(port, "ext.flutter.debugPaint", {
+            this.invokeFlutterExtension(port, "ext.flutter.debugPaint", {
               enabled,
             })
           );
@@ -594,7 +597,7 @@ class FlutterInspectorServer {
         case "get_flutter_version": {
           const port = handlePortParam();
           return wrapResponse(
-            this.invokeFlutterMethod(port, "ext.flutter.version")
+            this.invokeFlutterExtension(port, "ext.flutter.version")
           );
         }
 
