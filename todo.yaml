@@ -1,12 +1,5 @@
 missing_rpc_implementations:
   flutter_core:
-    - method: "evict"
-      steps:
-        - Add RPC method to Core group in FlutterRPC
-        - Add tool definition with asset parameter
-        - Implement handler in CallToolRequestSchema
-        - Add parameter validation
-        - Add error handling
     - method: "profilePlatformChannels"
       steps:
         - Add RPC method to Core group in FlutterRPC

@@ -1021,6 +1021,25 @@ class FlutterInspectorServer {
             required: ["dilation"],
           },
         },
+        {
+          name: "flutter_core_evict",
+          description: "RPC: Evict an asset from the Flutter app's cache",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              asset: {
+                type: "string",
+                description: "Asset path to evict from the cache",
+              },
+            },
+            required: ["asset"],
+          },
+        },
       ],
     }));
 
@@ -1311,7 +1330,6 @@ class FlutterInspectorServer {
           );
         }
 
-        // New handlers for UI methods
         case "schedule_frame": {
           const port = handlePortParam();
           return wrapResponse(
@@ -1333,7 +1351,6 @@ class FlutterInspectorServer {
           );
         }
 
-        // New handlers for DartIO methods
         case "dart_io_socket_profiling_enabled": {
           const port = handlePortParam();
           const { enabled } = request.params.arguments as { enabled: boolean };
@@ -1421,7 +1438,6 @@ class FlutterInspectorServer {
           );
         }
 
-        // New handlers for Isar methods
         case "list_isar_instances": {
           const port = handlePortParam();
           return wrapResponse(
@@ -1697,6 +1713,23 @@ class FlutterInspectorServer {
           return wrapResponse(
             this.invokeFlutterExtension(port, FlutterRPC.Core.TIME_DILATION, {
               timeDilation: dilation,
+            })
+          );
+        }
+
+        case "flutter_core_evict": {
+          const port = handlePortParam();
+          const { asset } = request.params.arguments as { asset: string };
+          if (!asset) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "asset parameter is required"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(port, FlutterRPC.Core.EVICT, {
+              asset,
             })
           );
         }
