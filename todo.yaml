@@ -1,12 +1,5 @@
 missing_rpc_implementations:
   inspector:
-    - method: "setSelectionById"
-      steps:
-        - Add RPC method to Inspector group in FlutterRPC
-        - Add tool definition with selectionId parameter
-        - Implement handler in CallToolRequestSchema
-        - Add parameter validation
-        - Add error handling
     - method: "getParentChain"
       steps:
         - Add RPC method to Inspector group in FlutterRPC
