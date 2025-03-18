@@ -1,13 +1,4 @@
 missing_rpc_implementations:
-  debug:
-    - method: "repaintRainbow"
-      steps:
-        - Add RPC method to Debug group in FlutterRPC
-        - Add tool definition with boolean parameter
-        - Implement handler in CallToolRequestSchema
-        - Add parameter validation
-        - Add error handling
-
   inspector:
     - method: "setSelectionById"
       steps:
