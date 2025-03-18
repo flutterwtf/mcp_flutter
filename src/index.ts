@@ -978,6 +978,27 @@ class FlutterInspectorServer {
             required: ["platform"],
           },
         },
+        {
+          name: "flutter_core_brightness_override",
+          description: "RPC: Override the brightness for the Flutter app",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              brightness: {
+                type: "string",
+                description:
+                  "Brightness to override to (light, dark, or null to reset)",
+                enum: ["light", "dark", null],
+              },
+            },
+            required: ["brightness"],
+          },
+        },
       ],
     }));
 
@@ -1613,6 +1634,29 @@ class FlutterInspectorServer {
               FlutterRPC.Core.PLATFORM_OVERRIDE,
               {
                 platform,
+              }
+            )
+          );
+        }
+
+        case "flutter_core_brightness_override": {
+          const port = handlePortParam();
+          const { brightness } = request.params.arguments as {
+            brightness: string | null;
+          };
+          if (brightness !== null && !["light", "dark"].includes(brightness)) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "brightness must be one of: light, dark, or null to reset"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Core.BRIGHTNESS_OVERRIDE,
+              {
+                brightness,
               }
             )
           );

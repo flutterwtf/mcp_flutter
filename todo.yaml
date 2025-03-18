@@ -1,12 +1,5 @@
 missing_rpc_implementations:
   flutter_core:
-    - method: "brightnessOverride"
-      steps:
-        - Add RPC method to Core group in FlutterRPC
-        - Add tool definition with brightness parameter
-        - Implement handler in CallToolRequestSchema
-        - Add parameter validation
-        - Add error handling
     - method: "timeDilation"
       steps:
         - Add RPC method to Core group in FlutterRPC
