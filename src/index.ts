@@ -222,6 +222,10 @@ const FlutterRPC = {
     GET_WIDGET_TREE: createRPCMethod(RPCPrefix.INSPECTOR, "getRootWidgetTree"),
     GET_PROPERTIES: createRPCMethod(RPCPrefix.INSPECTOR, "getProperties"),
     GET_CHILDREN: createRPCMethod(RPCPrefix.INSPECTOR, "getChildren"),
+    SET_SELECTION_BY_ID: createRPCMethod(
+      RPCPrefix.INSPECTOR,
+      "setSelectionById"
+    ),
     TRACK_REBUILDS: createRPCMethod(
       RPCPrefix.INSPECTOR,
       "trackRebuildDirtyWidgets"
@@ -798,6 +802,26 @@ class FlutterInspectorServer {
               },
             },
             required: ["objectId"],
+          },
+        },
+        {
+          name: "inspector_set_selection_by_id",
+          description:
+            "RPC: Set the selected widget by ID (ext.flutter.inspector.setSelectionById)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              selectionId: {
+                type: "string",
+                description: "ID of the widget to select",
+              },
+            },
+            required: ["selectionId"],
           },
         },
 
@@ -1971,6 +1995,50 @@ class FlutterInspectorServer {
               FlutterRPC.Debug.REPAINT_RAINBOW,
               {
                 enabled,
+              }
+            )
+          );
+        }
+
+        case "inspector_get_layout_explorer_node": {
+          const port = handlePortParam();
+          const { objectId } = request.params.arguments as { objectId: string };
+          if (!objectId) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "objectId parameter is required"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Layout.GET_EXPLORER_NODE,
+              {
+                arg: { objectId },
+              }
+            )
+          );
+        }
+
+        case "inspector_set_selection_by_id": {
+          const port = handlePortParam();
+          const { selectionId } = request.params.arguments as {
+            selectionId: string;
+          };
+          if (!selectionId) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "selectionId parameter is required"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Inspector.SET_SELECTION_BY_ID,
+              {
+                arg: { selectionId },
               }
             )
           );
