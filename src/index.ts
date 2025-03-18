@@ -162,6 +162,10 @@ const FlutterRPC = {
     ),
     TIME_DILATION: createRPCMethod(RPCPrefix.FLUTTER, "timeDilation"),
     EVICT: createRPCMethod(RPCPrefix.FLUTTER, "evict"),
+    INVERT_OVERSIZED_IMAGES: createRPCMethod(
+      RPCPrefix.FLUTTER,
+      "invertOversizedImages"
+    ),
   },
   Debug: {
     DUMP_APP: createRPCMethod(RPCPrefix.FLUTTER, "debugDumpApp"),
@@ -866,6 +870,27 @@ class FlutterInspectorServer {
             required: ["requestId"],
           },
         },
+        {
+          name: "flutter_core_invert_oversized_images",
+          description:
+            "RPC: Toggle inverting of oversized images for debugging",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              enabled: {
+                type: "boolean",
+                description:
+                  "Whether to enable or disable inverting of oversized images",
+              },
+            },
+            required: ["enabled"],
+          },
+        },
       ],
     }));
 
@@ -1404,6 +1429,27 @@ class FlutterInspectorServer {
               FlutterRPC.DartIO.GET_HTTP_PROFILE_REQUEST,
               {
                 requestId,
+              }
+            )
+          );
+        }
+
+        case "flutter_core_invert_oversized_images": {
+          const port = handlePortParam();
+          const { enabled } = request.params.arguments as { enabled: boolean };
+          if (typeof enabled !== "boolean") {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "enabled parameter must be a boolean"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Core.INVERT_OVERSIZED_IMAGES,
+              {
+                enabled,
               }
             )
           );
