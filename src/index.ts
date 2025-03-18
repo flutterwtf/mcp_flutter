@@ -312,6 +312,80 @@ class FlutterInspectorServer {
           },
         },
         {
+          name: "get_render_tree",
+          description: "Get render tree from a Flutter app",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description: "Port number where the Flutter app is running",
+              },
+            },
+            required: ["port"],
+          },
+        },
+        {
+          name: "get_layer_tree",
+          description: "Get layer tree from a Flutter app",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description: "Port number where the Flutter app is running",
+              },
+            },
+            required: ["port"],
+          },
+        },
+        {
+          name: "get_semantics_tree",
+          description: "Get semantics tree from a Flutter app",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description: "Port number where the Flutter app is running",
+              },
+            },
+            required: ["port"],
+          },
+        },
+        {
+          name: "toggle_debug_paint",
+          description: "Toggle debug paint in Flutter app",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description: "Port number where the Flutter app is running",
+              },
+              enabled: {
+                type: "boolean",
+                description: "Whether to enable or disable debug paint",
+              },
+            },
+            required: ["port", "enabled"],
+          },
+        },
+        {
+          name: "get_flutter_version",
+          description: "Get Flutter version information",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description: "Port number where the Flutter app is running",
+              },
+            },
+            required: ["port"],
+          },
+        },
+        {
           name: "stream_listen",
           description: "Subscribe to a Flutter event stream",
           inputSchema: {
@@ -388,6 +462,55 @@ class FlutterInspectorServer {
         case "get_vm_info": {
           const port = handlePortParam();
           return wrapResponse(this.invokeFlutterMethod(port, "getVM"));
+        }
+
+        case "get_render_tree": {
+          const port = handlePortParam();
+          return wrapResponse(
+            this.invokeFlutterMethod(port, "ext.flutter.debugDumpRenderTree")
+          );
+        }
+
+        case "get_layer_tree": {
+          const port = handlePortParam();
+          return wrapResponse(
+            this.invokeFlutterMethod(port, "ext.flutter.debugDumpLayerTree")
+          );
+        }
+
+        case "get_semantics_tree": {
+          const port = handlePortParam();
+          return wrapResponse(
+            this.invokeFlutterMethod(
+              port,
+              "ext.flutter.debugDumpSemanticsTreeInTraversalOrder"
+            )
+          );
+        }
+
+        case "toggle_debug_paint": {
+          const { port, enabled } = request.params.arguments as {
+            port: number;
+            enabled: boolean;
+          };
+          if (typeof enabled !== "boolean") {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "enabled parameter must be a boolean"
+            );
+          }
+          return wrapResponse(
+            this.invokeFlutterMethod(port, "ext.flutter.debugPaint", {
+              enabled,
+            })
+          );
+        }
+
+        case "get_flutter_version": {
+          const port = handlePortParam();
+          return wrapResponse(
+            this.invokeFlutterMethod(port, "ext.flutter.version")
+          );
         }
 
         case "stream_listen": {
