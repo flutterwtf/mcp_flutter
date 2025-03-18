@@ -726,6 +726,26 @@ class FlutterInspectorServer {
             required: ["enabled"],
           },
         },
+        {
+          name: "debug_disable_opacity_layers",
+          description:
+            "RPC: Toggle opacity layers debugging (ext.flutter.debugDisableOpacityLayers)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              enabled: {
+                type: "boolean",
+                description: "Whether to enable or disable opacity layers",
+              },
+            },
+            required: ["enabled"],
+          },
+        },
 
         // Inspector Methods (ext.flutter.inspector.*)
         {
@@ -1859,6 +1879,27 @@ class FlutterInspectorServer {
             this.invokeFlutterExtension(
               port,
               FlutterRPC.Debug.DISABLE_PHYSICAL_SHAPE_LAYERS,
+              {
+                enabled,
+              }
+            )
+          );
+        }
+
+        case "debug_disable_opacity_layers": {
+          const port = handlePortParam();
+          const { enabled } = request.params.arguments as { enabled: boolean };
+          if (typeof enabled !== "boolean") {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "enabled parameter must be a boolean"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Debug.DEBUG_DISABLE_OPACITY_LAYERS,
               {
                 enabled,
               }
