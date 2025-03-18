@@ -999,6 +999,28 @@ class FlutterInspectorServer {
             required: ["brightness"],
           },
         },
+        {
+          name: "flutter_core_time_dilation",
+          description:
+            "RPC: Set the time dilation factor for animations in the Flutter app",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              dilation: {
+                type: "number",
+                description:
+                  "Time dilation factor (1.0 is normal speed, >1.0 is slower, <1.0 is faster)",
+                minimum: 0,
+              },
+            },
+            required: ["dilation"],
+          },
+        },
       ],
     }));
 
@@ -1659,6 +1681,23 @@ class FlutterInspectorServer {
                 brightness,
               }
             )
+          );
+        }
+
+        case "flutter_core_time_dilation": {
+          const port = handlePortParam();
+          const { dilation } = request.params.arguments as { dilation: number };
+          if (typeof dilation !== "number" || dilation < 0) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "dilation must be a non-negative number"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(port, FlutterRPC.Core.TIME_DILATION, {
+              timeDilation: dilation,
+            })
           );
         }
 
