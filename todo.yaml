@@ -1,12 +1,4 @@
 missing_rpc_implementations:
-  dart_io:
-    - method: "getHttpProfileRequest"
-      steps:
-        - Add RPC method to DartIO group in FlutterRPC
-        - Add tool definition in ListToolsRequestSchema
-        - Implement handler in CallToolRequestSchema
-        - Add error handling
-
   flutter_core:
     - method: "invertOversizedImages"
       steps:

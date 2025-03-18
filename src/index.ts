@@ -846,6 +846,26 @@ class FlutterInspectorServer {
             required: ["streamId"],
           },
         },
+        {
+          name: "dart_io_get_http_profile_request",
+          description:
+            "RPC: Get details of a specific HTTP request from the profile",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              requestId: {
+                type: "string",
+                description: "ID of the HTTP request to get details for",
+              },
+            },
+            required: ["requestId"],
+          },
+        },
       ],
     }));
 
@@ -1362,6 +1382,28 @@ class FlutterInspectorServer {
               FlutterRPC.DartIO.GET_OPEN_FILE_BY_ID,
               {
                 fileId,
+              }
+            )
+          );
+        }
+
+        case "dart_io_get_http_profile_request": {
+          const port = handlePortParam();
+          const { requestId } = request.params.arguments as {
+            requestId: string;
+          };
+          if (!requestId) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "requestId parameter is required"
+            );
+          }
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.DartIO.GET_HTTP_PROFILE_REQUEST,
+              {
+                requestId,
               }
             )
           );
