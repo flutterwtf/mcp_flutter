@@ -226,6 +226,7 @@ const FlutterRPC = {
       RPCPrefix.INSPECTOR,
       "setSelectionById"
     ),
+    GET_PARENT_CHAIN: createRPCMethod(RPCPrefix.INSPECTOR, "getParentChain"),
     TRACK_REBUILDS: createRPCMethod(
       RPCPrefix.INSPECTOR,
       "trackRebuildDirtyWidgets"
@@ -822,6 +823,26 @@ class FlutterInspectorServer {
               },
             },
             required: ["selectionId"],
+          },
+        },
+        {
+          name: "inspector_get_parent_chain",
+          description:
+            "RPC: Get the parent chain for a widget (ext.flutter.inspector.getParentChain)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              objectId: {
+                type: "string",
+                description: "ID of the widget to get parent chain for",
+              },
+            },
+            required: ["objectId"],
           },
         },
 
@@ -2039,6 +2060,27 @@ class FlutterInspectorServer {
               FlutterRPC.Inspector.SET_SELECTION_BY_ID,
               {
                 arg: { selectionId },
+              }
+            )
+          );
+        }
+
+        case "inspector_get_parent_chain": {
+          const port = handlePortParam();
+          const { objectId } = request.params.arguments as { objectId: string };
+          if (!objectId) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "objectId parameter is required"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Inspector.GET_PARENT_CHAIN,
+              {
+                arg: { objectId },
               }
             )
           );
