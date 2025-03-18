@@ -795,6 +795,25 @@ class FlutterInspectorServer {
             required: [],
           },
         },
+        {
+          name: "dart_io_get_open_file_by_id",
+          description: "RPC: Get details of a specific open file by its ID",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              fileId: {
+                type: "string",
+                description: "ID of the file to get details for",
+              },
+            },
+            required: ["fileId"],
+          },
+        },
 
         // Stream Methods
         {
@@ -1325,6 +1344,26 @@ class FlutterInspectorServer {
               property,
               value,
             })
+          );
+        }
+
+        case "dart_io_get_open_file_by_id": {
+          const port = handlePortParam();
+          const { fileId } = request.params.arguments as { fileId: string };
+          if (!fileId) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "fileId parameter is required"
+            );
+          }
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.DartIO.GET_OPEN_FILE_BY_ID,
+              {
+                fileId,
+              }
+            )
           );
         }
 
