@@ -9,7 +9,36 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import axios from "axios";
 import { exec } from "child_process";
+import * as dotenv from "dotenv";
 import { promisify } from "util";
+import yargs from "yargs";
+import { hideBin } from "yargs/helpers";
+
+// Load environment variables
+dotenv.config();
+
+// Parse command line arguments
+const argv = yargs(hideBin(process.argv))
+  .options({
+    port: {
+      alias: "p",
+      description: "Port to run the server on",
+      type: "number",
+      default: parseInt(process.env.PORT || "3334", 10),
+    },
+    stdio: {
+      description: "Run in stdio mode instead of HTTP mode",
+      type: "boolean",
+      default: true,
+    },
+    "log-level": {
+      description: "Logging level",
+      choices: ["error", "warn", "info", "debug"] as const,
+      default: process.env.LOG_LEVEL || "info",
+    },
+  })
+  .help()
+  .parseSync();
 
 const execAsync = promisify(exec);
 
@@ -27,13 +56,29 @@ interface IsolatesResponse {
 }
 
 interface WidgetTreeResponse {
-  [key: string]: unknown;
+  result: {
+    [key: string]: unknown;
+  };
 }
+
+interface RouteResponse {
+  result: {
+    route?: string;
+    [key: string]: unknown;
+  };
+}
+
+type LogLevel = "error" | "warn" | "info" | "debug";
 
 class FlutterInspectorServer {
   private server: Server;
+  private port: number;
+  private logLevel: LogLevel;
 
   constructor() {
+    this.port = argv.port;
+    this.logLevel = argv["log-level"] as LogLevel;
+
     this.server = new Server(
       {
         name: "flutter-inspector",
@@ -47,12 +92,36 @@ class FlutterInspectorServer {
     );
 
     this.setupToolHandlers();
+    this.setupErrorHandling();
+  }
 
-    this.server.onerror = (error) => console.error("[MCP Error]", error);
+  private setupErrorHandling() {
+    this.server.onerror = (error) => this.log("error", "[MCP Error]", error);
+
     process.on("SIGINT", async () => {
       await this.server.close();
       process.exit(0);
     });
+  }
+
+  private log(level: LogLevel, ...args: unknown[]) {
+    const levels: LogLevel[] = ["error", "warn", "info", "debug"];
+    if (levels.indexOf(level) <= levels.indexOf(this.logLevel)) {
+      switch (level) {
+        case "error":
+          console.error(...args);
+          break;
+        case "warn":
+          console.warn(...args);
+          break;
+        case "info":
+          console.info(...args);
+          break;
+        case "debug":
+          console.debug(...args);
+          break;
+      }
+    }
   }
 
   private async getActivePorts(): Promise<FlutterPort[]> {
@@ -94,34 +163,103 @@ class FlutterInspectorServer {
 
   private async getWidgetTree(port: number): Promise<string> {
     try {
-      // Connect to the VM service and get the widget tree
-      const response = await axios.get(`http://localhost:${port}/vm-service`);
+      const baseUrl = `http://127.0.0.1:${port}`;
+      this.log("debug", `Connecting to VM service at ${baseUrl}`);
 
-      if (response.status !== 200) {
-        throw new Error(`Failed to connect to VM service on port ${port}`);
-      }
+      const vmResponse = await axios.get(`${baseUrl}/json`);
+      this.log("debug", "VM response:", vmResponse.data);
 
-      // Get the isolates
       const isolatesResponse = await axios.get<IsolatesResponse>(
-        `http://localhost:${port}/vm-service/isolates`
+        `${baseUrl}/json/list`
       );
-      const isolateId = isolatesResponse.data.isolates[0]?.id;
+      this.log("debug", "Isolates response:", isolatesResponse.data);
 
-      if (!isolateId) {
-        throw new Error("No isolates found");
+      if (!isolatesResponse.data.isolates?.length) {
+        throw new Error("No isolates found in response");
       }
 
-      // Get the widget tree for the main isolate
-      const widgetTreeResponse = await axios.get(
-        `http://localhost:${port}/vm-service/ext/flutter/widgetTree?isolateId=${isolateId}`
+      const isolateId = isolatesResponse.data.isolates[0].id;
+      this.log("debug", `Using isolate ID: ${isolateId}`);
+
+      const groupName = "my-widget-tree-group";
+      const widgetTreeResponse = await axios.post<WidgetTreeResponse>(
+        `${baseUrl}/json/invoke`,
+        {
+          isolateId,
+          target: "ext.flutter.inspector.getRootWidgetSummaryTree",
+          args: {
+            objectGroup: groupName,
+          },
+        },
+        {
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        }
       );
 
-      return JSON.stringify(widgetTreeResponse.data, null, 2);
+      await axios.post(
+        `${baseUrl}/json/invoke`,
+        {
+          isolateId,
+          target: "ext.flutter.inspector.disposeGroup",
+          args: {
+            objectGroup: groupName,
+          },
+        },
+        {
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      return JSON.stringify(widgetTreeResponse.data.result, null, 2);
     } catch (error: unknown) {
-      console.error("Error getting widget tree:", error);
+      this.log("error", "Error getting widget tree:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
       throw new Error(`Failed to get widget tree: ${errorMessage}`);
+    }
+  }
+
+  private async getCurrentRoute(port: number): Promise<string> {
+    try {
+      const baseUrl = `http://127.0.0.1:${port}`;
+      this.log("debug", `Getting current route from ${baseUrl}`);
+
+      const isolatesResponse = await axios.get<IsolatesResponse>(
+        `${baseUrl}/json/list`
+      );
+
+      if (!isolatesResponse.data.isolates?.length) {
+        throw new Error("No isolates found");
+      }
+
+      const isolateId = isolatesResponse.data.isolates[0].id;
+
+      const routeResponse = await axios.post<RouteResponse>(
+        `${baseUrl}/json/invoke`,
+        {
+          isolateId,
+          target: "ext.flutter.navigator.currentRoute",
+          args: {},
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      return JSON.stringify(routeResponse.data.result, null, 2);
+    } catch (error: unknown) {
+      this.log("error", "Error getting current route:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      throw new Error(`Failed to get current route: ${errorMessage}`);
     }
   }
 
@@ -142,6 +280,20 @@ class FlutterInspectorServer {
           name: "get_widget_tree",
           description:
             "Get widget tree from a Flutter app running on specified port",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description: "Port number where the Flutter app is running",
+              },
+            },
+            required: ["port"],
+          },
+        },
+        {
+          name: "get_current_route",
+          description: "Get the current route/page of the Flutter app",
           inputSchema: {
             type: "object",
             properties: {
@@ -204,6 +356,40 @@ class FlutterInspectorServer {
           }
         }
 
+        case "get_current_route": {
+          const { port } = request.params.arguments as { port: number };
+          if (!port || typeof port !== "number") {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "Port number is required and must be a number"
+            );
+          }
+
+          try {
+            const currentRoute = await this.getCurrentRoute(port);
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: currentRoute,
+                },
+              ],
+            };
+          } catch (error: unknown) {
+            const errorMessage =
+              error instanceof Error ? error.message : "Unknown error";
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: `Error: ${errorMessage}`,
+                },
+              ],
+              isError: true,
+            };
+          }
+        }
+
         default:
           throw new McpError(
             ErrorCode.MethodNotFound,
@@ -216,9 +402,15 @@ class FlutterInspectorServer {
   async run() {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    console.error("Flutter Inspector MCP server running on stdio");
+    this.log(
+      "info",
+      `Flutter Inspector MCP server running on stdio, port ${this.port}`
+    );
   }
 }
 
 const server = new FlutterInspectorServer();
-server.run().catch(console.error);
+server.run().catch((error) => {
+  console.error("Fatal error:", error);
+  process.exit(1);
+});

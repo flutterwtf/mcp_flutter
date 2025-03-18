@@ -1,106 +1,156 @@
 # Flutter Inspector MCP Server
 
-This is a Model Context Protocol (MCP) server that allows you to inspect running Flutter applications.
+Give Cursor, Windsurf, Cline, and other AI-powered coding tools access to your Flutter app's widget tree and navigation state with this Model Context Protocol server.
 
-## Features
+When Cursor has access to Flutter's widget tree and navigation state, it can better understand your app's structure and provide more accurate code suggestions and implementations.
 
-- **`get_active_ports`**: Lists ports where Flutter/Dart processes are listening.
-- **`get_widget_tree`**: Retrieves the widget tree from a Flutter app running on a specified port.
+Get started quickly:
+
+```bash
+npx flutter-inspector --port=3334
+```
+
+## How it works
+
+1. Start your Flutter app in debug mode
+2. Run the Flutter Inspector MCP server
+3. Open Cursor's composer in agent mode
+4. Ask Cursor to analyze your Flutter app's widget tree or current route
+5. Cursor will fetch the relevant metadata from your running Flutter app and use it to assist you
+
+This MCP server is specifically designed for use with Cursor and other AI coding tools. It provides access to Flutter's widget tree and navigation state through a standardized interface.
 
 ## Installation
 
-### General Installation
+### Running the server quickly with NPM
 
-1.  Clone this repository.
-2.  Navigate to the repository directory: `cd flutter-inspector`
-3.  Install dependencies: `npm install`
-4.  Build the server: `npm run build`
-5.  Link the server (optional, for global availability): `npm link`
+You can run the server quickly without installing or building the repo using NPM:
 
-### Cursor Installation
+```bash
+npx flutter-inspector --port=3334
 
-1.  Open Cursor.
-2.  Go to Settings (File > Settings on Windows/Linux, Cursor > Preferences on macOS).
-3.  Navigate to the "Claude" settings (it might be under "Extensions" or a similar category).
-4.  Find the MCP server configuration section (likely a JSON file, `cline_mcp_settings.json`).
-5.  Add a new entry to the `mcpServers` object:
+# or
+pnpx flutter-inspector --port=3334
 
-    ```json
-    {
-      "mcpServers": {
-        "flutter-inspector": {
-          "command": "node",
-          "args": ["/path/to/flutter-inspector/build/index.js"],
-          "env": {},
-          "disabled": false,
-          "autoApprove": []
-        }
-      }
-    }
-    ```
+# or
+yarn dlx flutter-inspector --port=3334
 
-    **Replace `/path/to/flutter-inspector/build/index.js` with the absolute path to the `index.js` file within the built MCP server directory.** You can find the absolute path by right-clicking on `index.js` in your file explorer and selecting "Copy Path".
-
-6.  Restart Cursor for the changes to take effect.
-
-## Usage
-
-1.  Run your Flutter app with the VM Service enabled:
-
-    ```bash
-    flutter run --observatory-port=8181
-    ```
-
-2.  Use the tools via MCP in Cursor. You can now ask Claude questions like:
-    - "What are the active Flutter ports?"
-    - "Show me the widget tree for the app running on port 8181."
-
-Example tool usage:
-
-```typescript
-// Get active Flutter ports
-use_mcp_tool({
-  server_name: "flutter-inspector",
-  tool_name: "get_active_ports",
-});
-
-// Get widget tree for a specific port
-use_mcp_tool({
-  server_name: "flutter-inspector",
-  tool_name: "get_widget_tree",
-  arguments: {
-    port: 8181,
-  },
-});
+# or
+bunx flutter-inspector --port=3334
 ```
 
-## Roadmap
+### JSON config for tools that use configuration files
 
-- **State Inspection:** Add tools to inspect the state of the Flutter application.
-- **Performance Monitoring:** Integrate performance profiling tools.
-- **Network Inspection:** Add tools to monitor network requests and responses.
-- **UI:** Create a user interface for easier interaction with the server.
-- **Remote Device Support:** Allow connecting to apps running on remote devices.
+Many tools like Windsurf, Cline, and Claude Desktop use a configuration file to start the server.
+
+The `flutter-inspector` server can be configured by adding the following to your configuration file:
+
+```json
+{
+  "mcpServers": {
+    "flutter-inspector": {
+      "command": "npx",
+      "args": ["-y", "flutter-inspector", "--stdio"],
+      "env": {
+        "PORT": "3334",
+        "LOG_LEVEL": "info"
+      }
+    }
+  }
+}
+```
+
+### Running the server from local source
+
+1. Clone the repository
+2. Install dependencies with `npm install` or `pnpm install`
+3. Copy `.env.example` to `.env` and configure as needed
+4. Run the server with `npm run start` or `pnpm start`, along with any command-line arguments
+
+## Configuration
+
+The server can be configured using either environment variables (via `.env` file) or command-line arguments. Command-line arguments take precedence over environment variables.
+
+### Environment Variables
+
+- `PORT`: The port to run the server on (default: 3334)
+- `LOG_LEVEL`: Logging level (error, warn, info, debug) (default: info)
+
+### Command-line Arguments
+
+- `--version`: Show version number
+- `--port`, `-p`: The port to run the server on
+- `--stdio`: Run the server in stdio mode (default: true)
+- `--log-level`: Set logging level (error, warn, info, debug)
+- `--help`: Show help menu
+
+## Connecting to Cursor
+
+### Start the server
+
+```bash
+npx flutter-inspector --port=3334
+# Initializing Flutter Inspector MCP Server...
+# Server running on port 3334
+```
+
+### Connect Cursor to the MCP server
+
+Once the server is running, connect Cursor to the MCP server in Cursor's settings, under the features tab.
+
+After the server has been connected, you can confirm Cursor has a valid connection before getting started. If you get a green dot and the tools show up, you're good to go!
+
+### Start using Composer with your Flutter app
+
+Once the MCP server is connected, you can start using the tools in Cursor's composer, as long as the composer is in agent mode.
+
+First, make sure your Flutter app is running in debug mode. Then you can ask Cursor to analyze your app's widget tree or get the current route.
+
+## Inspect Responses
+
+To inspect responses from the MCP server more easily, you can run the `inspect` command, which launches the `@modelcontextprotocol/inspector` web UI for triggering tool calls and reviewing responses:
+
+```bash
+npm run inspector
+# > flutter-inspector@0.1.0 inspector
+# > npx @modelcontextprotocol/inspector
+#
+# Starting MCP inspector...
+# Proxy server listening on port 3334
+#
+# 🔍 MCP Inspector is up and running at http://localhost:5173 🚀
+```
+
+## Available Tools
+
+The server provides the following MCP tools:
+
+### get_active_ports
+
+Lists all ports where Flutter/Dart processes are currently listening.
+
+Parameters: None
+
+### get_widget_tree
+
+Fetches the widget tree from a running Flutter application.
+
+Parameters:
+
+- `port` (number, required): The port number where the Flutter app is running
+
+### get_current_route
+
+Gets the current route/page from a running Flutter application.
+
+Parameters:
+
+- `port` (number, required): The port number where the Flutter app is running
 
 ## Contributing
 
-We welcome contributions! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Commit your changes (`git commit -m 'Add some amazing feature'`)
-5. Push to the branch (`git push origin feature/amazing-feature`)
-6. Open a Pull Request
-
-### Development Guidelines
-
-- Follow TypeScript best practices
-- Add appropriate error handling
-- Include tests for new features
-- Update documentation as needed
-- Follow the existing code style
+We welcome contributions! Please feel free to submit a Pull Request.
 
 ## License
 
-MIT License - see the [LICENSE](LICENSE) file for details
+MIT
