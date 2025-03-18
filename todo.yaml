@@ -1,11 +1,5 @@
 missing_rpc_implementations:
   debug:
-    - method: "debugDumpSemanticsTreeInInverseHitTestOrder"
-      steps:
-        - Add RPC method to Debug group in FlutterRPC
-        - Add tool definition in ListToolsRequestSchema
-        - Implement handler in CallToolRequestSchema
-        - Add error handling
     - method: "repaintRainbow"
       steps:
         - Add RPC method to Debug group in FlutterRPC
