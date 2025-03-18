@@ -229,6 +229,7 @@ Contributions are welcome! Please feel free to submit pull requests or report is
 
 - [Flutter DevTools Documentation](https://docs.flutter.dev/development/tools/devtools/overview)
 - [Dart VM Service Protocol](https://github.com/dart-lang/sdk/blob/main/runtime/vm/service/service.md)
+- [Flutter DevTools RPC Constants (I guess and hope they are correct:))](https://github.com/flutter/devtools/tree/87f8016e2610c98c3e2eae8b1c823de068701dfd/packages/devtools_app/lib/src/shared/analytics/constants)
 
 ## 📄 License
 

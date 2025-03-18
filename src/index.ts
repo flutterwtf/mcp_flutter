@@ -101,6 +101,20 @@ interface IsolateResponse extends IsolateInfo {
   // Add other isolate response fields as needed
 }
 
+const INSPECTOR_METHODS = {
+  WIDGET_TREE: "ext.flutter.inspector.getWidgetTree",
+  WIDGET_DETAILS: "ext.flutter.inspector.getProperties",
+  SET_PUB_ROOT: "ext.flutter.inspector.setPubRootDirectories",
+  GET_PUB_ROOT: "ext.flutter.inspector.getPubRootDirectories",
+  IS_WIDGET_TREE_READY: "ext.flutter.inspector.isWidgetTreeReady",
+};
+
+const PERFORMANCE_METHODS = {
+  GET_STATS: "ext.flutter.getStats",
+  CLEAR_STATS: "ext.flutter.clearStats",
+  ENABLE_STATS: "ext.flutter.enableStats",
+};
+
 class FlutterInspectorServer {
   private server: Server;
   private port: number;
@@ -497,6 +511,55 @@ class FlutterInspectorServer {
             required: ["streamId"],
           },
         },
+        {
+          name: "get_widget_tree",
+          description: "Get widget tree from a Flutter app",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
+        {
+          name: "get_widget_details",
+          description: "Get details for a specific widget",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              objectId: {
+                type: "string",
+                description: "ID of the widget to inspect",
+              },
+            },
+            required: ["objectId"],
+          },
+        },
+        {
+          name: "get_performance_stats",
+          description: "Get Flutter performance statistics",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
       ],
     }));
 
@@ -608,6 +671,50 @@ class FlutterInspectorServer {
           };
           return wrapResponse(
             this.invokeFlutterMethod(port, "streamListen", { streamId })
+          );
+        }
+
+        case "get_widget_tree": {
+          const port = handlePortParam();
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(port, "ext.flutter.debugDumpApp")
+          );
+        }
+
+        case "get_widget_details": {
+          const port = handlePortParam();
+          const { objectId } = request.params.arguments as { objectId: string };
+          if (!objectId) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "objectId parameter is required"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              "ext.flutter.inspector.getProperties",
+              {
+                arg: { objectId },
+              }
+            )
+          );
+        }
+
+        case "get_performance_stats": {
+          const port = handlePortParam();
+          await this.verifyFlutterDebugMode(port);
+
+          // First enable stats collection
+          await this.invokeFlutterExtension(port, "ext.flutter.enableStats", {
+            enabled: true,
+          });
+
+          // Then get the stats
+          return wrapResponse(
+            this.invokeFlutterExtension(port, "ext.flutter.getStats")
           );
         }
 
