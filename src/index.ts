@@ -115,6 +115,13 @@ const PERFORMANCE_METHODS = {
   ENABLE_STATS: "ext.flutter.enableStats",
 };
 
+// Add this interface for the extension RPC results
+interface IsolateRPCInfo {
+  name: string;
+  isFlutterIsolate: boolean;
+  extensionRPCs: string[];
+}
+
 class FlutterInspectorServer {
   private server: Server;
   private port: number;
@@ -560,6 +567,66 @@ class FlutterInspectorServer {
             required: [],
           },
         },
+        {
+          name: "debug_paint_size",
+          description: "Toggle paint size debugging",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              enabled: {
+                type: "boolean",
+                description:
+                  "Whether to enable or disable paint size debugging",
+              },
+            },
+            required: ["enabled"],
+          },
+        },
+        {
+          name: "debug_paint_baselines",
+          description: "Toggle baseline paint debugging",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              enabled: {
+                type: "boolean",
+                description:
+                  "Whether to enable or disable baseline paint debugging",
+              },
+            },
+            required: ["enabled"],
+          },
+        },
+        {
+          name: "get_extension_rpcs",
+          description: "Get list of available Flutter extension RPCs",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              isolateId: {
+                type: "string",
+                description:
+                  "Optional specific isolate ID to check. If not provided, checks all isolates",
+              },
+            },
+            required: [],
+          },
+        },
       ],
     }));
 
@@ -716,6 +783,78 @@ class FlutterInspectorServer {
           return wrapResponse(
             this.invokeFlutterExtension(port, "ext.flutter.getStats")
           );
+        }
+
+        case "debug_paint_size": {
+          const port = handlePortParam();
+          const { enabled } = request.params.arguments as { enabled: boolean };
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              "ext.flutter.debugPaintSizeEnabled",
+              {
+                enabled,
+              }
+            )
+          );
+        }
+
+        case "debug_paint_baselines": {
+          const port = handlePortParam();
+          const { enabled } = request.params.arguments as { enabled: boolean };
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              "ext.flutter.debugPaintBaselinesEnabled",
+              {
+                enabled,
+              }
+            )
+          );
+        }
+
+        case "get_extension_rpcs": {
+          const port = handlePortParam();
+          const { isolateId } =
+            (request.params.arguments as { isolateId?: string }) || {};
+
+          const vmInfo = (await this.invokeFlutterMethod(
+            port,
+            "getVM"
+          )) as VMInfo;
+          const results: Record<string, IsolateRPCInfo> = {};
+
+          for (const isolateRef of vmInfo.isolates) {
+            // Skip if specific isolateId was requested and this isn't it
+            if (isolateId && isolateRef.id !== isolateId) continue;
+
+            const isolate = (await this.invokeFlutterMethod(
+              port,
+              "getIsolate",
+              {
+                isolateId: isolateRef.id,
+              }
+            )) as IsolateResponse;
+
+            results[isolateRef.id] = {
+              name: isolate.name || "unnamed",
+              isFlutterIsolate: (isolate.extensionRPCs || []).some((ext) =>
+                ext.startsWith("ext.flutter")
+              ),
+              extensionRPCs: isolate.extensionRPCs || [],
+            };
+          }
+
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify(results, null, 2),
+              },
+            ],
+          };
         }
 
         default:
