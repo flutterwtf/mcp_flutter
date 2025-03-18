@@ -1,0 +1,145 @@
+missing_rpc_implementations:
+  dart_io:
+    - method: "httpEnableTimelineLogging"
+      steps:
+        - Add RPC method to DartIO group in FlutterRPC
+        - Add tool definition in ListToolsRequestSchema
+        - Implement handler in CallToolRequestSchema
+        - Add parameter validation
+        - Add error handling
+    - method: "socketProfilingEnabled"
+      steps:
+        - Add RPC method to DartIO group in FlutterRPC
+        - Add tool definition in ListToolsRequestSchema
+        - Implement handler with boolean parameter
+        - Add parameter validation
+        - Add error handling
+    - method: "getOpenFiles"
+      steps:
+        - Add RPC method to DartIO group in FlutterRPC
+        - Add tool definition in ListToolsRequestSchema
+        - Implement handler in CallToolRequestSchema
+        - Add error handling
+    - method: "getOpenFileById"
+      steps:
+        - Add RPC method to DartIO group in FlutterRPC
+        - Add tool definition with fileId parameter
+        - Implement handler in CallToolRequestSchema
+        - Add parameter validation
+        - Add error handling
+
+  flutter_core:
+    - method: "invertOversizedImages"
+      steps:
+        - Add RPC method to Core group in FlutterRPC
+        - Add tool definition with boolean parameter
+        - Implement handler in CallToolRequestSchema
+        - Add parameter validation
+        - Add error handling
+    - method: "debugAllowBanner"
+      steps:
+        - Add RPC method to Debug group in FlutterRPC
+        - Add tool definition with boolean parameter
+        - Implement handler in CallToolRequestSchema
+        - Add parameter validation
+        - Add error handling
+    - method: "didSendFirstFrameEvent"
+      steps:
+        - Add RPC method to Core group in FlutterRPC
+        - Add tool definition in ListToolsRequestSchema
+        - Implement handler in CallToolRequestSchema
+        - Add error handling
+    - method: "didSendFirstFrameRasterizedEvent"
+      steps:
+        - Add RPC method to Core group in FlutterRPC
+        - Add tool definition in ListToolsRequestSchema
+        - Implement handler in CallToolRequestSchema
+        - Add error handling
+
+  inspector:
+    - method: "setSelectionById"
+      steps:
+        - Add RPC method to Inspector group in FlutterRPC
+        - Add tool definition with selectionId parameter
+        - Implement handler in CallToolRequestSchema
+        - Add parameter validation
+        - Add error handling
+    - method: "getParentChain"
+      steps:
+        - Add RPC method to Inspector group in FlutterRPC
+        - Add tool definition with objectId parameter
+        - Implement handler in CallToolRequestSchema
+        - Add parameter validation
+        - Add error handling
+    - method: "getChildrenSummaryTree"
+      steps:
+        - Add RPC method to Inspector group in FlutterRPC
+        - Add tool definition with objectId parameter
+        - Implement handler in CallToolRequestSchema
+        - Add parameter validation
+        - Add error handling
+    - method: "getChildrenDetailsSubtree"
+      steps:
+        - Add RPC method to Inspector group in FlutterRPC
+        - Add tool definition with objectId parameter
+        - Implement handler in CallToolRequestSchema
+        - Add parameter validation
+        - Add error handling
+    - method: "getRootWidgetSummaryTree"
+      steps:
+        - Add RPC method to Inspector group in FlutterRPC
+        - Add tool definition in ListToolsRequestSchema
+        - Implement handler in CallToolRequestSchema
+        - Add error handling
+    - method: "getRootWidgetSummaryTreeWithPreviews"
+      steps:
+        - Add RPC method to Inspector group in FlutterRPC
+        - Add tool definition in ListToolsRequestSchema
+        - Implement handler in CallToolRequestSchema
+        - Add error handling
+    - method: "getDetailsSubtree"
+      steps:
+        - Add RPC method to Inspector group in FlutterRPC
+        - Add tool definition with objectId parameter
+        - Implement handler in CallToolRequestSchema
+        - Add parameter validation
+        - Add error handling
+    - method: "getSelectedWidget"
+      steps:
+        - Add RPC method to Inspector group in FlutterRPC
+        - Add tool definition in ListToolsRequestSchema
+        - Implement handler in CallToolRequestSchema
+        - Add error handling
+    - method: "getSelectedSummaryWidget"
+      steps:
+        - Add RPC method to Inspector group in FlutterRPC
+        - Add tool definition in ListToolsRequestSchema
+        - Implement handler in CallToolRequestSchema
+        - Add error handling
+    - method: "isWidgetCreationTracked"
+      steps:
+        - Add RPC method to Inspector group in FlutterRPC
+        - Add tool definition in ListToolsRequestSchema
+        - Implement handler in CallToolRequestSchema
+        - Add error handling
+
+refactoring_needed:
+  - Group related RPC methods into more specific categories
+  - Add comprehensive error handling for all RPC methods
+  - Add input validation for all parameters
+  - Add proper TypeScript types for all request/response objects
+  - Add documentation for all RPC methods
+  - Add tests for all RPC methods
+  - Add logging for all RPC method calls
+  - Add metrics collection for RPC method usage
+
+priority_order:
+  high:
+    - Inspector methods for widget tree manipulation
+    - Core Flutter debugging methods
+    - Performance profiling methods
+  medium:
+    - DartIO methods for file handling
+    - Additional inspector methods
+  low:
+    - Nice-to-have features and optimizations

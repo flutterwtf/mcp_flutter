@@ -101,26 +101,189 @@ interface IsolateResponse extends IsolateInfo {
   // Add other isolate response fields as needed
 }
 
-const INSPECTOR_METHODS = {
-  WIDGET_TREE: "ext.flutter.inspector.getWidgetTree",
-  WIDGET_DETAILS: "ext.flutter.inspector.getProperties",
-  SET_PUB_ROOT: "ext.flutter.inspector.setPubRootDirectories",
-  GET_PUB_ROOT: "ext.flutter.inspector.getPubRootDirectories",
-  IS_WIDGET_TREE_READY: "ext.flutter.inspector.isWidgetTreeReady",
-};
-
-const PERFORMANCE_METHODS = {
-  GET_STATS: "ext.flutter.getStats",
-  CLEAR_STATS: "ext.flutter.clearStats",
-  ENABLE_STATS: "ext.flutter.enableStats",
-};
-
-// Add this interface for the extension RPC results
-interface IsolateRPCInfo {
-  name: string;
-  isFlutterIsolate: boolean;
-  extensionRPCs: string[];
+enum RPCPrefix {
+  UI = "ext.ui.window",
+  DART_IO = "ext.dart.io",
+  FLUTTER = "ext.flutter",
+  INSPECTOR = "ext.flutter.inspector",
+  ISAR = "ext.isar",
 }
+
+function createRPCMethod(prefix: RPCPrefix, method: string): string {
+  return `${prefix}.${method}`;
+}
+
+// Group RPC methods by functionality
+const FlutterRPC = {
+  UI: {
+    SCHEDULE_FRAME: createRPCMethod(RPCPrefix.UI, "scheduleFrame"),
+    REINITIALIZE_SHADER: createRPCMethod(RPCPrefix.UI, "reinitializeShader"),
+    IMPELLER_ENABLED: createRPCMethod(RPCPrefix.UI, "impellerEnabled"),
+  },
+  DartIO: {
+    HTTP_TIMELINE_LOGGING: createRPCMethod(
+      RPCPrefix.DART_IO,
+      "httpEnableTimelineLogging"
+    ),
+    GET_SOCKET_PROFILE: createRPCMethod(RPCPrefix.DART_IO, "getSocketProfile"),
+    SOCKET_PROFILING_ENABLED: createRPCMethod(
+      RPCPrefix.DART_IO,
+      "socketProfilingEnabled"
+    ),
+    CLEAR_SOCKET_PROFILE: createRPCMethod(
+      RPCPrefix.DART_IO,
+      "clearSocketProfile"
+    ),
+    GET_VERSION: createRPCMethod(RPCPrefix.DART_IO, "getVersion"),
+    GET_HTTP_PROFILE: createRPCMethod(RPCPrefix.DART_IO, "getHttpProfile"),
+    GET_HTTP_PROFILE_REQUEST: createRPCMethod(
+      RPCPrefix.DART_IO,
+      "getHttpProfileRequest"
+    ),
+    CLEAR_HTTP_PROFILE: createRPCMethod(RPCPrefix.DART_IO, "clearHttpProfile"),
+    GET_OPEN_FILES: createRPCMethod(RPCPrefix.DART_IO, "getOpenFiles"),
+    GET_OPEN_FILE_BY_ID: createRPCMethod(RPCPrefix.DART_IO, "getOpenFileById"),
+  },
+  Core: {
+    REASSEMBLE: createRPCMethod(RPCPrefix.FLUTTER, "reassemble"),
+    EXIT: createRPCMethod(RPCPrefix.FLUTTER, "exit"),
+    CONNECTED_VM_SERVICE_URI: createRPCMethod(
+      RPCPrefix.FLUTTER,
+      "connectedVmServiceUri"
+    ),
+    ACTIVE_DEVTOOLS_SERVER_ADDRESS: createRPCMethod(
+      RPCPrefix.FLUTTER,
+      "activeDevToolsServerAddress"
+    ),
+    PLATFORM_OVERRIDE: createRPCMethod(RPCPrefix.FLUTTER, "platformOverride"),
+    BRIGHTNESS_OVERRIDE: createRPCMethod(
+      RPCPrefix.FLUTTER,
+      "brightnessOverride"
+    ),
+    TIME_DILATION: createRPCMethod(RPCPrefix.FLUTTER, "timeDilation"),
+    EVICT: createRPCMethod(RPCPrefix.FLUTTER, "evict"),
+  },
+  Debug: {
+    DUMP_APP: createRPCMethod(RPCPrefix.FLUTTER, "debugDumpApp"),
+    DUMP_RENDER_TREE: createRPCMethod(RPCPrefix.FLUTTER, "debugDumpRenderTree"),
+    DUMP_LAYER_TREE: createRPCMethod(RPCPrefix.FLUTTER, "debugDumpLayerTree"),
+    DUMP_SEMANTICS: createRPCMethod(
+      RPCPrefix.FLUTTER,
+      "debugDumpSemanticsTreeInTraversalOrder"
+    ),
+    DUMP_SEMANTICS_INVERSE: createRPCMethod(
+      RPCPrefix.FLUTTER,
+      "debugDumpSemanticsTreeInInverseHitTestOrder"
+    ),
+    DUMP_FOCUS_TREE: createRPCMethod(RPCPrefix.FLUTTER, "debugDumpFocusTree"),
+    DEBUG_PAINT: createRPCMethod(RPCPrefix.FLUTTER, "debugPaint"),
+    DEBUG_PAINT_BASELINES: createRPCMethod(
+      RPCPrefix.FLUTTER,
+      "debugPaintBaselinesEnabled"
+    ),
+    REPAINT_RAINBOW: createRPCMethod(RPCPrefix.FLUTTER, "repaintRainbow"),
+    DEBUG_DISABLE_CLIP_LAYERS: createRPCMethod(
+      RPCPrefix.FLUTTER,
+      "debugDisableClipLayers"
+    ),
+    DEBUG_DISABLE_PHYSICAL_SHAPE_LAYERS: createRPCMethod(
+      RPCPrefix.FLUTTER,
+      "debugDisablePhysicalShapeLayers"
+    ),
+    DEBUG_DISABLE_OPACITY_LAYERS: createRPCMethod(
+      RPCPrefix.FLUTTER,
+      "debugDisableOpacityLayers"
+    ),
+  },
+  Inspector: {
+    SCREENSHOT: createRPCMethod(RPCPrefix.INSPECTOR, "screenshot"),
+    GET_ROOT_WIDGET: createRPCMethod(RPCPrefix.INSPECTOR, "getRootWidget"),
+    GET_WIDGET_TREE: createRPCMethod(RPCPrefix.INSPECTOR, "getRootWidgetTree"),
+    GET_PROPERTIES: createRPCMethod(RPCPrefix.INSPECTOR, "getProperties"),
+    GET_CHILDREN: createRPCMethod(RPCPrefix.INSPECTOR, "getChildren"),
+    TRACK_REBUILDS: createRPCMethod(
+      RPCPrefix.INSPECTOR,
+      "trackRebuildDirtyWidgets"
+    ),
+    STRUCTURED_ERRORS: createRPCMethod(RPCPrefix.INSPECTOR, "structuredErrors"),
+    SHOW: createRPCMethod(RPCPrefix.INSPECTOR, "show"),
+    WIDGET_LOCATION_ID_MAP: createRPCMethod(
+      RPCPrefix.INSPECTOR,
+      "widgetLocationIdMap"
+    ),
+    TRACK_REPAINT_WIDGETS: createRPCMethod(
+      RPCPrefix.INSPECTOR,
+      "trackRepaintWidgets"
+    ),
+    DISPOSE_ALL_GROUPS: createRPCMethod(
+      RPCPrefix.INSPECTOR,
+      "disposeAllGroups"
+    ),
+    DISPOSE_GROUP: createRPCMethod(RPCPrefix.INSPECTOR, "disposeGroup"),
+    IS_WIDGET_TREE_READY: createRPCMethod(
+      RPCPrefix.INSPECTOR,
+      "isWidgetTreeReady"
+    ),
+    DISPOSE_ID: createRPCMethod(RPCPrefix.INSPECTOR, "disposeId"),
+    SET_PUB_ROOT_DIRECTORIES: createRPCMethod(
+      RPCPrefix.INSPECTOR,
+      "setPubRootDirectories"
+    ),
+    ADD_PUB_ROOT_DIRECTORIES: createRPCMethod(
+      RPCPrefix.INSPECTOR,
+      "addPubRootDirectories"
+    ),
+    REMOVE_PUB_ROOT_DIRECTORIES: createRPCMethod(
+      RPCPrefix.INSPECTOR,
+      "removePubRootDirectories"
+    ),
+    GET_PUB_ROOT_DIRECTORIES: createRPCMethod(
+      RPCPrefix.INSPECTOR,
+      "getPubRootDirectories"
+    ),
+  },
+  Performance: {
+    SHOW_OVERLAY: createRPCMethod(RPCPrefix.FLUTTER, "showPerformanceOverlay"),
+    PROFILE_WIDGETS: createRPCMethod(RPCPrefix.FLUTTER, "profileWidgetBuilds"),
+    PROFILE_USER_WIDGETS: createRPCMethod(
+      RPCPrefix.FLUTTER,
+      "profileUserWidgetBuilds"
+    ),
+    PROFILE_PLATFORM_CHANNELS: createRPCMethod(
+      RPCPrefix.FLUTTER,
+      "profilePlatformChannels"
+    ),
+    PROFILE_RENDER_OBJECT_PAINTS: createRPCMethod(
+      RPCPrefix.FLUTTER,
+      "profileRenderObjectPaints"
+    ),
+    PROFILE_RENDER_OBJECT_LAYOUTS: createRPCMethod(
+      RPCPrefix.FLUTTER,
+      "profileRenderObjectLayouts"
+    ),
+  },
+  Layout: {
+    GET_EXPLORER_NODE: createRPCMethod(
+      RPCPrefix.INSPECTOR,
+      "getLayoutExplorerNode"
+    ),
+    SET_FLEX_FIT: createRPCMethod(RPCPrefix.INSPECTOR, "setFlexFit"),
+    SET_FLEX_FACTOR: createRPCMethod(RPCPrefix.INSPECTOR, "setFlexFactor"),
+    SET_FLEX_PROPERTIES: createRPCMethod(
+      RPCPrefix.INSPECTOR,
+      "setFlexProperties"
+    ),
+  },
+  Isar: {
+    LIST_INSTANCES: createRPCMethod(RPCPrefix.ISAR, "listInstances"),
+    GET_SCHEMAS: createRPCMethod(RPCPrefix.ISAR, "getSchemas"),
+    WATCH_INSTANCE: createRPCMethod(RPCPrefix.ISAR, "watchInstance"),
+    EXECUTE_QUERY: createRPCMethod(RPCPrefix.ISAR, "executeQuery"),
+    DELETE_QUERY: createRPCMethod(RPCPrefix.ISAR, "deleteQuery"),
+    IMPORT_JSON: createRPCMethod(RPCPrefix.ISAR, "importJson"),
+    EDIT_PROPERTY: createRPCMethod(RPCPrefix.ISAR, "editProperty"),
+  },
+};
 
 class FlutterInspectorServer {
   private server: Server;
@@ -627,6 +790,308 @@ class FlutterInspectorServer {
             required: [],
           },
         },
+        {
+          name: "take_screenshot",
+          description: "Take a screenshot of the Flutter app",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
+        {
+          name: "get_focus_tree",
+          description: "Get the focus tree of the Flutter app",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
+        {
+          name: "profile_user_widgets",
+          description: "Profile user widget builds",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              enabled: {
+                type: "boolean",
+                description: "Whether to enable or disable profiling",
+              },
+            },
+            required: ["enabled"],
+          },
+        },
+        {
+          name: "get_layout_explorer",
+          description: "Get layout explorer information for a widget",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              objectId: {
+                type: "string",
+                description: "ID of the widget to inspect",
+              },
+            },
+            required: ["objectId"],
+          },
+        },
+        {
+          name: "schedule_frame",
+          description: "Schedule a new frame in the Flutter app",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
+        {
+          name: "reinitialize_shader",
+          description: "Reinitialize shaders in the Flutter app",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
+        {
+          name: "impeller_enabled",
+          description: "Check if Impeller is enabled in the Flutter app",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
+        {
+          name: "get_socket_profile",
+          description: "Get socket profiling information",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
+        {
+          name: "clear_socket_profile",
+          description: "Clear socket profiling data",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
+        {
+          name: "get_http_profile",
+          description: "Get HTTP profiling information",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
+        {
+          name: "clear_http_profile",
+          description: "Clear HTTP profiling data",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
+        {
+          name: "list_isar_instances",
+          description: "List all Isar database instances",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
+        {
+          name: "get_isar_schemas",
+          description: "Get schemas for all Isar collections",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
+        {
+          name: "watch_isar_instance",
+          description: "Watch changes in an Isar instance",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              instanceId: {
+                type: "string",
+                description: "ID of the Isar instance to watch",
+              },
+            },
+            required: ["instanceId"],
+          },
+        },
+        {
+          name: "execute_isar_query",
+          description: "Execute a query on an Isar database",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              query: {
+                type: "string",
+                description: "Query to execute",
+              },
+            },
+            required: ["query"],
+          },
+        },
+        {
+          name: "delete_isar_query",
+          description: "Delete a saved Isar query",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              queryId: {
+                type: "string",
+                description: "ID of the query to delete",
+              },
+            },
+            required: ["queryId"],
+          },
+        },
+        {
+          name: "import_isar_json",
+          description: "Import JSON data into an Isar database",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              json: {
+                type: "string",
+                description: "JSON data to import",
+              },
+            },
+            required: ["json"],
+          },
+        },
+        {
+          name: "edit_isar_property",
+          description: "Edit a property in an Isar database",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              property: {
+                type: "string",
+                description: "Property to edit",
+              },
+              value: {
+                type: "object",
+                description: "New value for the property",
+              },
+            },
+            required: ["property"],
+          },
+        },
       ],
     }));
 
@@ -682,7 +1147,7 @@ class FlutterInspectorServer {
           const port = handlePortParam();
           await this.verifyFlutterDebugMode(port);
           return wrapResponse(
-            this.invokeFlutterExtension(port, "ext.flutter.debugDumpRenderTree")
+            this.invokeFlutterExtension(port, FlutterRPC.Debug.DUMP_RENDER_TREE)
           );
         }
 
@@ -690,7 +1155,7 @@ class FlutterInspectorServer {
           const port = handlePortParam();
           await this.verifyFlutterDebugMode(port);
           return wrapResponse(
-            this.invokeFlutterExtension(port, "ext.flutter.debugDumpLayerTree")
+            this.invokeFlutterExtension(port, FlutterRPC.Debug.DUMP_LAYER_TREE)
           );
         }
 
@@ -698,10 +1163,7 @@ class FlutterInspectorServer {
           const port = handlePortParam();
           await this.verifyFlutterDebugMode(port);
           return wrapResponse(
-            this.invokeFlutterExtension(
-              port,
-              "ext.flutter.debugDumpSemanticsTreeInTraversalOrder"
-            )
+            this.invokeFlutterExtension(port, FlutterRPC.Debug.DUMP_SEMANTICS)
           );
         }
 
@@ -718,7 +1180,7 @@ class FlutterInspectorServer {
           }
           await this.verifyFlutterDebugMode(port);
           return wrapResponse(
-            this.invokeFlutterExtension(port, "ext.flutter.debugPaint", {
+            this.invokeFlutterExtension(port, FlutterRPC.Debug.DEBUG_PAINT, {
               enabled,
             })
           );
@@ -727,7 +1189,7 @@ class FlutterInspectorServer {
         case "get_flutter_version": {
           const port = handlePortParam();
           return wrapResponse(
-            this.invokeFlutterExtension(port, "ext.flutter.version")
+            this.invokeFlutterExtension(port, FlutterRPC.Debug.DUMP_APP)
           );
         }
 
@@ -745,7 +1207,7 @@ class FlutterInspectorServer {
           const port = handlePortParam();
           await this.verifyFlutterDebugMode(port);
           return wrapResponse(
-            this.invokeFlutterExtension(port, "ext.flutter.debugDumpApp")
+            this.invokeFlutterExtension(port, FlutterRPC.Debug.DUMP_APP)
           );
         }
 
@@ -762,7 +1224,7 @@ class FlutterInspectorServer {
           return wrapResponse(
             this.invokeFlutterExtension(
               port,
-              "ext.flutter.inspector.getProperties",
+              FlutterRPC.Inspector.GET_PROPERTIES,
               {
                 arg: { objectId },
               }
@@ -775,13 +1237,23 @@ class FlutterInspectorServer {
           await this.verifyFlutterDebugMode(port);
 
           // First enable stats collection
-          await this.invokeFlutterExtension(port, "ext.flutter.enableStats", {
-            enabled: true,
-          });
+          await this.invokeFlutterExtension(
+            port,
+            FlutterRPC.Performance.PROFILE_WIDGETS,
+            {
+              enabled: true,
+            }
+          );
 
           // Then get the stats
           return wrapResponse(
-            this.invokeFlutterExtension(port, "ext.flutter.getStats")
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Performance.PROFILE_USER_WIDGETS,
+              {
+                enabled: true,
+              }
+            )
           );
         }
 
@@ -790,13 +1262,9 @@ class FlutterInspectorServer {
           const { enabled } = request.params.arguments as { enabled: boolean };
           await this.verifyFlutterDebugMode(port);
           return wrapResponse(
-            this.invokeFlutterExtension(
-              port,
-              "ext.flutter.debugPaintSizeEnabled",
-              {
-                enabled,
-              }
-            )
+            this.invokeFlutterExtension(port, FlutterRPC.Debug.DEBUG_PAINT, {
+              enabled,
+            })
           );
         }
 
@@ -807,7 +1275,7 @@ class FlutterInspectorServer {
           return wrapResponse(
             this.invokeFlutterExtension(
               port,
-              "ext.flutter.debugPaintBaselinesEnabled",
+              FlutterRPC.Debug.DEBUG_PAINT_BASELINES,
               {
                 enabled,
               }
@@ -824,12 +1292,28 @@ class FlutterInspectorServer {
             port,
             "getVM"
           )) as VMInfo;
-          const results: Record<string, IsolateRPCInfo> = {};
+          const isolates = vmInfo.isolates;
 
-          for (const isolateRef of vmInfo.isolates) {
-            // Skip if specific isolateId was requested and this isn't it
-            if (isolateId && isolateRef.id !== isolateId) continue;
+          if (isolateId) {
+            const isolate = (await this.invokeFlutterMethod(
+              port,
+              "getIsolate",
+              {
+                isolateId,
+              }
+            )) as IsolateResponse;
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: JSON.stringify(isolate.extensionRPCs || [], null, 2),
+                },
+              ],
+            };
+          }
 
+          const allExtensions: string[] = [];
+          for (const isolateRef of isolates) {
             const isolate = (await this.invokeFlutterMethod(
               port,
               "getIsolate",
@@ -837,24 +1321,229 @@ class FlutterInspectorServer {
                 isolateId: isolateRef.id,
               }
             )) as IsolateResponse;
-
-            results[isolateRef.id] = {
-              name: isolate.name || "unnamed",
-              isFlutterIsolate: (isolate.extensionRPCs || []).some((ext) =>
-                ext.startsWith("ext.flutter")
-              ),
-              extensionRPCs: isolate.extensionRPCs || [],
-            };
+            if (isolate.extensionRPCs) {
+              allExtensions.push(...isolate.extensionRPCs);
+            }
           }
 
           return {
             content: [
               {
                 type: "text",
-                text: JSON.stringify(results, null, 2),
+                text: JSON.stringify([...new Set(allExtensions)], null, 2),
               },
             ],
           };
+        }
+
+        case "take_screenshot": {
+          const port = handlePortParam();
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(port, FlutterRPC.Inspector.SCREENSHOT)
+          );
+        }
+
+        case "get_focus_tree": {
+          const port = handlePortParam();
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(port, FlutterRPC.Debug.DUMP_FOCUS_TREE)
+          );
+        }
+
+        case "profile_user_widgets": {
+          const port = handlePortParam();
+          const { enabled } = request.params.arguments as { enabled: boolean };
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Performance.PROFILE_USER_WIDGETS,
+              {
+                enabled,
+              }
+            )
+          );
+        }
+
+        case "get_layout_explorer": {
+          const port = handlePortParam();
+          const { objectId } = request.params.arguments as { objectId: string };
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Layout.GET_EXPLORER_NODE,
+              {
+                arg: { objectId },
+              }
+            )
+          );
+        }
+
+        // New handlers for UI methods
+        case "schedule_frame": {
+          const port = handlePortParam();
+          return wrapResponse(
+            this.invokeFlutterExtension(port, FlutterRPC.UI.SCHEDULE_FRAME)
+          );
+        }
+
+        case "reinitialize_shader": {
+          const port = handlePortParam();
+          return wrapResponse(
+            this.invokeFlutterExtension(port, FlutterRPC.UI.REINITIALIZE_SHADER)
+          );
+        }
+
+        case "impeller_enabled": {
+          const port = handlePortParam();
+          return wrapResponse(
+            this.invokeFlutterExtension(port, FlutterRPC.UI.IMPELLER_ENABLED)
+          );
+        }
+
+        // New handlers for DartIO methods
+        case "get_socket_profile": {
+          const port = handlePortParam();
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.DartIO.GET_SOCKET_PROFILE
+            )
+          );
+        }
+
+        case "clear_socket_profile": {
+          const port = handlePortParam();
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.DartIO.CLEAR_SOCKET_PROFILE
+            )
+          );
+        }
+
+        case "get_http_profile": {
+          const port = handlePortParam();
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.DartIO.GET_HTTP_PROFILE
+            )
+          );
+        }
+
+        case "clear_http_profile": {
+          const port = handlePortParam();
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.DartIO.CLEAR_HTTP_PROFILE
+            )
+          );
+        }
+
+        // New handlers for Isar methods
+        case "list_isar_instances": {
+          const port = handlePortParam();
+          return wrapResponse(
+            this.invokeFlutterExtension(port, FlutterRPC.Isar.LIST_INSTANCES)
+          );
+        }
+
+        case "get_isar_schemas": {
+          const port = handlePortParam();
+          return wrapResponse(
+            this.invokeFlutterExtension(port, FlutterRPC.Isar.GET_SCHEMAS)
+          );
+        }
+
+        case "watch_isar_instance": {
+          const port = handlePortParam();
+          const { instanceId } = request.params.arguments as {
+            instanceId: string;
+          };
+          if (!instanceId) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "instanceId parameter is required"
+            );
+          }
+          return wrapResponse(
+            this.invokeFlutterExtension(port, FlutterRPC.Isar.WATCH_INSTANCE, {
+              instanceId,
+            })
+          );
+        }
+
+        case "execute_isar_query": {
+          const port = handlePortParam();
+          const { query } = request.params.arguments as { query: string };
+          if (!query) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "query parameter is required"
+            );
+          }
+          return wrapResponse(
+            this.invokeFlutterExtension(port, FlutterRPC.Isar.EXECUTE_QUERY, {
+              query,
+            })
+          );
+        }
+
+        case "delete_isar_query": {
+          const port = handlePortParam();
+          const { queryId } = request.params.arguments as { queryId: string };
+          if (!queryId) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "queryId parameter is required"
+            );
+          }
+          return wrapResponse(
+            this.invokeFlutterExtension(port, FlutterRPC.Isar.DELETE_QUERY, {
+              queryId,
+            })
+          );
+        }
+
+        case "import_isar_json": {
+          const port = handlePortParam();
+          const { json } = request.params.arguments as { json: string };
+          if (!json) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "json parameter is required"
+            );
+          }
+          return wrapResponse(
+            this.invokeFlutterExtension(port, FlutterRPC.Isar.IMPORT_JSON, {
+              json,
+            })
+          );
+        }
+
+        case "edit_isar_property": {
+          const port = handlePortParam();
+          const { property, value } = request.params.arguments as {
+            property: string;
+            value: unknown;
+          };
+          if (!property) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "property parameter is required"
+            );
+          }
+          return wrapResponse(
+            this.invokeFlutterExtension(port, FlutterRPC.Isar.EDIT_PROPERTY, {
+              property,
+              value,
+            })
+          );
         }
 
         default:

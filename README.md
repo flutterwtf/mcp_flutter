@@ -221,6 +221,193 @@ Each tool serves a specific debugging or inspection purpose:
    - Some methods may only be available in certain Flutter versions
    - Check if the method is supported using `get_supported_protocols`
 
+## 🔧 Implementing New RPC Methods
+
+### Step-by-Step Guide
+
+1. **Add RPC Method Definition**
+
+   ```typescript
+   // In src/index.ts, add to appropriate group in FlutterRPC
+   const FlutterRPC = {
+     GroupName: {
+       METHOD_NAME: createRPCMethod(RPCPrefix.GROUP, "methodName"),
+       // ... other methods
+     },
+   };
+   ```
+
+2. **Add Tool Definition**
+
+   ```typescript
+   // In ListToolsRequestSchema handler
+   {
+     name: "method_name",
+     description: "Clear description of what the method does",
+     inputSchema: {
+       type: "object",
+       properties: {
+         port: {
+           type: "number",
+           description: "Port number where the Flutter app is running (defaults to 8181)",
+         },
+         // Add other parameters if needed
+         paramName: {
+           type: "string", // or boolean, number, etc.
+           description: "Parameter description",
+         }
+       },
+       required: ["paramName"], // List required parameters
+     }
+   }
+   ```
+
+3. **Implement Handler**
+   ```typescript
+   // In CallToolRequestSchema handler
+   case "method_name": {
+     const port = handlePortParam();
+     // Get and validate parameters if any
+     const { paramName } = request.params.arguments as { paramName: string };
+     if (!paramName) {
+       throw new McpError(
+         ErrorCode.InvalidParams,
+         "paramName parameter is required"
+       );
+     }
+     // Call the RPC method
+     return wrapResponse(
+       this.invokeFlutterExtension(port, FlutterRPC.GroupName.METHOD_NAME, {
+         paramName,
+       })
+     );
+   }
+   ```
+
+### Implementation Checklist
+
+1. **Method Definition**
+
+   - [ ] Add to appropriate group in `FlutterRPC`
+   - [ ] Use correct `RPCPrefix`
+   - [ ] Follow naming convention
+
+2. **Tool Definition**
+
+   - [ ] Add clear description
+   - [ ] Define all parameters
+   - [ ] Mark required parameters
+   - [ ] Add port parameter
+   - [ ] Document parameter types
+
+3. **Handler Implementation**
+
+   - [ ] Add case in switch statement
+   - [ ] Handle port parameter
+   - [ ] Validate all parameters
+   - [ ] Add error handling
+   - [ ] Use proper types
+   - [ ] Return wrapped response
+
+4. **Testing**
+   - [ ] Verify method works in debug mode
+   - [ ] Test with different parameter values
+   - [ ] Test error cases
+   - [ ] Test with default port
+
+### Example Implementation
+
+```typescript
+// 1. Add RPC Method
+const FlutterRPC = {
+  Inspector: {
+    GET_WIDGET_DETAILS: createRPCMethod(RPCPrefix.INSPECTOR, "getWidgetDetails"),
+  }
+};
+
+// 2. Add Tool Definition
+{
+  name: "get_widget_details",
+  description: "Get detailed information about a specific widget",
+  inputSchema: {
+    type: "object",
+    properties: {
+      port: {
+        type: "number",
+        description: "Port number where the Flutter app is running (defaults to 8181)",
+      },
+      widgetId: {
+        type: "string",
+        description: "ID of the widget to inspect",
+      }
+    },
+    required: ["widgetId"],
+  }
+}
+
+// 3. Implement Handler
+case "get_widget_details": {
+  const port = handlePortParam();
+  const { widgetId } = request.params.arguments as { widgetId: string };
+  if (!widgetId) {
+    throw new McpError(
+      ErrorCode.InvalidParams,
+      "widgetId parameter is required"
+    );
+  }
+  await this.verifyFlutterDebugMode(port);
+  return wrapResponse(
+    this.invokeFlutterExtension(port, FlutterRPC.Inspector.GET_WIDGET_DETAILS, {
+      widgetId,
+    })
+  );
+}
+```
+
+### Common Patterns
+
+1. **Parameter Validation**
+
+   - Always validate required parameters
+   - Use TypeScript types for type safety
+   - Throw `McpError` with clear messages
+
+2. **Error Handling**
+
+   - Use try-catch blocks for async operations
+   - Verify Flutter debug mode when needed
+   - Handle connection errors
+
+3. **Response Wrapping**
+
+   - Use `wrapResponse` for consistent formatting
+   - Handle both success and error cases
+   - Format response data appropriately
+
+4. **Port Handling**
+   - Use `handlePortParam()` for port management
+   - Default to 8181 if not specified
+   - Validate port number
+
+### Notes for AI Agents
+
+When implementing methods from todo.yaml:
+
+1. Follow the step-by-step guide above
+2. Use the example implementation as a template
+3. Ensure all checklist items are completed
+4. Add proper error handling and parameter validation
+5. Follow the common patterns section
+6. Test the implementation thoroughly
+
+For each new method:
+
+1. Check the method's group (UI, DartIO, Inspector, etc.)
+2. Determine required parameters from method name and context
+3. Implement following the standard patterns
+4. Add appropriate error handling
+5. Follow the existing code style
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit pull requests or report issues on the [GitHub repository](https://github.com/Arenukvern/mcp_flutter).
