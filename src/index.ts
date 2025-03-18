@@ -166,6 +166,10 @@ const FlutterRPC = {
       RPCPrefix.FLUTTER,
       "invertOversizedImages"
     ),
+    DID_SEND_FIRST_FRAME_EVENT: createRPCMethod(
+      RPCPrefix.FLUTTER,
+      "didSendFirstFrameEvent"
+    ),
   },
   Debug: {
     DUMP_APP: createRPCMethod(RPCPrefix.FLUTTER, "debugDumpApp"),
@@ -911,6 +915,21 @@ class FlutterInspectorServer {
             required: ["enabled"],
           },
         },
+        {
+          name: "flutter_core_did_send_first_frame_event",
+          description: "RPC: Check if the first frame event has been sent",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
       ],
     }));
 
@@ -1492,6 +1511,17 @@ class FlutterInspectorServer {
               {
                 enabled,
               }
+            )
+          );
+        }
+
+        case "flutter_core_did_send_first_frame_event": {
+          const port = handlePortParam();
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Core.DID_SEND_FIRST_FRAME_EVENT
             )
           );
         }
