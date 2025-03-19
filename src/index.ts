@@ -217,6 +217,10 @@ const FlutterRPC = {
     ),
   },
   Inspector: {
+    GET_DETAILS_SUBTREE: createRPCMethod(
+      RPCPrefix.INSPECTOR,
+      "getDetailsSubtree"
+    ),
     SCREENSHOT: createRPCMethod(RPCPrefix.INSPECTOR, "screenshot"),
     GET_ROOT_WIDGET: createRPCMethod(RPCPrefix.INSPECTOR, "getRootWidget"),
     GET_WIDGET_TREE: createRPCMethod(RPCPrefix.INSPECTOR, "getRootWidgetTree"),
@@ -933,6 +937,26 @@ class FlutterInspectorServer {
               },
             },
             required: [],
+          },
+        },
+        {
+          name: "inspector_get_details_subtree",
+          description:
+            "RPC: Get the details subtree for a widget. This provides detailed information about the widget and its descendants.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              objectId: {
+                type: "string",
+                description: "ID of the widget to get details for",
+              },
+            },
+            required: ["objectId"],
           },
         },
 
@@ -2236,6 +2260,27 @@ class FlutterInspectorServer {
             this.invokeFlutterExtension(
               port,
               FlutterRPC.Inspector.GET_ROOT_WIDGET_SUMMARY_TREE_WITH_PREVIEWS
+            )
+          );
+        }
+
+        case "inspector_get_details_subtree": {
+          const port = handlePortParam();
+          const { objectId } = request.params.arguments as { objectId: string };
+          if (!objectId) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "objectId parameter is required"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Inspector.GET_DETAILS_SUBTREE,
+              {
+                arg: { objectId },
+              }
             )
           );
         }
