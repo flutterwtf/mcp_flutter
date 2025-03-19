@@ -4,11 +4,6 @@ missing_rpc_implementations:
     method1: []
   performance:
     # Methods that need to be implemented for the performance group
-    profileRenderObjectLayouts:
-      - Add tool definition in ListToolsRequestSchema handler
-      - Add case for handling in CallToolRequestSchema
-      - Add parameter validation
-      - Wrap response in promise
 
 refactoring_needed:
   - Group related RPC methods into more specific categories
