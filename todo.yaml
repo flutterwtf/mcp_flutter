@@ -1,12 +1,5 @@
 missing_rpc_implementations:
   inspector:
-    - method: "getChildrenDetailsSubtree"
-      steps:
-        - Add RPC method to Inspector group in FlutterRPC
-        - Add tool definition with objectId parameter
-        - Implement handler in CallToolRequestSchema
-        - Add parameter validation
-        - Add error handling
     - method: "getRootWidgetSummaryTree"
       steps:
         - Add RPC method to Inspector group in FlutterRPC
