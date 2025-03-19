@@ -1879,7 +1879,7 @@ class FlutterInspectorServer {
           return wrapResponse(this.invokeFlutterMethod(port, "getVM"));
         }
 
-        case "get_render_tree": {
+        case "debug_dump_render_tree": {
           const port = handlePortParam();
           await this.verifyFlutterDebugMode(port);
           return wrapResponse(
@@ -1887,7 +1887,7 @@ class FlutterInspectorServer {
           );
         }
 
-        case "get_layer_tree": {
+        case "debug_dump_layer_tree": {
           const port = handlePortParam();
           await this.verifyFlutterDebugMode(port);
           return wrapResponse(
@@ -1895,7 +1895,7 @@ class FlutterInspectorServer {
           );
         }
 
-        case "get_semantics_tree": {
+        case "debug_dump_semantics_tree": {
           const port = handlePortParam();
           await this.verifyFlutterDebugMode(port);
           return wrapResponse(
