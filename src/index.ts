@@ -1590,6 +1590,26 @@ class FlutterInspectorServer {
             required: [],
           },
         },
+        {
+          name: "inspector_dispose_id",
+          description:
+            "RPC: Dispose a specific widget ID to free up memory (ext.flutter.inspector.disposeId)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              id: {
+                type: "string",
+                description: "ID of the widget to dispose",
+              },
+            },
+            required: ["id"],
+          },
+        },
       ],
     }));
 
@@ -2725,6 +2745,23 @@ class FlutterInspectorServer {
             FlutterRPC.Inspector.IS_WIDGET_TREE_READY
           );
           return wrapResponse(Promise.resolve(result));
+        }
+
+        case "inspector_dispose_id": {
+          const port = handlePortParam();
+          const { id } = request.params.arguments as { id: string };
+          if (!id) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "id parameter is required"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(port, FlutterRPC.Inspector.DISPOSE_ID, {
+              arg: { id },
+            })
+          );
         }
 
         default:
