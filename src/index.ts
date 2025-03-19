@@ -1385,6 +1385,27 @@ class FlutterInspectorServer {
             required: ["enabled"],
           },
         },
+        {
+          name: "inspector_structured_errors",
+          description:
+            "RPC: Enable or disable structured error reporting in the Flutter app.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              enabled: {
+                type: "boolean",
+                description:
+                  "Whether to enable or disable structured error reporting",
+              },
+            },
+            required: ["enabled"],
+          },
+        },
       ],
     }));
 
@@ -2374,6 +2395,27 @@ class FlutterInspectorServer {
             this.invokeFlutterExtension(
               port,
               FlutterRPC.Inspector.IS_WIDGET_CREATION_TRACKED
+            )
+          );
+        }
+
+        case "inspector_structured_errors": {
+          const port = handlePortParam();
+          const { enabled } = request.params.arguments as { enabled: boolean };
+          if (typeof enabled !== "boolean") {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "enabled parameter must be a boolean"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Inspector.STRUCTURED_ERRORS,
+              {
+                enabled,
+              }
             )
           );
         }
