@@ -239,6 +239,10 @@ const FlutterRPC = {
       RPCPrefix.INSPECTOR,
       "getRootWidgetSummaryTree"
     ),
+    GET_ROOT_WIDGET_SUMMARY_TREE_WITH_PREVIEWS: createRPCMethod(
+      RPCPrefix.INSPECTOR,
+      "getRootWidgetSummaryTreeWithPreviews"
+    ),
     TRACK_REBUILDS: createRPCMethod(
       RPCPrefix.INSPECTOR,
       "trackRebuildDirtyWidgets"
@@ -903,6 +907,22 @@ class FlutterInspectorServer {
           name: "inspector_get_root_widget_summary_tree",
           description:
             "RPC: Get the root widget summary tree (ext.flutter.inspector.getRootWidgetSummaryTree)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
+        {
+          name: "inspector_get_root_widget_summary_tree_with_previews",
+          description:
+            "RPC: Get the root widget summary tree with previews from the Flutter app. This provides a hierarchical view of the widget tree with preview information.",
           inputSchema: {
             type: "object",
             properties: {
@@ -2205,6 +2225,17 @@ class FlutterInspectorServer {
             this.invokeFlutterExtension(
               port,
               FlutterRPC.Inspector.GET_ROOT_WIDGET_SUMMARY_TREE
+            )
+          );
+        }
+
+        case "inspector_get_root_widget_summary_tree_with_previews": {
+          const port = handlePortParam();
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Inspector.GET_ROOT_WIDGET_SUMMARY_TREE_WITH_PREVIEWS
             )
           );
         }
