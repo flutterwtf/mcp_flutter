@@ -1680,6 +1680,22 @@ class FlutterInspectorServer {
             required: ["directories"],
           },
         },
+        {
+          name: "inspector_get_pub_root_directories",
+          description:
+            "RPC: Get the list of root directories for pub packages (ext.flutter.inspector.getPubRootDirectories)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
       ],
     }));
 
@@ -2899,6 +2915,16 @@ class FlutterInspectorServer {
               {
                 directories,
               }
+            )
+          );
+        }
+
+        case "inspector_get_pub_root_directories": {
+          const port = handlePortParam();
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Inspector.GET_PUB_ROOT_DIRECTORIES
             )
           );
         }
