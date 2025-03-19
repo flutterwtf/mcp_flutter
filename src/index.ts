@@ -162,6 +162,22 @@ const FlutterRPC = {
     ),
     TIME_DILATION: createRPCMethod(RPCPrefix.FLUTTER, "timeDilation"),
     EVICT: createRPCMethod(RPCPrefix.FLUTTER, "evict"),
+    INVERT_OVERSIZED_IMAGES: createRPCMethod(
+      RPCPrefix.FLUTTER,
+      "invertOversizedImages"
+    ),
+    DID_SEND_FIRST_FRAME_EVENT: createRPCMethod(
+      RPCPrefix.FLUTTER,
+      "didSendFirstFrameEvent"
+    ),
+    DID_SEND_FIRST_FRAME_RASTERIZED_EVENT: createRPCMethod(
+      RPCPrefix.FLUTTER,
+      "didSendFirstFrameRasterizedEvent"
+    ),
+    PROFILE_PLATFORM_CHANNELS: createRPCMethod(
+      RPCPrefix.FLUTTER,
+      "profilePlatformChannels"
+    ),
   },
   Debug: {
     DUMP_APP: createRPCMethod(RPCPrefix.FLUTTER, "debugDumpApp"),
@@ -194,13 +210,55 @@ const FlutterRPC = {
       RPCPrefix.FLUTTER,
       "debugDisableOpacityLayers"
     ),
+    DEBUG_ALLOW_BANNER: createRPCMethod(RPCPrefix.FLUTTER, "debugAllowBanner"),
+    DISABLE_PHYSICAL_SHAPE_LAYERS: createRPCMethod(
+      RPCPrefix.FLUTTER,
+      "debugDisablePhysicalShapeLayers"
+    ),
   },
   Inspector: {
+    IS_WIDGET_CREATION_TRACKED: createRPCMethod(
+      RPCPrefix.INSPECTOR,
+      "isWidgetCreationTracked"
+    ),
+    GET_SELECTED_SUMMARY_WIDGET: createRPCMethod(
+      RPCPrefix.INSPECTOR,
+      "getSelectedSummaryWidget"
+    ),
+    GET_SELECTED_WIDGET: createRPCMethod(
+      RPCPrefix.INSPECTOR,
+      "getSelectedWidget"
+    ),
+    GET_DETAILS_SUBTREE: createRPCMethod(
+      RPCPrefix.INSPECTOR,
+      "getDetailsSubtree"
+    ),
     SCREENSHOT: createRPCMethod(RPCPrefix.INSPECTOR, "screenshot"),
     GET_ROOT_WIDGET: createRPCMethod(RPCPrefix.INSPECTOR, "getRootWidget"),
     GET_WIDGET_TREE: createRPCMethod(RPCPrefix.INSPECTOR, "getRootWidgetTree"),
     GET_PROPERTIES: createRPCMethod(RPCPrefix.INSPECTOR, "getProperties"),
     GET_CHILDREN: createRPCMethod(RPCPrefix.INSPECTOR, "getChildren"),
+    SET_SELECTION_BY_ID: createRPCMethod(
+      RPCPrefix.INSPECTOR,
+      "setSelectionById"
+    ),
+    GET_PARENT_CHAIN: createRPCMethod(RPCPrefix.INSPECTOR, "getParentChain"),
+    GET_CHILDREN_SUMMARY_TREE: createRPCMethod(
+      RPCPrefix.INSPECTOR,
+      "getChildrenSummaryTree"
+    ),
+    GET_CHILDREN_DETAILS_SUBTREE: createRPCMethod(
+      RPCPrefix.INSPECTOR,
+      "getChildrenDetailsSubtree"
+    ),
+    GET_ROOT_WIDGET_SUMMARY_TREE: createRPCMethod(
+      RPCPrefix.INSPECTOR,
+      "getRootWidgetSummaryTree"
+    ),
+    GET_ROOT_WIDGET_SUMMARY_TREE_WITH_PREVIEWS: createRPCMethod(
+      RPCPrefix.INSPECTOR,
+      "getRootWidgetSummaryTreeWithPreviews"
+    ),
     TRACK_REBUILDS: createRPCMethod(
       RPCPrefix.INSPECTOR,
       "trackRebuildDirtyWidgets"
@@ -533,10 +591,11 @@ class FlutterInspectorServer {
 
     this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
       tools: [
+        // Utility Methods (Not direct RPC calls)
         {
           name: "get_active_ports",
           description:
-            "Get list of ports where Flutter/Dart processes are listening",
+            "Utility: Get list of ports where Flutter/Dart processes are listening. This is a local utility, not a Flutter RPC method.",
           inputSchema: {
             type: "object",
             properties: {},
@@ -545,7 +604,8 @@ class FlutterInspectorServer {
         },
         {
           name: "get_supported_protocols",
-          description: "Get supported protocols from a Flutter app",
+          description:
+            "Utility: Get supported protocols from a Flutter app. This is a VM service method, not a Flutter RPC.",
           inputSchema: {
             type: "object",
             properties: {
@@ -560,7 +620,8 @@ class FlutterInspectorServer {
         },
         {
           name: "get_vm_info",
-          description: "Get VM information from a Flutter app",
+          description:
+            "Utility: Get VM information from a Flutter app. This is a VM service method, not a Flutter RPC.",
           inputSchema: {
             type: "object",
             properties: {
@@ -574,8 +635,38 @@ class FlutterInspectorServer {
           },
         },
         {
-          name: "get_render_tree",
-          description: "Get render tree from a Flutter app",
+          name: "get_extension_rpcs",
+          description:
+            "Utility: List all available extension RPCs in the Flutter app. This is a helper tool for discovering available methods.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              isolateId: {
+                type: "string",
+                description:
+                  "Optional specific isolate ID to check. If not provided, checks all isolates",
+              },
+              isRawResponse: {
+                type: "boolean",
+                description:
+                  "If true, returns the raw response from the VM service without processing",
+                default: false,
+              },
+            },
+            required: [],
+          },
+        },
+
+        // Debug Methods (ext.flutter.debug*)
+        {
+          name: "debug_dump_render_tree",
+          description:
+            "RPC: Dump the render tree (ext.flutter.debugDumpRenderTree)",
           inputSchema: {
             type: "object",
             properties: {
@@ -589,8 +680,9 @@ class FlutterInspectorServer {
           },
         },
         {
-          name: "get_layer_tree",
-          description: "Get layer tree from a Flutter app",
+          name: "debug_dump_layer_tree",
+          description:
+            "RPC: Dump the layer tree (ext.flutter.debugDumpLayerTree)",
           inputSchema: {
             type: "object",
             properties: {
@@ -604,8 +696,9 @@ class FlutterInspectorServer {
           },
         },
         {
-          name: "get_semantics_tree",
-          description: "Get semantics tree from a Flutter app",
+          name: "debug_dump_semantics_tree",
+          description:
+            "RPC: Dump the semantics tree (ext.flutter.debugDumpSemanticsTreeInTraversalOrder)",
           inputSchema: {
             type: "object",
             properties: {
@@ -619,8 +712,25 @@ class FlutterInspectorServer {
           },
         },
         {
-          name: "toggle_debug_paint",
-          description: "Toggle debug paint in Flutter app",
+          name: "debug_dump_semantics_tree_inverse",
+          description:
+            "RPC: Dump the semantics tree in inverse hit test order (ext.flutter.debugDumpSemanticsTreeInInverseHitTestOrder)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
+        {
+          name: "debug_paint_baselines_enabled",
+          description:
+            "RPC: Toggle baseline paint debugging (ext.flutter.debugPaintBaselinesEnabled)",
           inputSchema: {
             type: "object",
             properties: {
@@ -631,15 +741,17 @@ class FlutterInspectorServer {
               },
               enabled: {
                 type: "boolean",
-                description: "Whether to enable or disable debug paint",
+                description:
+                  "Whether to enable or disable baseline paint debugging",
               },
             },
             required: ["enabled"],
           },
         },
         {
-          name: "get_flutter_version",
-          description: "Get Flutter version information",
+          name: "debug_dump_focus_tree",
+          description:
+            "RPC: Dump the focus tree (ext.flutter.debugDumpFocusTree)",
           inputSchema: {
             type: "object",
             properties: {
@@ -653,8 +765,384 @@ class FlutterInspectorServer {
           },
         },
         {
+          name: "debug_disable_physical_shape_layers",
+          description:
+            "RPC: Toggle physical shape layers debugging (ext.flutter.debugDisablePhysicalShapeLayers)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              enabled: {
+                type: "boolean",
+                description:
+                  "Whether to enable or disable physical shape layers",
+              },
+            },
+            required: ["enabled"],
+          },
+        },
+        {
+          name: "debug_disable_opacity_layers",
+          description:
+            "RPC: Toggle opacity layers debugging (ext.flutter.debugDisableOpacityLayers)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              enabled: {
+                type: "boolean",
+                description: "Whether to enable or disable opacity layers",
+              },
+            },
+            required: ["enabled"],
+          },
+        },
+
+        // Inspector Methods (ext.flutter.inspector.*)
+        {
+          name: "inspector_screenshot",
+          description:
+            "RPC: Take a screenshot of the Flutter app (ext.flutter.inspector.screenshot)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
+        {
+          name: "inspector_get_layout_explorer_node",
+          description:
+            "RPC: Get layout explorer information for a widget (ext.flutter.inspector.getLayoutExplorerNode)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              objectId: {
+                type: "string",
+                description: "ID of the widget to inspect",
+              },
+            },
+            required: ["objectId"],
+          },
+        },
+        {
+          name: "inspector_track_rebuild_dirty_widgets",
+          description:
+            "RPC: Track widget rebuilds to identify performance issues (ext.flutter.inspector.trackRebuildDirtyWidgets)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              enabled: {
+                type: "boolean",
+                description: "Whether to enable or disable rebuild tracking",
+              },
+            },
+            required: ["enabled"],
+          },
+        },
+        {
+          name: "inspector_set_selection_by_id",
+          description:
+            "RPC: Set the selected widget by ID (ext.flutter.inspector.setSelectionById)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              selectionId: {
+                type: "string",
+                description: "ID of the widget to select",
+              },
+            },
+            required: ["selectionId"],
+          },
+        },
+        {
+          name: "inspector_get_parent_chain",
+          description:
+            "RPC: Get the parent chain for a widget (ext.flutter.inspector.getParentChain)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              objectId: {
+                type: "string",
+                description: "ID of the widget to get parent chain for",
+              },
+            },
+            required: ["objectId"],
+          },
+        },
+        {
+          name: "inspector_get_children_summary_tree",
+          description:
+            "RPC: Get the children summary tree for a widget (ext.flutter.inspector.getChildrenSummaryTree)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              objectId: {
+                type: "string",
+                description:
+                  "ID of the widget to get children summary tree for",
+              },
+            },
+            required: ["objectId"],
+          },
+        },
+        {
+          name: "inspector_get_children_details_subtree",
+          description:
+            "RPC: Get the children details subtree for a widget (ext.flutter.inspector.getChildrenDetailsSubtree)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              objectId: {
+                type: "string",
+                description:
+                  "ID of the widget to get children details subtree for",
+              },
+            },
+            required: ["objectId"],
+          },
+        },
+        {
+          name: "inspector_get_root_widget_summary_tree",
+          description:
+            "RPC: Get the root widget summary tree (ext.flutter.inspector.getRootWidgetSummaryTree)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
+        {
+          name: "inspector_get_root_widget_summary_tree_with_previews",
+          description:
+            "RPC: Get the root widget summary tree with previews from the Flutter app. This provides a hierarchical view of the widget tree with preview information.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
+        {
+          name: "inspector_get_details_subtree",
+          description:
+            "RPC: Get the details subtree for a widget. This provides detailed information about the widget and its descendants.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              objectId: {
+                type: "string",
+                description: "ID of the widget to get details for",
+              },
+            },
+            required: ["objectId"],
+          },
+        },
+        {
+          name: "inspector_get_selected_widget",
+          description:
+            "RPC: Get information about the currently selected widget in the Flutter app.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
+        {
+          name: "inspector_get_selected_summary_widget",
+          description:
+            "RPC: Get summary information about the currently selected widget in the Flutter app.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
+        {
+          name: "inspector_is_widget_creation_tracked",
+          description:
+            "RPC: Check if widget creation tracking is enabled in the Flutter app.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
+
+        // DartIO Methods (ext.dart.io.*)
+        {
+          name: "dart_io_socket_profiling_enabled",
+          description: "RPC: Enable or disable socket profiling",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              enabled: {
+                type: "boolean",
+                description: "Whether to enable or disable socket profiling",
+              },
+            },
+            required: ["enabled"],
+          },
+        },
+        {
+          name: "dart_io_http_enable_timeline_logging",
+          description: "RPC: Enable or disable HTTP timeline logging",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              enabled: {
+                type: "boolean",
+                description:
+                  "Whether to enable or disable HTTP timeline logging",
+              },
+            },
+            required: ["enabled"],
+          },
+        },
+        {
+          name: "dart_io_get_version",
+          description:
+            "RPC: Get Flutter version information (ext.dart.io.getVersion)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
+        {
+          name: "dart_io_get_open_files",
+          description:
+            "RPC: Get list of currently open files in the Flutter app",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
+        {
+          name: "dart_io_get_open_file_by_id",
+          description: "RPC: Get details of a specific open file by its ID",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              fileId: {
+                type: "string",
+                description: "ID of the file to get details for",
+              },
+            },
+            required: ["fileId"],
+          },
+        },
+
+        // Stream Methods
+        {
           name: "stream_listen",
-          description: "Subscribe to a Flutter event stream",
+          description:
+            "RPC: Subscribe to a Flutter event stream. This is a VM service method for event monitoring.",
           inputSchema: {
             type: "object",
             properties: {
@@ -682,8 +1170,9 @@ class FlutterInspectorServer {
           },
         },
         {
-          name: "get_widget_tree",
-          description: "Get widget tree from a Flutter app",
+          name: "dart_io_get_http_profile_request",
+          description:
+            "RPC: Get details of a specific HTTP request from the profile",
           inputSchema: {
             type: "object",
             properties: {
@@ -692,47 +1181,18 @@ class FlutterInspectorServer {
                 description:
                   "Port number where the Flutter app is running (defaults to 8181)",
               },
-            },
-            required: [],
-          },
-        },
-        {
-          name: "get_widget_details",
-          description: "Get details for a specific widget",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-              objectId: {
+              requestId: {
                 type: "string",
-                description: "ID of the widget to inspect",
+                description: "ID of the HTTP request to get details for",
               },
             },
-            required: ["objectId"],
+            required: ["requestId"],
           },
         },
         {
-          name: "get_performance_stats",
-          description: "Get Flutter performance statistics",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-            },
-            required: [],
-          },
-        },
-        {
-          name: "debug_paint_size",
-          description: "Toggle paint size debugging",
+          name: "flutter_core_invert_oversized_images",
+          description:
+            "RPC: Toggle inverting of oversized images for debugging",
           inputSchema: {
             type: "object",
             properties: {
@@ -744,15 +1204,155 @@ class FlutterInspectorServer {
               enabled: {
                 type: "boolean",
                 description:
-                  "Whether to enable or disable paint size debugging",
+                  "Whether to enable or disable inverting of oversized images",
               },
             },
             required: ["enabled"],
           },
         },
         {
-          name: "debug_paint_baselines",
-          description: "Toggle baseline paint debugging",
+          name: "debug_allow_banner",
+          description: "RPC: Toggle the debug banner in the Flutter app",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              enabled: {
+                type: "boolean",
+                description: "Whether to show or hide the debug banner",
+              },
+            },
+            required: ["enabled"],
+          },
+        },
+        {
+          name: "flutter_core_did_send_first_frame_event",
+          description: "RPC: Check if the first frame event has been sent",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
+        {
+          name: "flutter_core_did_send_first_frame_rasterized_event",
+          description: "RPC: Check if the first frame has been rasterized",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
+        {
+          name: "flutter_core_platform_override",
+          description: "RPC: Override the platform for the Flutter app",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              platform: {
+                type: "string",
+                description:
+                  "Platform to override to (android, ios, fuchsia, linux, macOS, windows, or null to reset)",
+                enum: [
+                  "android",
+                  "ios",
+                  "fuchsia",
+                  "linux",
+                  "macOS",
+                  "windows",
+                  null,
+                ],
+              },
+            },
+            required: ["platform"],
+          },
+        },
+        {
+          name: "flutter_core_brightness_override",
+          description: "RPC: Override the brightness for the Flutter app",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              brightness: {
+                type: "string",
+                description:
+                  "Brightness to override to (light, dark, or null to reset)",
+                enum: ["light", "dark", null],
+              },
+            },
+            required: ["brightness"],
+          },
+        },
+        {
+          name: "flutter_core_time_dilation",
+          description:
+            "RPC: Set the time dilation factor for animations in the Flutter app",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              dilation: {
+                type: "number",
+                description:
+                  "Time dilation factor (1.0 is normal speed, >1.0 is slower, <1.0 is faster)",
+                minimum: 0,
+              },
+            },
+            required: ["dilation"],
+          },
+        },
+        {
+          name: "flutter_core_evict",
+          description: "RPC: Evict an asset from the Flutter app's cache",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              asset: {
+                type: "string",
+                description: "Asset path to evict from the cache",
+              },
+            },
+            required: ["asset"],
+          },
+        },
+        {
+          name: "flutter_core_profile_platform_channels",
+          description: "RPC: Enable or disable profiling of platform channels",
           inputSchema: {
             type: "object",
             properties: {
@@ -764,65 +1364,16 @@ class FlutterInspectorServer {
               enabled: {
                 type: "boolean",
                 description:
-                  "Whether to enable or disable baseline paint debugging",
+                  "Whether to enable or disable platform channel profiling",
               },
             },
             required: ["enabled"],
           },
         },
         {
-          name: "get_extension_rpcs",
-          description: "Get list of available Flutter extension RPCs",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-              isolateId: {
-                type: "string",
-                description:
-                  "Optional specific isolate ID to check. If not provided, checks all isolates",
-              },
-            },
-            required: [],
-          },
-        },
-        {
-          name: "take_screenshot",
-          description: "Take a screenshot of the Flutter app",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-            },
-            required: [],
-          },
-        },
-        {
-          name: "get_focus_tree",
-          description: "Get the focus tree of the Flutter app",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-            },
-            required: [],
-          },
-        },
-        {
-          name: "profile_user_widgets",
-          description: "Profile user widget builds",
+          name: "debug_disable_clip_layers",
+          description:
+            "RPC: Toggle disabling of clip layers in the Flutter app",
           inputSchema: {
             type: "object",
             properties: {
@@ -833,15 +1384,16 @@ class FlutterInspectorServer {
               },
               enabled: {
                 type: "boolean",
-                description: "Whether to enable or disable profiling",
+                description: "Whether to enable or disable clip layers",
               },
             },
             required: ["enabled"],
           },
         },
         {
-          name: "get_layout_explorer",
-          description: "Get layout explorer information for a widget",
+          name: "debug_disable_physical_shape_layers",
+          description:
+            "RPC: Toggle physical shape layers debugging (ext.flutter.debugDisablePhysicalShapeLayers)",
           inputSchema: {
             type: "object",
             properties: {
@@ -850,17 +1402,19 @@ class FlutterInspectorServer {
                 description:
                   "Port number where the Flutter app is running (defaults to 8181)",
               },
-              objectId: {
-                type: "string",
-                description: "ID of the widget to inspect",
+              enabled: {
+                type: "boolean",
+                description:
+                  "Whether to enable or disable physical shape layers",
               },
             },
-            required: ["objectId"],
+            required: ["enabled"],
           },
         },
         {
-          name: "schedule_frame",
-          description: "Schedule a new frame in the Flutter app",
+          name: "debug_disable_opacity_layers",
+          description:
+            "RPC: Toggle opacity layers debugging (ext.flutter.debugDisableOpacityLayers)",
           inputSchema: {
             type: "object",
             properties: {
@@ -869,13 +1423,18 @@ class FlutterInspectorServer {
                 description:
                   "Port number where the Flutter app is running (defaults to 8181)",
               },
+              enabled: {
+                type: "boolean",
+                description: "Whether to enable or disable opacity layers",
+              },
             },
-            required: [],
+            required: ["enabled"],
           },
         },
         {
-          name: "reinitialize_shader",
-          description: "Reinitialize shaders in the Flutter app",
+          name: "repaint_rainbow",
+          description:
+            "RPC: Toggle repaint rainbow debugging (ext.flutter.repaintRainbow)",
           inputSchema: {
             type: "object",
             properties: {
@@ -884,13 +1443,19 @@ class FlutterInspectorServer {
                 description:
                   "Port number where the Flutter app is running (defaults to 8181)",
               },
+              enabled: {
+                type: "boolean",
+                description:
+                  "Whether to enable or disable repaint rainbow debugging",
+              },
             },
-            required: [],
+            required: ["enabled"],
           },
         },
         {
-          name: "impeller_enabled",
-          description: "Check if Impeller is enabled in the Flutter app",
+          name: "inspector_structured_errors",
+          description:
+            "RPC: Enable or disable structured error reporting in the Flutter app.",
           inputSchema: {
             type: "object",
             properties: {
@@ -899,13 +1464,19 @@ class FlutterInspectorServer {
                 description:
                   "Port number where the Flutter app is running (defaults to 8181)",
               },
+              enabled: {
+                type: "boolean",
+                description:
+                  "Whether to enable or disable structured error reporting",
+              },
             },
-            required: [],
+            required: ["enabled"],
           },
         },
         {
-          name: "get_socket_profile",
-          description: "Get socket profiling information",
+          name: "inspector_show",
+          description:
+            "RPC: Show specific widget details in the Flutter app inspector.",
           inputSchema: {
             type: "object",
             properties: {
@@ -914,182 +1485,350 @@ class FlutterInspectorServer {
                 description:
                   "Port number where the Flutter app is running (defaults to 8181)",
               },
-            },
-            required: [],
-          },
-        },
-        {
-          name: "clear_socket_profile",
-          description: "Clear socket profiling data",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-            },
-            required: [],
-          },
-        },
-        {
-          name: "get_http_profile",
-          description: "Get HTTP profiling information",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-            },
-            required: [],
-          },
-        },
-        {
-          name: "clear_http_profile",
-          description: "Clear HTTP profiling data",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-            },
-            required: [],
-          },
-        },
-        {
-          name: "list_isar_instances",
-          description: "List all Isar database instances",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-            },
-            required: [],
-          },
-        },
-        {
-          name: "get_isar_schemas",
-          description: "Get schemas for all Isar collections",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-            },
-            required: [],
-          },
-        },
-        {
-          name: "watch_isar_instance",
-          description: "Watch changes in an Isar instance",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-              instanceId: {
-                type: "string",
-                description: "ID of the Isar instance to watch",
-              },
-            },
-            required: ["instanceId"],
-          },
-        },
-        {
-          name: "execute_isar_query",
-          description: "Execute a query on an Isar database",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-              query: {
-                type: "string",
-                description: "Query to execute",
-              },
-            },
-            required: ["query"],
-          },
-        },
-        {
-          name: "delete_isar_query",
-          description: "Delete a saved Isar query",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-              queryId: {
-                type: "string",
-                description: "ID of the query to delete",
-              },
-            },
-            required: ["queryId"],
-          },
-        },
-        {
-          name: "import_isar_json",
-          description: "Import JSON data into an Isar database",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-              json: {
-                type: "string",
-                description: "JSON data to import",
-              },
-            },
-            required: ["json"],
-          },
-        },
-        {
-          name: "edit_isar_property",
-          description: "Edit a property in an Isar database",
-          inputSchema: {
-            type: "object",
-            properties: {
-              port: {
-                type: "number",
-                description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
-              },
-              property: {
-                type: "string",
-                description: "Property to edit",
-              },
-              value: {
+              options: {
                 type: "object",
-                description: "New value for the property",
+                description: "Options for showing widget details",
+                properties: {
+                  objectId: {
+                    type: "string",
+                    description: "ID of the widget to show",
+                  },
+                  groupName: {
+                    type: "string",
+                    description: "Optional group name for the widget",
+                  },
+                  subtreeDepth: {
+                    type: "number",
+                    description: "Optional depth to show the widget subtree",
+                  },
+                },
+                required: ["objectId"],
               },
             },
-            required: ["property"],
+            required: ["options"],
+          },
+        },
+        {
+          name: "inspector_widget_location_id_map",
+          description:
+            "RPC: Get a mapping of widget IDs to their source code locations (ext.flutter.inspector.widgetLocationIdMap)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
+        {
+          name: "inspector_track_repaint_widgets",
+          description:
+            "RPC: Track widget repaints to identify rendering performance issues (ext.flutter.inspector.trackRepaintWidgets)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              enabled: {
+                type: "boolean",
+                description: "Whether to enable or disable repaint tracking",
+              },
+            },
+            required: ["enabled"],
+          },
+        },
+        {
+          name: "inspector_dispose_all_groups",
+          description:
+            "RPC: Dispose all inspector groups to free up memory (ext.flutter.inspector.disposeAllGroups)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
+        {
+          name: "inspector_dispose_group",
+          description:
+            "RPC: Dispose a specific inspector group to free up memory (ext.flutter.inspector.disposeGroup)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              groupId: {
+                type: "string",
+                description: "ID of the group to dispose",
+              },
+            },
+            required: ["groupId"],
+          },
+        },
+        {
+          name: "inspector_is_widget_tree_ready",
+          description:
+            "RPC: Check if the widget tree is ready for inspection (ext.flutter.inspector.isWidgetTreeReady)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
+        {
+          name: "inspector_dispose_id",
+          description:
+            "RPC: Dispose a specific widget ID to free up memory (ext.flutter.inspector.disposeId)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              id: {
+                type: "string",
+                description: "ID of the widget to dispose",
+              },
+            },
+            required: ["id"],
+          },
+        },
+        {
+          name: "inspector_set_pub_root_directories",
+          description:
+            "RPC: Set the root directories for pub packages (ext.flutter.inspector.setPubRootDirectories)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              directories: {
+                type: "array",
+                items: {
+                  type: "string",
+                },
+                description: "List of root directories for pub packages",
+              },
+            },
+            required: ["directories"],
+          },
+        },
+        {
+          name: "inspector_add_pub_root_directories",
+          description:
+            "RPC: Add additional root directories for pub packages (ext.flutter.inspector.addPubRootDirectories)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              directories: {
+                type: "array",
+                items: {
+                  type: "string",
+                },
+                description: "List of root directories to add for pub packages",
+              },
+            },
+            required: ["directories"],
+          },
+        },
+        {
+          name: "inspector_remove_pub_root_directories",
+          description:
+            "RPC: Remove root directories from pub packages (ext.flutter.inspector.removePubRootDirectories)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              directories: {
+                type: "array",
+                items: {
+                  type: "string",
+                },
+                description:
+                  "List of root directories to remove from pub packages",
+              },
+            },
+            required: ["directories"],
+          },
+        },
+        {
+          name: "inspector_get_pub_root_directories",
+          description:
+            "RPC: Get the list of root directories for pub packages (ext.flutter.inspector.getPubRootDirectories)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
+        {
+          name: "layout_set_flex_fit",
+          description:
+            "RPC: Set the flex fit property of a flex child widget (ext.flutter.inspector.setFlexFit)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              objectId: {
+                type: "string",
+                description: "ID of the flex child widget",
+              },
+              fit: {
+                type: "string",
+                description: "Flex fit value to set (tight or loose)",
+                enum: ["tight", "loose"],
+              },
+            },
+            required: ["objectId", "fit"],
+          },
+        },
+        {
+          name: "layout_set_flex_factor",
+          description:
+            "RPC: Set the flex factor of a flex child widget (ext.flutter.inspector.setFlexFactor)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              objectId: {
+                type: "string",
+                description: "ID of the flex child widget",
+              },
+              factor: {
+                type: "number",
+                description: "Flex factor value to set (must be non-negative)",
+                minimum: 0,
+              },
+            },
+            required: ["objectId", "factor"],
+          },
+        },
+        {
+          name: "layout_set_flex_properties",
+          description:
+            "RPC: Set multiple flex properties of a flex child widget (ext.flutter.inspector.setFlexProperties)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              objectId: {
+                type: "string",
+                description: "ID of the flex child widget",
+              },
+              properties: {
+                type: "object",
+                description: "Flex properties to set",
+                properties: {
+                  fit: {
+                    type: "string",
+                    description: "Flex fit value (tight or loose)",
+                    enum: ["tight", "loose"],
+                  },
+                  factor: {
+                    type: "number",
+                    description: "Flex factor value (must be non-negative)",
+                    minimum: 0,
+                  },
+                },
+                additionalProperties: false,
+              },
+            },
+            required: ["objectId", "properties"],
+          },
+        },
+        {
+          name: "performance_profile_render_object_paints",
+          description:
+            "RPC: Enable or disable profiling of render object paint operations (ext.flutter.profileRenderObjectPaints)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              enabled: {
+                type: "boolean",
+                description:
+                  "Whether to enable or disable render object paint profiling",
+              },
+            },
+            required: ["enabled"],
+          },
+        },
+        {
+          name: "performance_profile_render_object_layouts",
+          description:
+            "RPC: Enable or disable profiling of render object layout operations (ext.flutter.profileRenderObjectLayouts)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              enabled: {
+                type: "boolean",
+                description:
+                  "Whether to enable or disable render object layout profiling",
+              },
+            },
+            required: ["enabled"],
           },
         },
       ],
@@ -1164,6 +1903,17 @@ class FlutterInspectorServer {
           await this.verifyFlutterDebugMode(port);
           return wrapResponse(
             this.invokeFlutterExtension(port, FlutterRPC.Debug.DUMP_SEMANTICS)
+          );
+        }
+
+        case "debug_dump_semantics_tree_inverse": {
+          const port = handlePortParam();
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Debug.DUMP_SEMANTICS_INVERSE
+            )
           );
         }
 
@@ -1283,10 +2033,34 @@ class FlutterInspectorServer {
           );
         }
 
+        case "inspector_track_rebuild_dirty_widgets": {
+          const port = handlePortParam();
+          const { enabled } = request.params.arguments as { enabled: boolean };
+          if (typeof enabled !== "boolean") {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "enabled parameter must be a boolean"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Inspector.TRACK_REBUILDS,
+              {
+                enabled,
+              }
+            )
+          );
+        }
+
         case "get_extension_rpcs": {
           const port = handlePortParam();
-          const { isolateId } =
-            (request.params.arguments as { isolateId?: string }) || {};
+          const { isolateId, isRawResponse = false } =
+            (request.params.arguments as {
+              isolateId?: string;
+              isRawResponse?: boolean;
+            }) || {};
 
           const vmInfo = (await this.invokeFlutterMethod(
             port,
@@ -1302,11 +2076,41 @@ class FlutterInspectorServer {
                 isolateId,
               }
             )) as IsolateResponse;
+
+            if (isRawResponse) {
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: JSON.stringify(isolate, null, 2),
+                  },
+                ],
+              };
+            }
+
             return {
               content: [
                 {
                   type: "text",
                   text: JSON.stringify(isolate.extensionRPCs || [], null, 2),
+                },
+              ],
+            };
+          }
+
+          if (isRawResponse) {
+            const allIsolates = await Promise.all(
+              isolates.map((isolateRef) =>
+                this.invokeFlutterMethod(port, "getIsolate", {
+                  isolateId: isolateRef.id,
+                })
+              )
+            );
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: JSON.stringify(allIsolates, null, 2),
                 },
               ],
             };
@@ -1382,7 +2186,6 @@ class FlutterInspectorServer {
           );
         }
 
-        // New handlers for UI methods
         case "schedule_frame": {
           const port = handlePortParam();
           return wrapResponse(
@@ -1404,7 +2207,53 @@ class FlutterInspectorServer {
           );
         }
 
-        // New handlers for DartIO methods
+        case "dart_io_socket_profiling_enabled": {
+          const port = handlePortParam();
+          const { enabled } = request.params.arguments as { enabled: boolean };
+          if (typeof enabled !== "boolean") {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "enabled parameter must be a boolean"
+            );
+          }
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.DartIO.SOCKET_PROFILING_ENABLED,
+              {
+                enabled,
+              }
+            )
+          );
+        }
+
+        case "dart_io_http_enable_timeline_logging": {
+          const port = handlePortParam();
+          const { enabled } = request.params.arguments as { enabled: boolean };
+          if (typeof enabled !== "boolean") {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "enabled parameter must be a boolean"
+            );
+          }
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.DartIO.HTTP_TIMELINE_LOGGING,
+              {
+                enabled,
+              }
+            )
+          );
+        }
+
+        case "dart_io_get_open_files": {
+          const port = handlePortParam();
+          return wrapResponse(
+            this.invokeFlutterExtension(port, FlutterRPC.DartIO.GET_OPEN_FILES)
+          );
+        }
+
         case "get_socket_profile": {
           const port = handlePortParam();
           return wrapResponse(
@@ -1445,7 +2294,6 @@ class FlutterInspectorServer {
           );
         }
 
-        // New handlers for Isar methods
         case "list_isar_instances": {
           const port = handlePortParam();
           return wrapResponse(
@@ -1544,6 +2392,854 @@ class FlutterInspectorServer {
               value,
             })
           );
+        }
+
+        case "dart_io_get_open_file_by_id": {
+          const port = handlePortParam();
+          const { fileId } = request.params.arguments as { fileId: string };
+          if (!fileId) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "fileId parameter is required"
+            );
+          }
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.DartIO.GET_OPEN_FILE_BY_ID,
+              {
+                fileId,
+              }
+            )
+          );
+        }
+
+        case "dart_io_get_http_profile_request": {
+          const port = handlePortParam();
+          const { requestId } = request.params.arguments as {
+            requestId: string;
+          };
+          if (!requestId) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "requestId parameter is required"
+            );
+          }
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.DartIO.GET_HTTP_PROFILE_REQUEST,
+              {
+                requestId,
+              }
+            )
+          );
+        }
+
+        case "inspector_screenshot": {
+          const port = handlePortParam();
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(port, FlutterRPC.Inspector.SCREENSHOT)
+          );
+        }
+
+        case "flutter_core_invert_oversized_images": {
+          const port = handlePortParam();
+          const { enabled } = request.params.arguments as { enabled: boolean };
+          if (typeof enabled !== "boolean") {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "enabled parameter must be a boolean"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Core.INVERT_OVERSIZED_IMAGES,
+              {
+                enabled,
+              }
+            )
+          );
+        }
+
+        case "debug_allow_banner": {
+          const port = handlePortParam();
+          const { enabled } = request.params.arguments as { enabled: boolean };
+          if (typeof enabled !== "boolean") {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "enabled parameter must be a boolean"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Debug.DEBUG_ALLOW_BANNER,
+              {
+                enabled,
+              }
+            )
+          );
+        }
+
+        case "flutter_core_did_send_first_frame_event": {
+          const port = handlePortParam();
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Core.DID_SEND_FIRST_FRAME_EVENT
+            )
+          );
+        }
+
+        case "flutter_core_did_send_first_frame_rasterized_event": {
+          const port = handlePortParam();
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Core.DID_SEND_FIRST_FRAME_RASTERIZED_EVENT
+            )
+          );
+        }
+
+        case "flutter_core_platform_override": {
+          const port = handlePortParam();
+          const { platform } = request.params.arguments as {
+            platform: string | null;
+          };
+          if (
+            platform !== null &&
+            ![
+              "android",
+              "ios",
+              "fuchsia",
+              "linux",
+              "macOS",
+              "windows",
+            ].includes(platform)
+          ) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "platform must be one of: android, ios, fuchsia, linux, macOS, windows, or null to reset"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Core.PLATFORM_OVERRIDE,
+              {
+                platform,
+              }
+            )
+          );
+        }
+
+        case "flutter_core_brightness_override": {
+          const port = handlePortParam();
+          const { brightness } = request.params.arguments as {
+            brightness: string | null;
+          };
+          if (
+            brightness !== null &&
+            !["light", "dark", null].includes(brightness)
+          ) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "brightness must be one of: light, dark, or null to reset"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Core.BRIGHTNESS_OVERRIDE,
+              {
+                brightness,
+              }
+            )
+          );
+        }
+
+        case "flutter_core_time_dilation": {
+          const port = handlePortParam();
+          const { dilation } = request.params.arguments as { dilation: number };
+          if (typeof dilation !== "number" || dilation < 0) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "dilation must be a non-negative number"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(port, FlutterRPC.Core.TIME_DILATION, {
+              timeDilation: dilation,
+            })
+          );
+        }
+
+        case "flutter_core_evict": {
+          const port = handlePortParam();
+          const { asset } = request.params.arguments as { asset: string };
+          if (!asset) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "asset parameter is required"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(port, FlutterRPC.Core.EVICT, {
+              asset,
+            })
+          );
+        }
+
+        case "flutter_core_profile_platform_channels": {
+          const port = handlePortParam();
+          const { enabled } = request.params.arguments as { enabled: boolean };
+          if (typeof enabled !== "boolean") {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "enabled parameter must be a boolean"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Core.PROFILE_PLATFORM_CHANNELS,
+              {
+                enabled,
+              }
+            )
+          );
+        }
+
+        case "debug_disable_clip_layers": {
+          const port = handlePortParam();
+          const { enabled } = request.params.arguments as { enabled: boolean };
+          if (typeof enabled !== "boolean") {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "enabled parameter must be a boolean"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Debug.DEBUG_DISABLE_CLIP_LAYERS,
+              {
+                enabled,
+              }
+            )
+          );
+        }
+
+        case "debug_disable_physical_shape_layers": {
+          const port = handlePortParam();
+          const { enabled } = request.params.arguments as { enabled: boolean };
+          if (typeof enabled !== "boolean") {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "enabled parameter must be a boolean"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Debug.DISABLE_PHYSICAL_SHAPE_LAYERS,
+              {
+                enabled,
+              }
+            )
+          );
+        }
+
+        case "debug_disable_opacity_layers": {
+          const port = handlePortParam();
+          const { enabled } = request.params.arguments as { enabled: boolean };
+          if (typeof enabled !== "boolean") {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "enabled parameter must be a boolean"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Debug.DEBUG_DISABLE_OPACITY_LAYERS,
+              {
+                enabled,
+              }
+            )
+          );
+        }
+
+        case "repaint_rainbow": {
+          const port = handlePortParam();
+          const { enabled } = request.params.arguments as { enabled: boolean };
+          if (typeof enabled !== "boolean") {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "enabled parameter must be a boolean"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Debug.REPAINT_RAINBOW,
+              {
+                enabled,
+              }
+            )
+          );
+        }
+
+        case "inspector_get_layout_explorer_node": {
+          const port = handlePortParam();
+          const { objectId } = request.params.arguments as { objectId: string };
+          if (!objectId) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "objectId parameter is required"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Layout.GET_EXPLORER_NODE,
+              {
+                arg: { objectId },
+              }
+            )
+          );
+        }
+
+        case "inspector_set_selection_by_id": {
+          const port = handlePortParam();
+          const { selectionId } = request.params.arguments as {
+            selectionId: string;
+          };
+          if (!selectionId) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "selectionId parameter is required"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Inspector.SET_SELECTION_BY_ID,
+              {
+                arg: { selectionId },
+              }
+            )
+          );
+        }
+
+        case "inspector_get_parent_chain": {
+          const port = handlePortParam();
+          const { objectId } = request.params.arguments as { objectId: string };
+          if (!objectId) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "objectId parameter is required"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Inspector.GET_PARENT_CHAIN,
+              {
+                arg: { objectId },
+              }
+            )
+          );
+        }
+
+        case "inspector_get_children_summary_tree": {
+          const port = handlePortParam();
+          const { objectId } = request.params.arguments as { objectId: string };
+          if (!objectId) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "objectId parameter is required"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Inspector.GET_CHILDREN_SUMMARY_TREE,
+              {
+                arg: { objectId },
+              }
+            )
+          );
+        }
+
+        case "inspector_get_children_details_subtree": {
+          const port = handlePortParam();
+          const { objectId } = request.params.arguments as { objectId: string };
+          if (!objectId) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "objectId parameter is required"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Inspector.GET_CHILDREN_DETAILS_SUBTREE,
+              {
+                arg: { objectId },
+              }
+            )
+          );
+        }
+
+        case "inspector_get_root_widget_summary_tree": {
+          const port = handlePortParam();
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Inspector.GET_ROOT_WIDGET_SUMMARY_TREE
+            )
+          );
+        }
+
+        case "inspector_get_root_widget_summary_tree_with_previews": {
+          const port = handlePortParam();
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Inspector.GET_ROOT_WIDGET_SUMMARY_TREE_WITH_PREVIEWS
+            )
+          );
+        }
+
+        case "inspector_get_details_subtree": {
+          const port = handlePortParam();
+          const { objectId } = request.params.arguments as { objectId: string };
+          if (!objectId) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "objectId parameter is required"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Inspector.GET_DETAILS_SUBTREE,
+              {
+                arg: { objectId },
+              }
+            )
+          );
+        }
+
+        case "inspector_get_selected_widget": {
+          const port = handlePortParam();
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Inspector.GET_SELECTED_WIDGET
+            )
+          );
+        }
+
+        case "inspector_get_selected_summary_widget": {
+          const port = handlePortParam();
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Inspector.GET_SELECTED_SUMMARY_WIDGET
+            )
+          );
+        }
+
+        case "inspector_is_widget_creation_tracked": {
+          const port = handlePortParam();
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Inspector.IS_WIDGET_CREATION_TRACKED
+            )
+          );
+        }
+
+        case "inspector_structured_errors": {
+          const port = handlePortParam();
+          const { enabled } = request.params.arguments as { enabled: boolean };
+          if (typeof enabled !== "boolean") {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "enabled parameter must be a boolean"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Inspector.STRUCTURED_ERRORS,
+              {
+                enabled,
+              }
+            )
+          );
+        }
+
+        case "inspector_show": {
+          const port = handlePortParam();
+          const { options } = request.params.arguments as {
+            options: {
+              objectId: string;
+              groupName?: string;
+              subtreeDepth?: number;
+            };
+          };
+
+          if (!options || !options.objectId) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "options.objectId parameter is required"
+            );
+          }
+
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(port, FlutterRPC.Inspector.SHOW, {
+              arg: options,
+            })
+          );
+        }
+
+        case "inspector_widget_location_id_map": {
+          const port = handlePortParam();
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Inspector.WIDGET_LOCATION_ID_MAP
+            )
+          );
+        }
+
+        case "inspector_track_repaint_widgets": {
+          const port = handlePortParam();
+          const { enabled } = request.params.arguments as { enabled: boolean };
+          if (typeof enabled !== "boolean") {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "enabled parameter must be a boolean"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Inspector.TRACK_REPAINT_WIDGETS,
+              {
+                enabled,
+              }
+            )
+          );
+        }
+
+        case "inspector_dispose_all_groups": {
+          const port = handlePortParam();
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Inspector.DISPOSE_ALL_GROUPS
+            )
+          );
+        }
+
+        case "inspector_dispose_group": {
+          const port = handlePortParam();
+          const { groupId } = request.params.arguments as { groupId: string };
+          if (!groupId) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "groupId parameter is required"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Inspector.DISPOSE_GROUP,
+              {
+                arg: { groupId },
+              }
+            )
+          );
+        }
+
+        case "inspector_is_widget_tree_ready": {
+          const port = handlePortParam();
+          await this.verifyFlutterDebugMode(port);
+          const result = await this.invokeFlutterExtension(
+            port,
+            FlutterRPC.Inspector.IS_WIDGET_TREE_READY
+          );
+          return wrapResponse(Promise.resolve(result));
+        }
+
+        case "inspector_dispose_id": {
+          const port = handlePortParam();
+          const { id } = request.params.arguments as { id: string };
+          if (!id) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "id parameter is required"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(port, FlutterRPC.Inspector.DISPOSE_ID, {
+              arg: { id },
+            })
+          );
+        }
+
+        case "inspector_set_pub_root_directories": {
+          const port = handlePortParam();
+          const { directories } = request.params.arguments as {
+            directories: string[];
+          };
+          if (!directories || !Array.isArray(directories)) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "directories parameter must be an array"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Inspector.SET_PUB_ROOT_DIRECTORIES,
+              {
+                directories,
+              }
+            )
+          );
+        }
+
+        case "inspector_add_pub_root_directories": {
+          const port = handlePortParam();
+          const { directories } = request.params.arguments as {
+            directories: string[];
+          };
+          if (!directories || !Array.isArray(directories)) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "directories parameter must be an array"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Inspector.ADD_PUB_ROOT_DIRECTORIES,
+              {
+                directories,
+              }
+            )
+          );
+        }
+
+        case "inspector_remove_pub_root_directories": {
+          const port = handlePortParam();
+          const { directories } = request.params.arguments as {
+            directories: string[];
+          };
+          if (!directories || !Array.isArray(directories)) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "directories parameter must be an array"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Inspector.REMOVE_PUB_ROOT_DIRECTORIES,
+              {
+                directories,
+              }
+            )
+          );
+        }
+
+        case "inspector_get_pub_root_directories": {
+          const port = handlePortParam();
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Inspector.GET_PUB_ROOT_DIRECTORIES
+            )
+          );
+        }
+
+        case "layout_set_flex_fit": {
+          const port = handlePortParam();
+          const { objectId, fit } = request.params.arguments as {
+            objectId: string;
+            fit: string;
+          };
+          if (!objectId || !fit) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "objectId and fit parameters are required"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(port, FlutterRPC.Layout.SET_FLEX_FIT, {
+              objectId,
+              fit,
+            })
+          );
+        }
+
+        case "layout_set_flex_factor": {
+          const port = handlePortParam();
+          const { objectId, factor } = request.params.arguments as {
+            objectId: string;
+            factor: number;
+          };
+          if (!objectId || typeof factor !== "number" || factor < 0) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "objectId and factor parameters are required and factor must be non-negative"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Layout.SET_FLEX_FACTOR,
+              {
+                objectId,
+                factor,
+              }
+            )
+          );
+        }
+
+        case "layout_set_flex_properties": {
+          const port = handlePortParam();
+          const { objectId, properties } = request.params.arguments as {
+            objectId: string;
+            properties: {
+              fit: string;
+              factor: number;
+            };
+          };
+          if (
+            !objectId ||
+            !properties ||
+            !properties.fit ||
+            !properties.factor
+          ) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "objectId and properties parameters are required"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Layout.SET_FLEX_PROPERTIES,
+              {
+                objectId,
+                properties,
+              }
+            )
+          );
+        }
+
+        case "performance_profile_render_object_paints": {
+          const port = handlePortParam();
+          const { enabled } = request.params.arguments as { enabled: boolean };
+          if (typeof enabled !== "boolean") {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "enabled parameter must be a boolean"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          const response = await this.invokeFlutterExtension(
+            port,
+            FlutterRPC.Performance.PROFILE_RENDER_OBJECT_PAINTS,
+            {
+              enabled,
+            }
+          );
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Render object paint profiling ${
+                  enabled ? "enabled" : "disabled"
+                }`,
+              },
+            ],
+          };
+        }
+
+        case "performance_profile_render_object_layouts": {
+          const port = handlePortParam();
+          const { enabled } = request.params.arguments as { enabled: boolean };
+          if (typeof enabled !== "boolean") {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "enabled parameter must be a boolean"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          const response = await this.invokeFlutterExtension(
+            port,
+            FlutterRPC.Performance.PROFILE_RENDER_OBJECT_LAYOUTS,
+            {
+              enabled,
+            }
+          );
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Render object layout profiling ${
+                  enabled ? "enabled" : "disabled"
+                }`,
+              },
+            ],
+          };
         }
 
         default:
