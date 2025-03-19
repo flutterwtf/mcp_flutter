@@ -1783,6 +1783,27 @@ class FlutterInspectorServer {
             required: ["objectId", "properties"],
           },
         },
+        {
+          name: "performance_profile_render_object_paints",
+          description:
+            "RPC: Enable or disable profiling of render object paint operations (ext.flutter.profileRenderObjectPaints)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              enabled: {
+                type: "boolean",
+                description:
+                  "Whether to enable or disable render object paint profiling",
+              },
+            },
+            required: ["enabled"],
+          },
+        },
       ],
     }));
 
@@ -3093,6 +3114,35 @@ class FlutterInspectorServer {
               }
             )
           );
+        }
+
+        case "performance_profile_render_object_paints": {
+          const port = handlePortParam();
+          const { enabled } = request.params.arguments as { enabled: boolean };
+          if (typeof enabled !== "boolean") {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "enabled parameter must be a boolean"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          const response = await this.invokeFlutterExtension(
+            port,
+            FlutterRPC.Performance.PROFILE_RENDER_OBJECT_PAINTS,
+            {
+              enabled,
+            }
+          );
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Render object paint profiling ${
+                  enabled ? "enabled" : "disabled"
+                }`,
+              },
+            ],
+          };
         }
 
         default:
