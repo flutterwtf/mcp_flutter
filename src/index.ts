@@ -217,6 +217,10 @@ const FlutterRPC = {
     ),
   },
   Inspector: {
+    GET_SELECTED_WIDGET: createRPCMethod(
+      RPCPrefix.INSPECTOR,
+      "getSelectedWidget"
+    ),
     GET_DETAILS_SUBTREE: createRPCMethod(
       RPCPrefix.INSPECTOR,
       "getDetailsSubtree"
@@ -957,6 +961,22 @@ class FlutterInspectorServer {
               },
             },
             required: ["objectId"],
+          },
+        },
+        {
+          name: "inspector_get_selected_widget",
+          description:
+            "RPC: Get information about the currently selected widget in the Flutter app.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
           },
         },
 
@@ -2281,6 +2301,17 @@ class FlutterInspectorServer {
               {
                 arg: { objectId },
               }
+            )
+          );
+        }
+
+        case "inspector_get_selected_widget": {
+          const port = handlePortParam();
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Inspector.GET_SELECTED_WIDGET
             )
           );
         }
