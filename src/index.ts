@@ -2397,6 +2397,14 @@ class FlutterInspectorServer {
           );
         }
 
+        case "inspector_screenshot": {
+          const port = handlePortParam();
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(port, FlutterRPC.Inspector.SCREENSHOT)
+          );
+        }
+
         case "flutter_core_invert_oversized_images": {
           const port = handlePortParam();
           const { enabled } = request.params.arguments as { enabled: boolean };
