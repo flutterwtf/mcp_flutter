@@ -1554,6 +1554,26 @@ class FlutterInspectorServer {
             required: [],
           },
         },
+        {
+          name: "inspector_dispose_group",
+          description:
+            "RPC: Dispose a specific inspector group to free up memory (ext.flutter.inspector.disposeGroup)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              groupId: {
+                type: "string",
+                description: "ID of the group to dispose",
+              },
+            },
+            required: ["groupId"],
+          },
+        },
       ],
     }));
 
@@ -2656,6 +2676,27 @@ class FlutterInspectorServer {
             this.invokeFlutterExtension(
               port,
               FlutterRPC.Inspector.DISPOSE_ALL_GROUPS
+            )
+          );
+        }
+
+        case "inspector_dispose_group": {
+          const port = handlePortParam();
+          const { groupId } = request.params.arguments as { groupId: string };
+          if (!groupId) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "groupId parameter is required"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Inspector.DISPOSE_GROUP,
+              {
+                arg: { groupId },
+              }
             )
           );
         }
