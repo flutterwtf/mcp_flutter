@@ -838,6 +838,26 @@ class FlutterInspectorServer {
           },
         },
         {
+          name: "inspector_track_rebuild_dirty_widgets",
+          description:
+            "RPC: Track widget rebuilds to identify performance issues (ext.flutter.inspector.trackRebuildDirtyWidgets)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              enabled: {
+                type: "boolean",
+                description: "Whether to enable or disable rebuild tracking",
+              },
+            },
+            required: ["enabled"],
+          },
+        },
+        {
           name: "inspector_set_selection_by_id",
           description:
             "RPC: Set the selected widget by ID (ext.flutter.inspector.setSelectionById)",
@@ -1365,6 +1385,47 @@ class FlutterInspectorServer {
           },
         },
         {
+          name: "debug_disable_physical_shape_layers",
+          description:
+            "RPC: Toggle physical shape layers debugging (ext.flutter.debugDisablePhysicalShapeLayers)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              enabled: {
+                type: "boolean",
+                description:
+                  "Whether to enable or disable physical shape layers",
+              },
+            },
+            required: ["enabled"],
+          },
+        },
+        {
+          name: "debug_disable_opacity_layers",
+          description:
+            "RPC: Toggle opacity layers debugging (ext.flutter.debugDisableOpacityLayers)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              enabled: {
+                type: "boolean",
+                description: "Whether to enable or disable opacity layers",
+              },
+            },
+            required: ["enabled"],
+          },
+        },
+        {
           name: "repaint_rainbow",
           description:
             "RPC: Toggle repaint rainbow debugging (ext.flutter.repaintRainbow)",
@@ -1636,6 +1697,27 @@ class FlutterInspectorServer {
             this.invokeFlutterExtension(
               port,
               FlutterRPC.Debug.DEBUG_PAINT_BASELINES,
+              {
+                enabled,
+              }
+            )
+          );
+        }
+
+        case "inspector_track_rebuild_dirty_widgets": {
+          const port = handlePortParam();
+          const { enabled } = request.params.arguments as { enabled: boolean };
+          if (typeof enabled !== "boolean") {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "enabled parameter must be a boolean"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Inspector.TRACK_REBUILDS,
               {
                 enabled,
               }
