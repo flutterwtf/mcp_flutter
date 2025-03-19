@@ -1,12 +1,5 @@
 missing_rpc_implementations:
   inspector:
-    - method: "show"
-      steps:
-        - Add RPC method to Inspector group in FlutterRPC
-        - Add tool definition with options parameter
-        - Implement handler in CallToolRequestSchema
-        - Add parameter validation
-        - Add error handling
     - method: "trackRebuildDirtyWidgets"
       steps:
         - Add RPC method to Inspector group in FlutterRPC
