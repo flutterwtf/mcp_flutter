@@ -1746,6 +1746,43 @@ class FlutterInspectorServer {
             required: ["objectId", "factor"],
           },
         },
+        {
+          name: "layout_set_flex_properties",
+          description:
+            "RPC: Set multiple flex properties of a flex child widget (ext.flutter.inspector.setFlexProperties)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              objectId: {
+                type: "string",
+                description: "ID of the flex child widget",
+              },
+              properties: {
+                type: "object",
+                description: "Flex properties to set",
+                properties: {
+                  fit: {
+                    type: "string",
+                    description: "Flex fit value (tight or loose)",
+                    enum: ["tight", "loose"],
+                  },
+                  factor: {
+                    type: "number",
+                    description: "Flex factor value (must be non-negative)",
+                    minimum: 0,
+                  },
+                },
+                additionalProperties: false,
+              },
+            },
+            required: ["objectId", "properties"],
+          },
+        },
       ],
     }));
 
@@ -3020,6 +3057,39 @@ class FlutterInspectorServer {
               {
                 objectId,
                 factor,
+              }
+            )
+          );
+        }
+
+        case "layout_set_flex_properties": {
+          const port = handlePortParam();
+          const { objectId, properties } = request.params.arguments as {
+            objectId: string;
+            properties: {
+              fit: string;
+              factor: number;
+            };
+          };
+          if (
+            !objectId ||
+            !properties ||
+            !properties.fit ||
+            !properties.factor
+          ) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "objectId and properties parameters are required"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Layout.SET_FLEX_PROPERTIES,
+              {
+                objectId,
+                properties,
               }
             )
           );
