@@ -1518,6 +1518,26 @@ class FlutterInspectorServer {
             required: [],
           },
         },
+        {
+          name: "inspector_track_repaint_widgets",
+          description:
+            "RPC: Track widget repaints to identify rendering performance issues (ext.flutter.inspector.trackRepaintWidgets)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              enabled: {
+                type: "boolean",
+                description: "Whether to enable or disable repaint tracking",
+              },
+            },
+            required: ["enabled"],
+          },
+        },
       ],
     }));
 
@@ -2588,6 +2608,27 @@ class FlutterInspectorServer {
             this.invokeFlutterExtension(
               port,
               FlutterRPC.Inspector.WIDGET_LOCATION_ID_MAP
+            )
+          );
+        }
+
+        case "inspector_track_repaint_widgets": {
+          const port = handlePortParam();
+          const { enabled } = request.params.arguments as { enabled: boolean };
+          if (typeof enabled !== "boolean") {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "enabled parameter must be a boolean"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Inspector.TRACK_REPAINT_WIDGETS,
+              {
+                enabled,
+              }
             )
           );
         }
