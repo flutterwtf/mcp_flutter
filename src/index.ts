@@ -1656,6 +1656,30 @@ class FlutterInspectorServer {
             required: ["directories"],
           },
         },
+        {
+          name: "inspector_remove_pub_root_directories",
+          description:
+            "RPC: Remove root directories from pub packages (ext.flutter.inspector.removePubRootDirectories)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              directories: {
+                type: "array",
+                items: {
+                  type: "string",
+                },
+                description:
+                  "List of root directories to remove from pub packages",
+              },
+            },
+            required: ["directories"],
+          },
+        },
       ],
     }));
 
@@ -2849,6 +2873,29 @@ class FlutterInspectorServer {
             this.invokeFlutterExtension(
               port,
               FlutterRPC.Inspector.ADD_PUB_ROOT_DIRECTORIES,
+              {
+                directories,
+              }
+            )
+          );
+        }
+
+        case "inspector_remove_pub_root_directories": {
+          const port = handlePortParam();
+          const { directories } = request.params.arguments as {
+            directories: string[];
+          };
+          if (!directories || !Array.isArray(directories)) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "directories parameter must be an array"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Inspector.REMOVE_PUB_ROOT_DIRECTORIES,
               {
                 directories,
               }
