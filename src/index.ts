@@ -217,6 +217,10 @@ const FlutterRPC = {
     ),
   },
   Inspector: {
+    IS_WIDGET_CREATION_TRACKED: createRPCMethod(
+      RPCPrefix.INSPECTOR,
+      "isWidgetCreationTracked"
+    ),
     GET_SELECTED_SUMMARY_WIDGET: createRPCMethod(
       RPCPrefix.INSPECTOR,
       "getSelectedSummaryWidget"
@@ -987,6 +991,22 @@ class FlutterInspectorServer {
           name: "inspector_get_selected_summary_widget",
           description:
             "RPC: Get summary information about the currently selected widget in the Flutter app.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
+        {
+          name: "inspector_is_widget_creation_tracked",
+          description:
+            "RPC: Check if widget creation tracking is enabled in the Flutter app.",
           inputSchema: {
             type: "object",
             properties: {
@@ -2343,6 +2363,17 @@ class FlutterInspectorServer {
             this.invokeFlutterExtension(
               port,
               FlutterRPC.Inspector.GET_SELECTED_SUMMARY_WIDGET
+            )
+          );
+        }
+
+        case "inspector_is_widget_creation_tracked": {
+          const port = handlePortParam();
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Inspector.IS_WIDGET_CREATION_TRACKED
             )
           );
         }
