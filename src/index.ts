@@ -1721,6 +1721,31 @@ class FlutterInspectorServer {
             required: ["objectId", "fit"],
           },
         },
+        {
+          name: "layout_set_flex_factor",
+          description:
+            "RPC: Set the flex factor of a flex child widget (ext.flutter.inspector.setFlexFactor)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              objectId: {
+                type: "string",
+                description: "ID of the flex child widget",
+              },
+              factor: {
+                type: "number",
+                description: "Flex factor value to set (must be non-negative)",
+                minimum: 0,
+              },
+            },
+            required: ["objectId", "factor"],
+          },
+        },
       ],
     }));
 
@@ -2972,6 +2997,31 @@ class FlutterInspectorServer {
               objectId,
               fit,
             })
+          );
+        }
+
+        case "layout_set_flex_factor": {
+          const port = handlePortParam();
+          const { objectId, factor } = request.params.arguments as {
+            objectId: string;
+            factor: number;
+          };
+          if (!objectId || typeof factor !== "number" || factor < 0) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "objectId and factor parameters are required and factor must be non-negative"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Layout.SET_FLEX_FACTOR,
+              {
+                objectId,
+                factor,
+              }
+            )
           );
         }
 
