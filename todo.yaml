@@ -1,19 +1,14 @@
 missing_rpc_implementations:
+  inspector:
+    # Methods that need to be implemented for the inspector group
+    method1: []
   performance:
-    - method: "profileRenderObjectPaints"
-      steps:
-        - Add RPC method to Performance group in FlutterRPC
-        - Add tool definition with boolean parameter
-        - Implement handler in CallToolRequestSchema
-        - Add parameter validation
-        - Add error handling
-    - method: "profileRenderObjectLayouts"
-      steps:
-        - Add RPC method to Performance group in FlutterRPC
-        - Add tool definition with boolean parameter
-        - Implement handler in CallToolRequestSchema
-        - Add parameter validation
-        - Add error handling
+    # Methods that need to be implemented for the performance group
+    profileRenderObjectLayouts:
+      - Add tool definition in ListToolsRequestSchema handler
+      - Add case for handling in CallToolRequestSchema
+      - Add parameter validation
+      - Wrap response in promise
 
 refactoring_needed:
   - Group related RPC methods into more specific categories
