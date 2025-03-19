@@ -1406,6 +1406,41 @@ class FlutterInspectorServer {
             required: ["enabled"],
           },
         },
+        {
+          name: "inspector_show",
+          description:
+            "RPC: Show specific widget details in the Flutter app inspector.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              options: {
+                type: "object",
+                description: "Options for showing widget details",
+                properties: {
+                  objectId: {
+                    type: "string",
+                    description: "ID of the widget to show",
+                  },
+                  groupName: {
+                    type: "string",
+                    description: "Optional group name for the widget",
+                  },
+                  subtreeDepth: {
+                    type: "number",
+                    description: "Optional depth to show the widget subtree",
+                  },
+                },
+                required: ["objectId"],
+              },
+            },
+            required: ["options"],
+          },
+        },
       ],
     }));
 
@@ -2417,6 +2452,31 @@ class FlutterInspectorServer {
                 enabled,
               }
             )
+          );
+        }
+
+        case "inspector_show": {
+          const port = handlePortParam();
+          const { options } = request.params.arguments as {
+            options: {
+              objectId: string;
+              groupName?: string;
+              subtreeDepth?: number;
+            };
+          };
+
+          if (!options || !options.objectId) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "options.objectId parameter is required"
+            );
+          }
+
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(port, FlutterRPC.Inspector.SHOW, {
+              arg: options,
+            })
           );
         }
 
