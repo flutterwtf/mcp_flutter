@@ -1,12 +1,6 @@
 missing_rpc_implementations:
   inspector:
     methods:
-      - method: "getPubRootDirectories"
-        steps:
-          - Add RPC method to Inspector group in FlutterRPC
-          - Add tool definition in ListToolsRequestSchema
-          - Implement handler in CallToolRequestSchema
-          - Add error handling
       - method: "setFlexFit"
         steps:
           - Add RPC method to Inspector group in FlutterRPC
