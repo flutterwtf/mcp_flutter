@@ -605,14 +605,14 @@ class FlutterInspectorServer {
         {
           name: "get_supported_protocols",
           description:
-            "Utility: Get supported protocols from a Flutter app. This is a VM service method, not a Flutter RPC.",
+            "Utility: Get supported protocols from a Flutter app. This is a VM service method, not a Flutter RPC. Connects to the default Flutter debug port (8181) unless specified otherwise.",
           inputSchema: {
             type: "object",
             properties: {
               port: {
                 type: "number",
                 description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
+                  "Optional: Custom port number if not using default Flutter debug port 8181",
               },
             },
             required: [],
@@ -621,14 +621,14 @@ class FlutterInspectorServer {
         {
           name: "get_vm_info",
           description:
-            "Utility: Get VM information from a Flutter app. This is a VM service method, not a Flutter RPC.",
+            "Utility: Get VM information from a Flutter app. This is a VM service method, not a Flutter RPC. Connects to the default Flutter debug port (8181) unless specified otherwise.",
           inputSchema: {
             type: "object",
             properties: {
               port: {
                 type: "number",
                 description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
+                  "Optional: Custom port number if not using default Flutter debug port 8181",
               },
             },
             required: [],
@@ -644,7 +644,7 @@ class FlutterInspectorServer {
               port: {
                 type: "number",
                 description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
+                  "Optional: Custom port number if not using default Flutter debug port 8181",
               },
               isolateId: {
                 type: "string",
@@ -666,14 +666,14 @@ class FlutterInspectorServer {
         {
           name: "debug_dump_render_tree",
           description:
-            "RPC: Dump the render tree (ext.flutter.debugDumpRenderTree)",
+            "RPC: Dump the render tree (ext.flutter.debugDumpRenderTree). Connects to the default Flutter debug port (8181) unless specified otherwise.",
           inputSchema: {
             type: "object",
             properties: {
               port: {
                 type: "number",
                 description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
+                  "Optional: Custom port number if not using default Flutter debug port 8181",
               },
             },
             required: [],
@@ -682,14 +682,14 @@ class FlutterInspectorServer {
         {
           name: "debug_dump_layer_tree",
           description:
-            "RPC: Dump the layer tree (ext.flutter.debugDumpLayerTree)",
+            "RPC: Dump the layer tree (ext.flutter.debugDumpLayerTree). Connects to the default Flutter debug port (8181) unless specified otherwise.",
           inputSchema: {
             type: "object",
             properties: {
               port: {
                 type: "number",
                 description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
+                  "Optional: Custom port number if not using default Flutter debug port 8181",
               },
             },
             required: [],
@@ -698,14 +698,14 @@ class FlutterInspectorServer {
         {
           name: "debug_dump_semantics_tree",
           description:
-            "RPC: Dump the semantics tree (ext.flutter.debugDumpSemanticsTreeInTraversalOrder)",
+            "RPC: Dump the semantics tree (ext.flutter.debugDumpSemanticsTreeInTraversalOrder). Connects to the default Flutter debug port (8181) unless specified otherwise.",
           inputSchema: {
             type: "object",
             properties: {
               port: {
                 type: "number",
                 description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
+                  "Optional: Custom port number if not using default Flutter debug port 8181",
               },
             },
             required: [],
@@ -730,14 +730,14 @@ class FlutterInspectorServer {
         {
           name: "debug_paint_baselines_enabled",
           description:
-            "RPC: Toggle baseline paint debugging (ext.flutter.debugPaintBaselinesEnabled)",
+            "RPC: Toggle baseline paint debugging (ext.flutter.debugPaintBaselinesEnabled). Connects to the default Flutter debug port (8181) unless specified otherwise.",
           inputSchema: {
             type: "object",
             properties: {
               port: {
                 type: "number",
                 description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
+                  "Optional: Custom port number if not using default Flutter debug port 8181",
               },
               enabled: {
                 type: "boolean",
@@ -788,18 +788,19 @@ class FlutterInspectorServer {
         {
           name: "debug_disable_opacity_layers",
           description:
-            "RPC: Toggle opacity layers debugging (ext.flutter.debugDisableOpacityLayers)",
+            "RPC: Toggle opacity layers debugging (ext.flutter.debugDisableOpacityLayers). Connects to the default Flutter debug port (8181) unless specified otherwise.",
           inputSchema: {
             type: "object",
             properties: {
               port: {
                 type: "number",
                 description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
+                  "Optional: Custom port number if not using default Flutter debug port 8181",
               },
               enabled: {
                 type: "boolean",
                 description: "Whether to enable or disable opacity layers",
+                default: false,
               },
             },
             required: ["enabled"],
@@ -810,14 +811,14 @@ class FlutterInspectorServer {
         {
           name: "inspector_screenshot",
           description:
-            "RPC: Take a screenshot of the Flutter app (ext.flutter.inspector.screenshot)",
+            "RPC: Take a screenshot of the Flutter app (ext.flutter.inspector.screenshot). Connects to the default Flutter debug port (8181) unless specified otherwise.",
           inputSchema: {
             type: "object",
             properties: {
               port: {
                 type: "number",
                 description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
+                  "Optional: Custom port number if not using default Flutter debug port 8181",
               },
             },
             required: [],
@@ -826,14 +827,14 @@ class FlutterInspectorServer {
         {
           name: "inspector_get_layout_explorer_node",
           description:
-            "RPC: Get layout explorer information for a widget (ext.flutter.inspector.getLayoutExplorerNode)",
+            "RPC: Get layout explorer information for a widget (ext.flutter.inspector.getLayoutExplorerNode). Connects to the default Flutter debug port (8181) unless specified otherwise.",
           inputSchema: {
             type: "object",
             properties: {
               port: {
                 type: "number",
                 description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
+                  "Optional: Custom port number if not using default Flutter debug port 8181",
               },
               objectId: {
                 type: "string",
@@ -846,14 +847,14 @@ class FlutterInspectorServer {
         {
           name: "inspector_track_rebuild_dirty_widgets",
           description:
-            "RPC: Track widget rebuilds to identify performance issues (ext.flutter.inspector.trackRebuildDirtyWidgets)",
+            "RPC: Track widget rebuilds to identify performance issues (ext.flutter.inspector.trackRebuildDirtyWidgets). Connects to the default Flutter debug port (8181) unless specified otherwise.",
           inputSchema: {
             type: "object",
             properties: {
               port: {
                 type: "number",
                 description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
+                  "Optional: Custom port number if not using default Flutter debug port 8181",
               },
               enabled: {
                 type: "boolean",
@@ -866,14 +867,14 @@ class FlutterInspectorServer {
         {
           name: "inspector_set_selection_by_id",
           description:
-            "RPC: Set the selected widget by ID (ext.flutter.inspector.setSelectionById)",
+            "RPC: Set the selected widget by ID (ext.flutter.inspector.setSelectionById). Connects to the default Flutter debug port (8181) unless specified otherwise.",
           inputSchema: {
             type: "object",
             properties: {
               port: {
                 type: "number",
                 description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
+                  "Optional: Custom port number if not using default Flutter debug port 8181",
               },
               selectionId: {
                 type: "string",
@@ -886,14 +887,14 @@ class FlutterInspectorServer {
         {
           name: "inspector_get_parent_chain",
           description:
-            "RPC: Get the parent chain for a widget (ext.flutter.inspector.getParentChain)",
+            "RPC: Get the parent chain for a widget (ext.flutter.inspector.getParentChain). Connects to the default Flutter debug port (8181) unless specified otherwise.",
           inputSchema: {
             type: "object",
             properties: {
               port: {
                 type: "number",
                 description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
+                  "Optional: Custom port number if not using default Flutter debug port 8181",
               },
               objectId: {
                 type: "string",
@@ -906,14 +907,14 @@ class FlutterInspectorServer {
         {
           name: "inspector_get_children_summary_tree",
           description:
-            "RPC: Get the children summary tree for a widget (ext.flutter.inspector.getChildrenSummaryTree)",
+            "RPC: Get the children summary tree for a widget (ext.flutter.inspector.getChildrenSummaryTree). Connects to the default Flutter debug port (8181) unless specified otherwise.",
           inputSchema: {
             type: "object",
             properties: {
               port: {
                 type: "number",
                 description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
+                  "Optional: Custom port number if not using default Flutter debug port 8181",
               },
               objectId: {
                 type: "string",
@@ -980,14 +981,14 @@ class FlutterInspectorServer {
         {
           name: "inspector_get_details_subtree",
           description:
-            "RPC: Get the details subtree for a widget. This provides detailed information about the widget and its descendants.",
+            "RPC: Get the details subtree for a widget. This provides detailed information about the widget and its descendants. Connects to the default Flutter debug port (8181) unless specified otherwise.",
           inputSchema: {
             type: "object",
             properties: {
               port: {
                 type: "number",
                 description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
+                  "Optional: Custom port number if not using default Flutter debug port 8181",
               },
               objectId: {
                 type: "string",
@@ -1000,14 +1001,14 @@ class FlutterInspectorServer {
         {
           name: "inspector_get_selected_widget",
           description:
-            "RPC: Get information about the currently selected widget in the Flutter app.",
+            "RPC: Get information about the currently selected widget in the Flutter app. Connects to the default Flutter debug port (8181) unless specified otherwise.",
           inputSchema: {
             type: "object",
             properties: {
               port: {
                 type: "number",
                 description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
+                  "Optional: Custom port number if not using default Flutter debug port 8181",
               },
             },
             required: [],
@@ -1016,14 +1017,14 @@ class FlutterInspectorServer {
         {
           name: "inspector_get_selected_summary_widget",
           description:
-            "RPC: Get summary information about the currently selected widget in the Flutter app.",
+            "RPC: Get summary information about the currently selected widget in the Flutter app. Connects to the default Flutter debug port (8181) unless specified otherwise.",
           inputSchema: {
             type: "object",
             properties: {
               port: {
                 type: "number",
                 description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
+                  "Optional: Custom port number if not using default Flutter debug port 8181",
               },
             },
             required: [],
@@ -1039,7 +1040,7 @@ class FlutterInspectorServer {
               port: {
                 type: "number",
                 description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
+                  "Optional: Custom port number if not using default Flutter debug port 8181",
               },
             },
             required: [],
@@ -1049,14 +1050,15 @@ class FlutterInspectorServer {
         // DartIO Methods (ext.dart.io.*)
         {
           name: "dart_io_socket_profiling_enabled",
-          description: "RPC: Enable or disable socket profiling",
+          description:
+            "RPC: Enable or disable socket profiling. Connects to the default Flutter debug port (8181) unless specified otherwise.",
           inputSchema: {
             type: "object",
             properties: {
               port: {
                 type: "number",
                 description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
+                  "Optional: Custom port number if not using default Flutter debug port 8181",
               },
               enabled: {
                 type: "boolean",
@@ -1068,14 +1070,15 @@ class FlutterInspectorServer {
         },
         {
           name: "dart_io_http_enable_timeline_logging",
-          description: "RPC: Enable or disable HTTP timeline logging",
+          description:
+            "RPC: Enable or disable HTTP timeline logging. Connects to the default Flutter debug port (8181) unless specified otherwise.",
           inputSchema: {
             type: "object",
             properties: {
               port: {
                 type: "number",
                 description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
+                  "Optional: Custom port number if not using default Flutter debug port 8181",
               },
               enabled: {
                 type: "boolean",
@@ -1142,14 +1145,14 @@ class FlutterInspectorServer {
         {
           name: "stream_listen",
           description:
-            "RPC: Subscribe to a Flutter event stream. This is a VM service method for event monitoring.",
+            "RPC: Subscribe to a Flutter event stream. This is a VM service method for event monitoring. Connects to the default Flutter debug port (8181) unless specified otherwise.",
           inputSchema: {
             type: "object",
             properties: {
               port: {
                 type: "number",
                 description:
-                  "Port number where the Flutter app is running (defaults to 8181)",
+                  "Optional: Custom port number if not using default Flutter debug port 8181",
               },
               streamId: {
                 type: "string",
@@ -1836,13 +1839,7 @@ class FlutterInspectorServer {
 
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const handlePortParam = () => {
-        const { port } = (request.params.arguments as { port?: number }) || {};
-        if (port && typeof port !== "number") {
-          throw new McpError(
-            ErrorCode.InvalidParams,
-            "Port number must be a number when provided"
-          );
-        }
+        const port = request.params.arguments?.port as number | undefined;
         return port || DEFAULT_FLUTTER_PORT;
       };
 
