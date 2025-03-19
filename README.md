@@ -161,7 +161,32 @@ LOG_LEVEL=info        # Logging level (error, warn, info, debug)
 --help         # Show help
 ```
 
-## 🔍 Troubleshooting
+## Port Configuration
+
+All Flutter Inspector tools automatically connect to the default Flutter debug port (8181). You only need to specify a port if:
+
+- You're running Flutter on a different port
+- You have multiple Flutter instances running
+- You've configured a custom debug port
+
+Example usage:
+
+```json
+// Default port (8181)
+{
+  "name": "debug_dump_render_tree"
+}
+
+// Custom port
+{
+  "name": "debug_dump_render_tree",
+  "arguments": {
+    "port": 8182
+  }
+}
+```
+
+## 🔧 Troubleshooting
 
 1. **Connection Issues**
 
