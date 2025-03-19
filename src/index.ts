@@ -231,6 +231,10 @@ const FlutterRPC = {
       RPCPrefix.INSPECTOR,
       "getChildrenSummaryTree"
     ),
+    GET_CHILDREN_DETAILS_SUBTREE: createRPCMethod(
+      RPCPrefix.INSPECTOR,
+      "getChildrenDetailsSubtree"
+    ),
     TRACK_REBUILDS: createRPCMethod(
       RPCPrefix.INSPECTOR,
       "trackRebuildDirtyWidgets"
@@ -865,6 +869,27 @@ class FlutterInspectorServer {
                 type: "string",
                 description:
                   "ID of the widget to get children summary tree for",
+              },
+            },
+            required: ["objectId"],
+          },
+        },
+        {
+          name: "inspector_get_children_details_subtree",
+          description:
+            "RPC: Get the children details subtree for a widget (ext.flutter.inspector.getChildrenDetailsSubtree)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              objectId: {
+                type: "string",
+                description:
+                  "ID of the widget to get children details subtree for",
               },
             },
             required: ["objectId"],
@@ -2125,6 +2150,27 @@ class FlutterInspectorServer {
             this.invokeFlutterExtension(
               port,
               FlutterRPC.Inspector.GET_CHILDREN_SUMMARY_TREE,
+              {
+                arg: { objectId },
+              }
+            )
+          );
+        }
+
+        case "inspector_get_children_details_subtree": {
+          const port = handlePortParam();
+          const { objectId } = request.params.arguments as { objectId: string };
+          if (!objectId) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "objectId parameter is required"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Inspector.GET_CHILDREN_DETAILS_SUBTREE,
               {
                 arg: { objectId },
               }
