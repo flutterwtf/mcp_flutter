@@ -1574,6 +1574,22 @@ class FlutterInspectorServer {
             required: ["groupId"],
           },
         },
+        {
+          name: "inspector_is_widget_tree_ready",
+          description:
+            "RPC: Check if the widget tree is ready for inspection (ext.flutter.inspector.isWidgetTreeReady)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
       ],
     }));
 
@@ -2699,6 +2715,16 @@ class FlutterInspectorServer {
               }
             )
           );
+        }
+
+        case "inspector_is_widget_tree_ready": {
+          const port = handlePortParam();
+          await this.verifyFlutterDebugMode(port);
+          const result = await this.invokeFlutterExtension(
+            port,
+            FlutterRPC.Inspector.IS_WIDGET_TREE_READY
+          );
+          return wrapResponse(Promise.resolve(result));
         }
 
         default:
