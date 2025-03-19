@@ -1804,6 +1804,27 @@ class FlutterInspectorServer {
             required: ["enabled"],
           },
         },
+        {
+          name: "performance_profile_render_object_layouts",
+          description:
+            "RPC: Enable or disable profiling of render object layout operations (ext.flutter.profileRenderObjectLayouts)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              enabled: {
+                type: "boolean",
+                description:
+                  "Whether to enable or disable render object layout profiling",
+              },
+            },
+            required: ["enabled"],
+          },
+        },
       ],
     }));
 
@@ -3138,6 +3159,35 @@ class FlutterInspectorServer {
               {
                 type: "text",
                 text: `Render object paint profiling ${
+                  enabled ? "enabled" : "disabled"
+                }`,
+              },
+            ],
+          };
+        }
+
+        case "performance_profile_render_object_layouts": {
+          const port = handlePortParam();
+          const { enabled } = request.params.arguments as { enabled: boolean };
+          if (typeof enabled !== "boolean") {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "enabled parameter must be a boolean"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          const response = await this.invokeFlutterExtension(
+            port,
+            FlutterRPC.Performance.PROFILE_RENDER_OBJECT_LAYOUTS,
+            {
+              enabled,
+            }
+          );
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Render object layout profiling ${
                   enabled ? "enabled" : "disabled"
                 }`,
               },
