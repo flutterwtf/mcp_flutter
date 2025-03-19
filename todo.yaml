@@ -1,11 +1,5 @@
 missing_rpc_implementations:
   inspector:
-    - method: "disposeAllGroups"
-      steps:
-        - Add RPC method to Inspector group in FlutterRPC
-        - Add tool definition in ListToolsRequestSchema
-        - Implement handler in CallToolRequestSchema
-        - Add error handling
     - method: "disposeGroup"
       steps:
         - Add RPC method to Inspector group in FlutterRPC
