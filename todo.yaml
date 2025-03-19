@@ -1,13 +1,6 @@
 missing_rpc_implementations:
   inspector:
     methods:
-      - method: "setFlexFactor"
-        steps:
-          - Add RPC method to Inspector group in FlutterRPC
-          - Add tool definition with factor parameter
-          - Implement handler in CallToolRequestSchema
-          - Add parameter validation
-          - Add error handling
       - method: "setFlexProperties"
         steps:
           - Add RPC method to Inspector group in FlutterRPC
