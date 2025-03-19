@@ -235,6 +235,10 @@ const FlutterRPC = {
       RPCPrefix.INSPECTOR,
       "getChildrenDetailsSubtree"
     ),
+    GET_ROOT_WIDGET_SUMMARY_TREE: createRPCMethod(
+      RPCPrefix.INSPECTOR,
+      "getRootWidgetSummaryTree"
+    ),
     TRACK_REBUILDS: createRPCMethod(
       RPCPrefix.INSPECTOR,
       "trackRebuildDirtyWidgets"
@@ -893,6 +897,22 @@ class FlutterInspectorServer {
               },
             },
             required: ["objectId"],
+          },
+        },
+        {
+          name: "inspector_get_root_widget_summary_tree",
+          description:
+            "RPC: Get the root widget summary tree (ext.flutter.inspector.getRootWidgetSummaryTree)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
           },
         },
 
@@ -2174,6 +2194,17 @@ class FlutterInspectorServer {
               {
                 arg: { objectId },
               }
+            )
+          );
+        }
+
+        case "inspector_get_root_widget_summary_tree": {
+          const port = handlePortParam();
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Inspector.GET_ROOT_WIDGET_SUMMARY_TREE
             )
           );
         }
