@@ -1696,6 +1696,31 @@ class FlutterInspectorServer {
             required: [],
           },
         },
+        {
+          name: "layout_set_flex_fit",
+          description:
+            "RPC: Set the flex fit property of a flex child widget (ext.flutter.inspector.setFlexFit)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              objectId: {
+                type: "string",
+                description: "ID of the flex child widget",
+              },
+              fit: {
+                type: "string",
+                description: "Flex fit value to set (tight or loose)",
+                enum: ["tight", "loose"],
+              },
+            },
+            required: ["objectId", "fit"],
+          },
+        },
       ],
     }));
 
@@ -2926,6 +2951,27 @@ class FlutterInspectorServer {
               port,
               FlutterRPC.Inspector.GET_PUB_ROOT_DIRECTORIES
             )
+          );
+        }
+
+        case "layout_set_flex_fit": {
+          const port = handlePortParam();
+          const { objectId, fit } = request.params.arguments as {
+            objectId: string;
+            fit: string;
+          };
+          if (!objectId || !fit) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "objectId and fit parameters are required"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(port, FlutterRPC.Layout.SET_FLEX_FIT, {
+              objectId,
+              fit,
+            })
           );
         }
 
