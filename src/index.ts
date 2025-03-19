@@ -1502,6 +1502,22 @@ class FlutterInspectorServer {
             required: ["options"],
           },
         },
+        {
+          name: "inspector_widget_location_id_map",
+          description:
+            "RPC: Get a mapping of widget IDs to their source code locations (ext.flutter.inspector.widgetLocationIdMap)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
       ],
     }));
 
@@ -2176,7 +2192,10 @@ class FlutterInspectorServer {
           const { brightness } = request.params.arguments as {
             brightness: string | null;
           };
-          if (brightness !== null && !["light", "dark"].includes(brightness)) {
+          if (
+            brightness !== null &&
+            !["light", "dark", null].includes(brightness)
+          ) {
             throw new McpError(
               ErrorCode.InvalidParams,
               "brightness must be one of: light, dark, or null to reset"
@@ -2559,6 +2578,17 @@ class FlutterInspectorServer {
             this.invokeFlutterExtension(port, FlutterRPC.Inspector.SHOW, {
               arg: options,
             })
+          );
+        }
+
+        case "inspector_widget_location_id_map": {
+          const port = handlePortParam();
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Inspector.WIDGET_LOCATION_ID_MAP
+            )
           );
         }
 
