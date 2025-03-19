@@ -1538,6 +1538,22 @@ class FlutterInspectorServer {
             required: ["enabled"],
           },
         },
+        {
+          name: "inspector_dispose_all_groups",
+          description:
+            "RPC: Dispose all inspector groups to free up memory (ext.flutter.inspector.disposeAllGroups)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+            },
+            required: [],
+          },
+        },
       ],
     }));
 
@@ -2629,6 +2645,17 @@ class FlutterInspectorServer {
               {
                 enabled,
               }
+            )
+          );
+        }
+
+        case "inspector_dispose_all_groups": {
+          const port = handlePortParam();
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Inspector.DISPOSE_ALL_GROUPS
             )
           );
         }
