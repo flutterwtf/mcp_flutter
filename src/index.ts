@@ -1610,6 +1610,29 @@ class FlutterInspectorServer {
             required: ["id"],
           },
         },
+        {
+          name: "inspector_set_pub_root_directories",
+          description:
+            "RPC: Set the root directories for pub packages (ext.flutter.inspector.setPubRootDirectories)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              directories: {
+                type: "array",
+                items: {
+                  type: "string",
+                },
+                description: "List of root directories for pub packages",
+              },
+            },
+            required: ["directories"],
+          },
+        },
       ],
     }));
 
@@ -2761,6 +2784,29 @@ class FlutterInspectorServer {
             this.invokeFlutterExtension(port, FlutterRPC.Inspector.DISPOSE_ID, {
               arg: { id },
             })
+          );
+        }
+
+        case "inspector_set_pub_root_directories": {
+          const port = handlePortParam();
+          const { directories } = request.params.arguments as {
+            directories: string[];
+          };
+          if (!directories || !Array.isArray(directories)) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "directories parameter must be an array"
+            );
+          }
+          await this.verifyFlutterDebugMode(port);
+          return wrapResponse(
+            this.invokeFlutterExtension(
+              port,
+              FlutterRPC.Inspector.SET_PUB_ROOT_DIRECTORIES,
+              {
+                directories,
+              }
+            )
           );
         }
 
