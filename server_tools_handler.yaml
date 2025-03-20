@@ -15,6 +15,13 @@ handlers:
     parameters:
       objectId: "arg.objectId"
 
+  - name: get_vm_info
+    description: Fetches VM information.
+    rpcMethod: "getVM"
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters: {}
+
   - name: toggle_debug_paint
     description: Toggles debug paint mode.
     rpcMethod: "debug.setDebugPaint"
@@ -23,176 +30,19 @@ handlers:
     parameters:
       enabled: ""
 
+  - name: get_root_widget_summary_tree
+    description: Fetches the root widget summary tree using the Dart Service Extension Proxy.
+    rpcMethod: "ext.flutter.inspector.getRootWidgetSummaryTree"
+    needsDartServiceExtensionProxy: true
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters:
+      includeProperties: "arg.includeProperties"
+      subtreeDepth: "arg.subtreeDepth"
+
   - name: debug_dump_layer_tree
     description: Dump the layer tree from the Flutter app.
     rpcMethod: "debug.dumpLayerTree"
     needsDebugVerification: true
     responseWrapper: true
     parameters: {}
-
-  - name: debug_dump_semantics_tree
-    description: Dump the semantics tree in traversal order.
-    rpcMethod: "debug.dumpSemanticsTreeInTraversalOrder"
-    needsDebugVerification: true
-    responseWrapper: true
-    parameters: {}
-
-  - name: debug_dump_semantics_tree_inverse
-    description: Dump the semantics tree in inverse hit test order.
-    rpcMethod: "debug.dumpSemanticsTreeInInverseHitTestOrder"
-    needsDebugVerification: true
-    responseWrapper: true
-    parameters: {}
-
-  - name: debug_paint_baselines_enabled
-    description: Toggle baseline paint debugging.
-    rpcMethod: "debug.debugPaintBaselinesEnabled"
-    needsDebugVerification: true
-    responseWrapper: true
-    parameters:
-      enabled: ""
-
-  - name: debug_dump_focus_tree
-    description: Dump the focus tree.
-    rpcMethod: "debug.dumpFocusTree"
-    needsDebugVerification: true
-    responseWrapper: true
-    parameters: {}
-
-  - name: debug_disable_physical_shape_layers
-    description: Toggle physical shape layers debugging.
-    rpcMethod: "debug.debugDisablePhysicalShapeLayers"
-    needsDebugVerification: true
-    responseWrapper: true
-    parameters:
-      enabled: ""
-
-  - name: debug_disable_opacity_layers
-    description: Toggle opacity layers debugging.
-    rpcMethod: "debug.debugDisableOpacityLayers"
-    needsDebugVerification: true
-    responseWrapper: true
-    parameters:
-      enabled: ""
-
-  - name: inspector_screenshot
-    description: Take a screenshot of the Flutter app.
-    rpcMethod: "inspector.screenshot"
-    needsDebugVerification: true
-    responseWrapper: true
-    parameters: {}
-
-  - name: inspector_get_layout_explorer_node
-    description: Get layout explorer information for a widget.
-    rpcMethod: "inspector.getLayoutExplorerNode"
-    needsDebugVerification: true
-    responseWrapper: true
-    parameters:
-      objectId: ""
-
-  - name: inspector_track_rebuild_dirty_widgets
-    description: Track widget rebuilds to identify performance issues.
-    rpcMethod: "inspector.trackRebuildDirtyWidgets"
-    needsDebugVerification: true
-    responseWrapper: true
-    parameters:
-      enabled: ""
-
-  - name: inspector_set_selection_by_id
-    description: Set the selected widget by ID.
-    rpcMethod: "inspector.setSelectionById"
-    needsDebugVerification: true
-    responseWrapper: true
-    parameters:
-      selectionId: ""
-
-  - name: inspector_get_parent_chain
-    description: Get the parent chain for a widget.
-    rpcMethod: "inspector.getParentChain"
-    needsDebugVerification: true
-    responseWrapper: true
-    parameters:
-      objectId: ""
-
-  - name: inspector_get_children_summary_tree
-    description: Get the children summary tree for a widget.
-    rpcMethod: "inspector.getChildrenSummaryTree"
-    needsDebugVerification: true
-    responseWrapper: true
-    parameters:
-      objectId: ""
-
-  - name: inspector_get_details_subtree
-    description: Get the details subtree for a widget.
-    rpcMethod: "inspector.getDetailsSubtree"
-    needsDebugVerification: true
-    responseWrapper: true
-    parameters:
-      objectId: ""
-
-  - name: inspector_get_selected_widget
-    description: Get information about the currently selected widget.
-    rpcMethod: "inspector.getSelectedWidget"
-    needsDebugVerification: true
-    responseWrapper: true
-    parameters: {}
-
-  - name: inspector_get_selected_summary_widget
-    description: Get summary information about the currently selected widget.
-    rpcMethod: "inspector.getSelectedSummaryWidget"
-    needsDebugVerification: true
-    responseWrapper: true
-    parameters: {}
-
-  - name: inspector_is_widget_creation_tracked
-    description: Check if widget creation tracking is enabled.
-    rpcMethod: "inspector.isWidgetCreationTracked"
-    needsDebugVerification: true
-    responseWrapper: true
-    parameters: {}
-
-  - name: dart_io_socket_profiling_enabled
-    description: Enable or disable socket profiling.
-    rpcMethod: "dart.io.socketProfilingEnabled"
-    needsDebugVerification: false
-    responseWrapper: true
-    parameters:
-      enabled: ""
-
-  - name: dart_io_http_enable_timeline_logging
-    description: Enable or disable HTTP timeline logging.
-    rpcMethod: "dart.io.httpEnableTimelineLogging"
-    needsDebugVerification: false
-    responseWrapper: true
-    parameters:
-      enabled: ""
-
-  - name: dart_io_get_version
-    description: Get Flutter version information.
-    rpcMethod: "dart.io.getVersion"
-    needsDebugVerification: false
-    responseWrapper: true
-    parameters: {}
-
-  - name: dart_io_get_open_files
-    description: Get list of currently open files in the Flutter app.
-    rpcMethod: "dart.io.getOpenFiles"
-    needsDebugVerification: false
-    responseWrapper: true
-    parameters: {}
-
-  - name: inspector_structured_errors
-    description: Enable or disable structured error reporting.
-    rpcMethod: "inspector.structuredErrors"
-    needsDebugVerification: true
-    responseWrapper: true
-    parameters:
-      enabled: ""
-
-  - name: inspector_show
-    description: Show specific widget details in the Flutter app inspector.
-    rpcMethod: "inspector.show"
-    needsDebugVerification: true
-    responseWrapper: true
-    parameters:
-      options: "arg"

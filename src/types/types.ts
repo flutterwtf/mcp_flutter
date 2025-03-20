@@ -56,11 +56,3 @@ export interface IsolateResponse extends IsolateInfo {
   extensionRPCs?: string[];
   // Add other isolate response fields as needed
 }
-
-export enum RPCPrefix {
-  UI = "ext.ui.window",
-  DART_IO = "ext.dart.io",
-  FLUTTER = "ext.flutter",
-  INSPECTOR = "ext.flutter.inspector",
-  ISAR = "ext.isar",
-}
