@@ -33,6 +33,7 @@ export abstract class BaseDartServer extends EventEmitter {
       resolve: (value: unknown) => void;
       reject: (reason?: any) => void;
       method: string;
+      timeoutId?: NodeJS.Timeout;
     }
   >();
   protected reconnectAttempts = 0;
@@ -44,17 +45,33 @@ export abstract class BaseDartServer extends EventEmitter {
     this.config.reconnectAttempts = config.reconnectAttempts || 5;
     this.config.reconnectDelay = config.reconnectDelay || 1000;
     this.config.connectionTimeout = config.connectionTimeout || 30000;
+
+    // Handle process termination
+    process.on("SIGINT", async () => {
+      await this.disconnect();
+      process.exit(0);
+    });
   }
 
-  protected log(level: LogLevel, message: string, ...args: unknown[]) {
+  protected log(level: LogLevel, ...args: unknown[]) {
+    const levels: LogLevel[] = ["error", "warn", "info", "debug"];
     if (
-      this.config.logLevel === "debug" ||
-      (this.config.logLevel === "info" && level !== "debug") ||
-      (this.config.logLevel === "warn" &&
-        (level === "warn" || level === "error")) ||
-      (this.config.logLevel === "error" && level === "error")
+      levels.indexOf(level) <= levels.indexOf(this.config.logLevel || "info")
     ) {
-      console.log(`[${level.toUpperCase()}] ${message}`, ...args);
+      switch (level) {
+        case "error":
+          console.error(...args);
+          break;
+        case "warn":
+          console.warn(...args);
+          break;
+        case "info":
+          console.info(...args);
+          break;
+        case "debug":
+          console.debug(...args);
+          break;
+      }
     }
   }
 
@@ -79,8 +96,10 @@ export abstract class BaseDartServer extends EventEmitter {
       await this.establishConnection();
       this.isConnecting = false;
       this.reconnectAttempts = 0;
+      this.emit("connected");
     } catch (error) {
       this.isConnecting = false;
+      this.emit("error", error);
       throw error;
     }
   }
@@ -95,7 +114,7 @@ export abstract class BaseDartServer extends EventEmitter {
           this.ws?.close();
           reject(
             new McpError(
-              ErrorCode.InvalidRequest,
+              ErrorCode.InternalError,
               `Connection timeout to ${wsUrl}`
             )
           );
@@ -112,11 +131,12 @@ export abstract class BaseDartServer extends EventEmitter {
       this.ws.on("error", (error: Error) => {
         clearTimeout(connectionTimeout);
         this.log("error", `WebSocket error for ${wsUrl}:`, error);
-        reject(error);
+        reject(new McpError(ErrorCode.InternalError, error.message));
       });
 
       this.ws.on("close", () => {
         this.log("warn", `Connection closed to ${wsUrl}`);
+        this.emit("disconnected");
         this.handleReconnect();
       });
     });
@@ -128,13 +148,24 @@ export abstract class BaseDartServer extends EventEmitter {
     this.ws.on("message", (data: WebSocket.Data) => {
       try {
         const message = JSON.parse(data.toString()) as WebSocketMessage;
+        this.log("debug", "Received message:", message);
 
         if (message.id) {
           const request = this.pendingRequests.get(message.id);
           if (request) {
+            if (request.timeoutId) {
+              clearTimeout(request.timeoutId);
+            }
             this.pendingRequests.delete(message.id);
+
             if (message.error) {
-              request.reject(new Error(message.error.message));
+              request.reject(
+                new McpError(
+                  message.error.code as ErrorCode,
+                  message.error.message,
+                  message.error.data
+                )
+              );
             } else {
               request.resolve(message.result);
             }
@@ -144,6 +175,13 @@ export abstract class BaseDartServer extends EventEmitter {
         this.emit("message", message);
       } catch (error) {
         this.log("error", "Failed to parse WebSocket message:", error);
+        this.emit(
+          "error",
+          new McpError(
+            ErrorCode.ParseError,
+            "Failed to parse WebSocket message"
+          )
+        );
       }
     });
   }
@@ -169,6 +207,7 @@ export abstract class BaseDartServer extends EventEmitter {
       await this.connect();
     } catch (error) {
       this.log("error", "Reconnection failed:", error);
+      this.emit("error", error);
     }
   }
 
@@ -188,26 +227,23 @@ export abstract class BaseDartServer extends EventEmitter {
       params,
     };
 
+    this.log("debug", "Sending message:", message);
+
     return new Promise((resolve, reject) => {
       const timeoutId = setTimeout(() => {
         if (this.pendingRequests.has(id)) {
           this.pendingRequests.delete(id);
           reject(
-            new McpError(ErrorCode.InvalidRequest, `Request timeout: ${method}`)
+            new McpError(ErrorCode.InternalError, `Request timeout: ${method}`)
           );
         }
       }, this.config.connectionTimeout);
 
       this.pendingRequests.set(id, {
-        resolve: (value) => {
-          clearTimeout(timeoutId);
-          resolve(value);
-        },
-        reject: (error) => {
-          clearTimeout(timeoutId);
-          reject(error);
-        },
+        resolve,
+        reject,
         method,
+        timeoutId,
       });
 
       this.ws!.send(JSON.stringify(message), (error) => {
@@ -216,7 +252,7 @@ export abstract class BaseDartServer extends EventEmitter {
           this.pendingRequests.delete(id);
           reject(
             new McpError(
-              ErrorCode.InvalidRequest,
+              ErrorCode.InternalError,
               `Failed to send message: ${error.message}`
             )
           );
@@ -225,12 +261,24 @@ export abstract class BaseDartServer extends EventEmitter {
     });
   }
 
-  public disconnect(): void {
+  public async disconnect(): Promise<void> {
     if (this.ws) {
       this.ws.close();
       this.ws = null;
     }
+
+    // Clear all pending requests with timeout error
+    for (const [id, request] of this.pendingRequests) {
+      if (request.timeoutId) {
+        clearTimeout(request.timeoutId);
+      }
+      request.reject(
+        new McpError(ErrorCode.InternalError, "Server disconnected")
+      );
+    }
     this.pendingRequests.clear();
+
+    this.emit("disconnected");
   }
 
   public isConnected(): boolean {

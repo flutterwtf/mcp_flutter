@@ -33,23 +33,28 @@ export interface WebSocketResponse {
   };
 }
 
-export interface IsolateInfo {
+export interface IsolateRef {
   id: string;
   name?: string;
   number?: string;
-  isSystemIsolate?: boolean;
-  isolateGroupId?: string;
-  extensionRPCs?: string[];
 }
 
 export interface VMInfo {
-  isolates: IsolateInfo[];
+  isolates: IsolateRef[];
+  uri?: string;
   version?: string;
   pid?: number;
 }
 
-export interface IsolateResponse extends IsolateInfo {
+export interface IsolateResponse {
+  id: string;
+  name?: string;
+  number?: string;
   extensionRPCs?: string[];
+  libraries?: Array<{
+    uri: string;
+    name?: string;
+  }>;
 }
 
 // Helper function to create RPC method strings

@@ -10,6 +10,8 @@ export interface FlutterPort {
   command: string;
 }
 
+export type LogLevel = "error" | "warn" | "info" | "debug";
+
 export class UtilitiesRPC {
   constructor(private logLevel: string = "info") {}
 

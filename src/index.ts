@@ -3355,8 +3355,7 @@ class FlutterInspectorServer {
 
     // Extract auth token from the VM service URL
     const vmServiceUrl = await this.invokeFlutterMethod(port, "getVM");
-    const authToken =
-      (vmServiceUrl as any)?.uri?.split("/")?.at(-2) || "0yEC3VaHaUk=";
+    const authToken = (vmServiceUrl as any)?.uri?.split("/")?.at(-2);
 
     const request = {
       id,
