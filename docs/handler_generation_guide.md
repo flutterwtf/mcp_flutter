@@ -6,7 +6,8 @@ The Flutter Inspector module uses a code generation system to create TypeScript 
 
 1. **Configuration Files**:
 
-   - `server_tools_flutter.yaml`: Defines the tool interfaces available to users
+   - `server_tools_flutter.yaml`: Defines the tool interfaces available to users for Flutter RPC methods. These methods will be generated.
+   - `server_tools_custom.yaml`: Defines the tool interfaces available to users for custom RPC methods
    - `server_tools_handler.yaml`: Maps tools to RPC method implementations
 
 2. **Generation Scripts**:

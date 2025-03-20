@@ -18,7 +18,7 @@ export class FlutterRpcHandlers {
    */
   async handleDebugDumpRenderTree(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.invokeFlutterMethod(port, "debug.dumpRenderTree", {});
+    const result = await this.rpcUtils.invokeFlutterMethod(port, "ext.flutter.debugDumpRenderTree", {});
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -27,7 +27,7 @@ export class FlutterRpcHandlers {
    */
   async handleInspectorGetProperties(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.invokeFlutterMethod(port, "inspector.getProperties", { arg: { objectId: params?.objectId } });
+    const result = await this.rpcUtils.sendDartProxyRequest("ext.flutter.inspector.getProperties", port, { arg: { objectId: params?.objectId } });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -45,7 +45,7 @@ export class FlutterRpcHandlers {
    */
   async handleDebugSetDebugPaint(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.invokeFlutterMethod(port, "debug.setDebugPaint", { enabled: params?.enabled });
+    const result = await this.rpcUtils.invokeFlutterMethod(port, "ext.flutter.debugPaint", { enabled: params?.enabled });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -54,16 +54,286 @@ export class FlutterRpcHandlers {
    */
   async handleInspectorGetRootWidgetSummaryTree(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.invokeFlutterMethod(port, "ext.flutter.inspector.getRootWidgetSummaryTree", { arg: { includeProperties: params?.includeProperties, subtreeDepth: params?.subtreeDepth } });
+    const result = await this.rpcUtils.sendDartProxyRequest("ext.flutter.inspector.getRootWidgetSummaryTree", port, { arg: { includeProperties: params?.includeProperties, subtreeDepth: params?.subtreeDepth } });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
   /**
-   * Dump the layer tree from the Flutter app.
+   * Dumps the layer tree from the Flutter app.
    */
   async handleDebugDumpLayerTree(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.invokeFlutterMethod(port, "debug.dumpLayerTree", {});
+    const result = await this.rpcUtils.invokeFlutterMethod(port, "ext.flutter.debugDumpLayerTree", {});
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Dumps the semantics tree in traversal order.
+   */
+  async handleDebugDumpSemanticsTree(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.invokeFlutterMethod(port, "ext.flutter.debugDumpSemanticsTreeInTraversalOrder", {});
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Dumps the semantics tree in inverse hit test order.
+   */
+  async handleDebugDumpSemanticsTreeInverse(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.invokeFlutterMethod(port, "ext.flutter.debugDumpSemanticsTreeInInverseHitTestOrder", {});
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Dumps the focus tree from the Flutter app.
+   */
+  async handleDebugDumpFocusTree(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.invokeFlutterMethod(port, "ext.flutter.debugDumpFocusTree", {});
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Toggles baseline paint debugging.
+   */
+  async handleDebugPaintBaselinesEnabled(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.invokeFlutterMethod(port, "ext.flutter.debugPaintBaselinesEnabled", { enabled: params?.enabled });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Toggles disabling of clip layers.
+   */
+  async handleDebugDisableClipLayers(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.invokeFlutterMethod(port, "ext.flutter.debugDisableClipLayers", { enabled: params?.enabled });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Toggles physical shape layers debugging.
+   */
+  async handleDebugDisablePhysicalShapeLayers(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.invokeFlutterMethod(port, "ext.flutter.debugDisablePhysicalShapeLayers", { enabled: params?.enabled });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Toggles opacity layers debugging.
+   */
+  async handleDebugDisableOpacityLayers(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.invokeFlutterMethod(port, "ext.flutter.debugDisableOpacityLayers", { enabled: params?.enabled });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Toggles repaint rainbow debugging.
+   */
+  async handleRepaintRainbow(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.invokeFlutterMethod(port, "ext.flutter.repaintRainbow", { enabled: params?.enabled });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Toggles the debug banner in the Flutter app.
+   */
+  async handleDebugAllowBanner(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.invokeFlutterMethod(port, "ext.flutter.debugAllowBanner", { enabled: params?.enabled });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Enables or disables socket profiling.
+   */
+  async handleDartIoSocketProfilingEnabled(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.invokeFlutterMethod(port, "ext.dart.io.socketProfilingEnabled", { enabled: params?.enabled });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Enables or disables HTTP timeline logging.
+   */
+  async handleDartIoHttpEnableTimelineLogging(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.invokeFlutterMethod(port, "ext.dart.io.httpEnableTimelineLogging", { enabled: params?.enabled });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Gets Flutter version information.
+   */
+  async handleDartIoGetVersion(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.invokeFlutterMethod(port, "ext.dart.io.getVersion", {});
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Gets details of a specific HTTP request from the profile.
+   */
+  async handleDartIoGetHttpProfileRequest(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.invokeFlutterMethod(port, "ext.dart.io.getHttpProfileRequest", { requestId: params?.requestId });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Toggles inverting of oversized images for debugging.
+   */
+  async handleFlutterCoreInvertOversizedImages(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.invokeFlutterMethod(port, "ext.flutter.invertOversizedImages", { enabled: params?.enabled });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Overrides the platform for the Flutter app.
+   */
+  async handleFlutterCorePlatformOverride(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.invokeFlutterMethod(port, "ext.flutter.platformOverride", { platform: params?.platform });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Overrides the brightness for the Flutter app.
+   */
+  async handleFlutterCoreBrightnessOverride(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.invokeFlutterMethod(port, "ext.flutter.brightnessOverride", { brightness: params?.brightness });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Sets the time dilation factor for animations.
+   */
+  async handleFlutterCoreTimeDilation(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.invokeFlutterMethod(port, "ext.flutter.timeDilation", { dilation: params?.dilation });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Evicts an asset from the Flutter app's cache.
+   */
+  async handleFlutterCoreEvict(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.invokeFlutterMethod(port, "ext.flutter.evict", { asset: params?.asset });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Takes a screenshot of the Flutter app.
+   */
+  async handleInspectorScreenshot(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.sendDartProxyRequest("ext.flutter.inspector.screenshot", port, {});
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Gets layout explorer information for a widget.
+   */
+  async handleInspectorGetLayoutExplorerNode(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.sendDartProxyRequest("ext.flutter.inspector.getLayoutExplorerNode", port, { arg: { objectId: params?.objectId } });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Tracks widget rebuilds to identify performance issues.
+   */
+  async handleInspectorTrackRebuildDirtyWidgets(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.sendDartProxyRequest("ext.flutter.inspector.trackRebuildDirtyWidgets", port, { enabled: params?.enabled });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Sets the selected widget by ID.
+   */
+  async handleInspectorSetSelectionById(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.sendDartProxyRequest("ext.flutter.inspector.setSelectionById", port, { arg: { selectionId: params?.selectionId } });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Gets the parent chain for a widget.
+   */
+  async handleInspectorGetParentChain(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.sendDartProxyRequest("ext.flutter.inspector.getParentChain", port, { arg: { objectId: params?.objectId } });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Gets the children summary tree for a widget.
+   */
+  async handleInspectorGetChildrenSummaryTree(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.sendDartProxyRequest("ext.flutter.inspector.getChildrenSummaryTree", port, { arg: { objectId: params?.objectId } });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Gets the details subtree for a widget.
+   */
+  async handleInspectorGetDetailsSubtree(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.sendDartProxyRequest("ext.flutter.inspector.getDetailsSubtree", port, { arg: { objectId: params?.objectId } });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Gets information about the currently selected widget.
+   */
+  async handleInspectorGetSelectedWidget(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.sendDartProxyRequest("ext.flutter.inspector.getSelectedWidget", port, {});
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Gets summary information about the currently selected widget.
+   */
+  async handleInspectorGetSelectedSummaryWidget(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.sendDartProxyRequest("ext.flutter.inspector.getSelectedSummaryWidget", port, {});
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Checks if widget creation tracking is enabled.
+   */
+  async handleInspectorIsWidgetCreationTracked(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.sendDartProxyRequest("ext.flutter.inspector.isWidgetCreationTracked", port, {});
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Enables or disables structured error reporting.
+   */
+  async handleInspectorStructuredErrors(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.sendDartProxyRequest("ext.flutter.inspector.structuredErrors", port, { enabled: params?.enabled });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Shows specific widget details in the Flutter app inspector.
+   */
+  async handleInspectorShow(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.sendDartProxyRequest("ext.flutter.inspector.show", port, { arg: { options: params?.options } });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   

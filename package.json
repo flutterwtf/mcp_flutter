@@ -11,7 +11,7 @@
     "build"
   ],
   "scripts": {
-    "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\" && npm run copy-yaml-files",
+    "build": "npm run generate-rpc-handlers && tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\" && npm run copy-yaml-files",
     "prepare": "npm run build",
     "watch": "tsc --watch",
     "inspector": "npx @modelcontextprotocol/inspector build/index.js",
