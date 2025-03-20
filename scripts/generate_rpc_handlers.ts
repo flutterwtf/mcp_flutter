@@ -58,6 +58,8 @@ export class FlutterRpcHandlers {
       const description = handler.description.replace(/\n/g, "\n   * "); // Format description for JSDoc
       const rpcMethod = handler.rpcMethod;
       const needsDebugVerification = handler.needsDebugVerification === true;
+      const needsDartServiceExtensionProxy =
+        handler.needsDartServiceExtensionProxy === true;
       const responseWrapper = handler.responseWrapper !== false; // Default to true if not explicitly false
       const parameters = handler.parameters || {};
 
@@ -93,6 +95,11 @@ export class FlutterRpcHandlers {
         rpcParamsObject = rpcParamsObject.slice(0, -2) + " }"; // Remove trailing comma and space
       }
 
+      // Determine which method to use based on whether it needs the Dart proxy
+      const invokeMethod = needsDartServiceExtensionProxy
+        ? `this.rpcUtils.sendDartProxyRequest("${rpcMethod}", port, ${rpcParamsObject.trim()})`
+        : `this.rpcUtils.invokeFlutterMethod(port, "${rpcMethod}", ${rpcParamsObject.trim()})`;
+
       generatedCode += `
   /**
    * ${description}
@@ -103,7 +110,7 @@ export class FlutterRpcHandlers {
         ? "await this.rpcUtils.verifyFlutterDebugMode(port);"
         : ""
     }
-    const result = await this.rpcUtils.invokeFlutterMethod(port, "${rpcMethod}", ${rpcParamsObject.trim()});
+    const result = await ${invokeMethod};
     ${
       responseWrapper
         ? "return this.rpcUtils.wrapResponse(Promise.resolve(result));"
