@@ -10,6 +10,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { CommandLineConfig } from "../index.js";
 import { LogLevel } from "../types/types.js";
+import { createCustomRpcHandlerMap } from "./create_custom_rpc_handler_map.js";
 import { createRpcHandlerMap } from "./create_rpc_handler_map.generated.js";
 import { FlutterRpcHandlers } from "./flutter_rpc_handlers.generated.js";
 import { RpcUtilities } from "./rpc_utilities.js";
@@ -77,8 +78,6 @@ export class FlutterInspectorServer {
   }
 
   private setupToolHandlers() {
-    // Default port for Flutter/Dart processes
-    const DEFAULT_FLUTTER_PORT = 8181;
     const serverToolsPath = path.join(__dirname, "server_tools.yaml");
 
     try {
@@ -96,33 +95,26 @@ export class FlutterInspectorServer {
         this.handlePortParam(request)
       );
 
+      // Get custom handlers
+      const customHandlerMap = createCustomRpcHandlerMap(this.rpcUtils);
+
       this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const toolName = request.params.name;
-        const handler = handlerMap[toolName];
 
-        if (handler) {
-          return handler(request);
+        // Check generated handlers first
+        if (handlerMap[toolName]) {
+          return handlerMap[toolName](request);
         }
 
-        switch (request.params.name) {
-          case "get_active_ports": {
-            const ports = await this.rpcUtils.getActivePorts();
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: JSON.stringify(ports, null, 2),
-                },
-              ],
-            };
-          }
-
-          default:
-            throw new McpError(
-              ErrorCode.MethodNotFound,
-              `Unknown tool: ${request.params.name}`
-            );
+        // Then check custom handlers
+        if (customHandlerMap[toolName]) {
+          return customHandlerMap[toolName](request);
         }
+
+        throw new McpError(
+          ErrorCode.MethodNotFound,
+          `Unknown tool: ${request.params.name}`
+        );
       });
     } catch (error) {
       this.log("error", "Error setting up tool handlers:", error);
