@@ -61,14 +61,25 @@ export class FlutterInspectorServer {
   }
 
   private setupToolHandlers() {
-    const serverToolsPath = path.join(__dirname, "server_tools.yaml");
-
+    const serverToolsFlutterPath = path.join(
+      __dirname,
+      "server_tools_flutter.yaml"
+    );
+    const serverToolsCustomPath = path.join(
+      __dirname,
+      "server_tools_custom.yaml"
+    );
     try {
       // Load tools configuration
-      const serverTools = this.rpcUtils.loadYamlConfig(serverToolsPath);
+      const serverToolsFlutter = this.rpcUtils.loadYamlConfig(
+        serverToolsFlutterPath
+      );
+      const serverToolsCustom = this.rpcUtils.loadYamlConfig(
+        serverToolsCustomPath
+      );
 
       this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
-        tools: serverTools.tools,
+        tools: [...serverToolsFlutter.tools, ...serverToolsCustom.tools],
       }));
 
       const rpcHandlers = new FlutterRpcHandlers(this.rpcUtils);
