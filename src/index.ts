@@ -354,6 +354,14 @@ class FlutterInspectorServer {
   > = new Map();
   private messageId = 0;
 
+  // New properties for Dart proxy
+  private dartProxyWs: WebSocket | null = null;
+  private proxyPort = 8888;
+  private pendingProxyRequests = new Map<
+    string,
+    { resolve: Function; reject: Function }
+  >();
+
   constructor() {
     this.port = argv.port;
     this.logLevel = argv["log-level"] as LogLevel;
@@ -1834,6 +1842,31 @@ class FlutterInspectorServer {
             required: ["enabled"],
           },
         },
+        {
+          name: "get_widget_tree_proxy",
+          description: "Gets the widget tree via the Dart proxy server.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              port: {
+                type: "number",
+                description:
+                  "Port number where the Flutter app is running (defaults to 8181)",
+              },
+              includeProperties: {
+                type: "boolean",
+                description:
+                  "Whether to include widget properties (default: false)",
+              },
+              subtreeDepth: {
+                type: "number",
+                description:
+                  "Maximum depth of the subtree to fetch (default: 1000)",
+              },
+            },
+            required: [],
+          },
+        },
       ],
     }));
 
@@ -3239,12 +3272,103 @@ class FlutterInspectorServer {
           };
         }
 
+        case "get_widget_tree_proxy": {
+          const port = handlePortParam();
+          const { includeProperties, subtreeDepth } = request.params
+            .arguments as {
+            includeProperties?: boolean;
+            subtreeDepth?: number;
+          };
+          return wrapResponse(
+            this.sendDartProxyRequest("getWidgetTree", port, {
+              includeProperties,
+              subtreeDepth,
+            })
+          );
+        }
+
         default:
           throw new McpError(
             ErrorCode.MethodNotFound,
             `Unknown tool: ${request.params.name}`
           );
       }
+    });
+  }
+
+  // New method for connecting to Dart proxy
+  private async connectToDartProxy(): Promise<WebSocket> {
+    if (this.dartProxyWs && this.dartProxyWs.readyState === WebSocket.OPEN) {
+      return this.dartProxyWs;
+    }
+
+    return new Promise((resolve, reject) => {
+      const wsUrl = `ws://localhost:${this.proxyPort}`;
+      const ws = new WebSocket(wsUrl);
+
+      ws.onopen = () => {
+        this.log("debug", `WebSocket connected to Dart proxy at ${wsUrl}`);
+        this.dartProxyWs = ws;
+        resolve(ws);
+      };
+
+      ws.onerror = (error) => {
+        this.log("error", `WebSocket error for Dart proxy:`, error);
+        reject(error);
+        this.dartProxyWs = null; // Clear on error
+      };
+
+      ws.onclose = () => {
+        this.log("debug", `WebSocket closed for Dart proxy`);
+        this.dartProxyWs = null;
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const response = JSON.parse(event.data.toString());
+          if (response.id) {
+            const request = this.pendingProxyRequests.get(response.id);
+            if (request) {
+              if (response.error) {
+                request.reject(new Error(response.error));
+              } else {
+                request.resolve(response.result);
+              }
+              this.pendingProxyRequests.delete(response.id);
+            }
+          }
+        } catch (error) {
+          this.log("error", "Error parsing Dart proxy message:", error);
+        }
+      };
+    });
+  }
+
+  // New method for sending requests to Dart proxy
+  private async sendDartProxyRequest(
+    command: string,
+    port: number,
+    args: Record<string, any> = {}
+  ): Promise<any> {
+    const ws = await this.connectToDartProxy();
+    const id = this.generateId();
+
+    // Extract auth token from the VM service URL
+    const vmServiceUrl = await this.invokeFlutterMethod(port, "getVM");
+    const authToken =
+      (vmServiceUrl as any)?.uri?.split("/")?.at(-2) || "0yEC3VaHaUk=";
+
+    const request = {
+      id,
+      command,
+      port,
+      authToken,
+      ...args,
+    };
+
+    return new Promise((resolve, reject) => {
+      this.pendingProxyRequests.set(id, { resolve, reject });
+      ws.send(JSON.stringify(request));
     });
   }
 
