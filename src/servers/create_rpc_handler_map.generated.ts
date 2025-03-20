@@ -196,5 +196,70 @@ export function createRpcHandlerMap(
       const params = request.params.arguments;
       return rpcHandlers.handleInspectorShow(port, params);
     },
+    "dart_io_get_socket_profile": (request: any) => {
+      const port = handlePortParam(request);
+      
+      return rpcHandlers.handleDartIoGetSocketProfile(port);
+    },
+    "dart_io_clear_socket_profile": (request: any) => {
+      const port = handlePortParam(request);
+      
+      return rpcHandlers.handleDartIoClearSocketProfile(port);
+    },
+    "dart_io_get_http_profile": (request: any) => {
+      const port = handlePortParam(request);
+      
+      return rpcHandlers.handleDartIoGetHttpProfile(port);
+    },
+    "dart_io_clear_http_profile": (request: any) => {
+      const port = handlePortParam(request);
+      
+      return rpcHandlers.handleDartIoClearHttpProfile(port);
+    },
+    "dart_io_get_open_files": (request: any) => {
+      const port = handlePortParam(request);
+      
+      return rpcHandlers.handleDartIoGetOpenFiles(port);
+    },
+    "dart_io_get_open_file_by_id": (request: any) => {
+      const port = handlePortParam(request);
+      const params = request.params.arguments;
+      return rpcHandlers.handleDartIoGetOpenFileById(port, params);
+    },
+    "flutter_core_profile_platform_channels": (request: any) => {
+      const port = handlePortParam(request);
+      const params = request.params.arguments;
+      return rpcHandlers.handleFlutterCoreProfilePlatformChannels(port, params);
+    },
+    "flutter_core_profile_render_object_paints": (request: any) => {
+      const port = handlePortParam(request);
+      const params = request.params.arguments;
+      return rpcHandlers.handleFlutterCoreProfileRenderObjectPaints(port, params);
+    },
+    "flutter_core_profile_render_object_layouts": (request: any) => {
+      const port = handlePortParam(request);
+      const params = request.params.arguments;
+      return rpcHandlers.handleFlutterCoreProfileRenderObjectLayouts(port, params);
+    },
+    "flutter_core_show_performance_overlay": (request: any) => {
+      const port = handlePortParam(request);
+      const params = request.params.arguments;
+      return rpcHandlers.handleFlutterCoreShowPerformanceOverlay(port, params);
+    },
+    "flutter_core_profile_widget_builds": (request: any) => {
+      const port = handlePortParam(request);
+      const params = request.params.arguments;
+      return rpcHandlers.handleFlutterCoreProfileWidgetBuilds(port, params);
+    },
+    "flutter_core_profile_user_widget_builds": (request: any) => {
+      const port = handlePortParam(request);
+      const params = request.params.arguments;
+      return rpcHandlers.handleFlutterCoreProfileUserWidgetBuilds(port, params);
+    },
+    "inspector_track_repaint_widgets": (request: any) => {
+      const port = handlePortParam(request);
+      const params = request.params.arguments;
+      return rpcHandlers.handleInspectorTrackRepaintWidgets(port, params);
+    },
   };
 }

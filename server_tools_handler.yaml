@@ -291,3 +291,103 @@ handlers:
     responseWrapper: true
     parameters:
       options: "arg.options"
+
+  - name: dart_io_get_socket_profile
+    description: Gets socket profiling information.
+    rpcMethod: "ext.dart.io.getSocketProfile"
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters: {}
+
+  - name: dart_io_clear_socket_profile
+    description: Clears the socket profiling data.
+    rpcMethod: "ext.dart.io.clearSocketProfile"
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters: {}
+
+  - name: dart_io_get_http_profile
+    description: Gets HTTP profiling information.
+    rpcMethod: "ext.dart.io.getHttpProfile"
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters: {}
+
+  - name: dart_io_clear_http_profile
+    description: Clears the HTTP profiling data.
+    rpcMethod: "ext.dart.io.clearHttpProfile"
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters: {}
+
+  - name: dart_io_get_open_files
+    description: Gets list of currently open files in the Flutter app.
+    rpcMethod: "ext.dart.io.getOpenFiles"
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters: {}
+
+  - name: dart_io_get_open_file_by_id
+    description: Gets details of a specific open file by its ID.
+    rpcMethod: "ext.dart.io.getOpenFileById"
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters:
+      fileId: ""
+
+  - name: flutter_core_profile_platform_channels
+    description: Enables or disables platform channel profiling.
+    rpcMethod: "ext.flutter.profilePlatformChannels"
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters:
+      enabled: ""
+
+  - name: flutter_core_profile_render_object_paints
+    description: Enables or disables profiling of render object paints.
+    rpcMethod: "ext.flutter.profileRenderObjectPaints"
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters:
+      enabled: ""
+
+  - name: flutter_core_profile_render_object_layouts
+    description: Enables or disables profiling of render object layouts.
+    rpcMethod: "ext.flutter.profileRenderObjectLayouts"
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters:
+      enabled: ""
+
+  - name: flutter_core_show_performance_overlay
+    description: Shows or hides the performance overlay.
+    rpcMethod: "ext.flutter.showPerformanceOverlay"
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters:
+      enabled: ""
+
+  - name: flutter_core_profile_widget_builds
+    description: Enables or disables profiling of widget builds.
+    rpcMethod: "ext.flutter.profileWidgetBuilds"
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters:
+      enabled: ""
+
+  - name: flutter_core_profile_user_widget_builds
+    description: Enables or disables profiling of user widget builds.
+    rpcMethod: "ext.flutter.profileUserWidgetBuilds"
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters:
+      enabled: ""
+
+  - name: inspector_track_repaint_widgets
+    description: Tracks widget repaints to identify performance issues.
+    rpcMethod: "ext.flutter.inspector.trackRepaintWidgets"
+    needsDartServiceExtensionProxy: true
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters:
+      enabled: ""

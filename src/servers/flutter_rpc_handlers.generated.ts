@@ -337,4 +337,121 @@ export class FlutterRpcHandlers {
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
+  /**
+   * Gets socket profiling information.
+   */
+  async handleDartIoGetSocketProfile(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.invokeFlutterMethod(port, "ext.dart.io.getSocketProfile", {});
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Clears the socket profiling data.
+   */
+  async handleDartIoClearSocketProfile(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.invokeFlutterMethod(port, "ext.dart.io.clearSocketProfile", {});
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Gets HTTP profiling information.
+   */
+  async handleDartIoGetHttpProfile(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.invokeFlutterMethod(port, "ext.dart.io.getHttpProfile", {});
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Clears the HTTP profiling data.
+   */
+  async handleDartIoClearHttpProfile(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.invokeFlutterMethod(port, "ext.dart.io.clearHttpProfile", {});
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Gets list of currently open files in the Flutter app.
+   */
+  async handleDartIoGetOpenFiles(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.invokeFlutterMethod(port, "ext.dart.io.getOpenFiles", {});
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Gets details of a specific open file by its ID.
+   */
+  async handleDartIoGetOpenFileById(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.invokeFlutterMethod(port, "ext.dart.io.getOpenFileById", { fileId: params?.fileId });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Enables or disables platform channel profiling.
+   */
+  async handleFlutterCoreProfilePlatformChannels(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.invokeFlutterMethod(port, "ext.flutter.profilePlatformChannels", { enabled: params?.enabled });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Enables or disables profiling of render object paints.
+   */
+  async handleFlutterCoreProfileRenderObjectPaints(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.invokeFlutterMethod(port, "ext.flutter.profileRenderObjectPaints", { enabled: params?.enabled });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Enables or disables profiling of render object layouts.
+   */
+  async handleFlutterCoreProfileRenderObjectLayouts(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.invokeFlutterMethod(port, "ext.flutter.profileRenderObjectLayouts", { enabled: params?.enabled });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Shows or hides the performance overlay.
+   */
+  async handleFlutterCoreShowPerformanceOverlay(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.invokeFlutterMethod(port, "ext.flutter.showPerformanceOverlay", { enabled: params?.enabled });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Enables or disables profiling of widget builds.
+   */
+  async handleFlutterCoreProfileWidgetBuilds(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.invokeFlutterMethod(port, "ext.flutter.profileWidgetBuilds", { enabled: params?.enabled });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Enables or disables profiling of user widget builds.
+   */
+  async handleFlutterCoreProfileUserWidgetBuilds(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.invokeFlutterMethod(port, "ext.flutter.profileUserWidgetBuilds", { enabled: params?.enabled });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Tracks widget repaints to identify performance issues.
+   */
+  async handleInspectorTrackRepaintWidgets(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.sendDartProxyRequest("ext.flutter.inspector.trackRepaintWidgets", port, { enabled: params?.enabled });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
 }
