@@ -21,7 +21,7 @@ import {
   WebSocketRequest,
   WebSocketResponse,
 } from "../types/types.js";
-import { createRpcHandlerMap } from "./createRpcHandlerMap.generated.js";
+import { createRpcHandlerMap } from "./create_rpc_handler_map.generated.js";
 import { FlutterRpcHandlers } from "./flutter_rpc_handlers.generated.js";
 
 // Get the directory name in ESM
@@ -334,7 +334,91 @@ export class FlutterInspectorServer {
               ],
             };
           }
+          case "get_extension_rpcs": {
+            const port = handlePortParam();
+            const { isolateId, isRawResponse = false } =
+              (request.params.arguments as {
+                isolateId?: string;
+                isRawResponse?: boolean;
+              }) || {};
 
+            const vmInfo = (await this.invokeFlutterMethod(
+              port,
+              "getVM"
+            )) as VMInfo;
+            const isolates = vmInfo.isolates;
+
+            if (isolateId) {
+              const isolate = (await this.invokeFlutterMethod(
+                port,
+                "getIsolate",
+                {
+                  isolateId,
+                }
+              )) as IsolateResponse;
+
+              if (isRawResponse) {
+                return {
+                  content: [
+                    {
+                      type: "text",
+                      text: JSON.stringify(isolate, null, 2),
+                    },
+                  ],
+                };
+              }
+
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: JSON.stringify(isolate.extensionRPCs || [], null, 2),
+                  },
+                ],
+              };
+            }
+
+            if (isRawResponse) {
+              const allIsolates = await Promise.all(
+                isolates.map((isolateRef) =>
+                  this.invokeFlutterMethod(port, "getIsolate", {
+                    isolateId: isolateRef.id,
+                  })
+                )
+              );
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: JSON.stringify(allIsolates, null, 2),
+                  },
+                ],
+              };
+            }
+
+            const allExtensions: string[] = [];
+            for (const isolateRef of isolates) {
+              const isolate = (await this.invokeFlutterMethod(
+                port,
+                "getIsolate",
+                {
+                  isolateId: isolateRef.id,
+                }
+              )) as IsolateResponse;
+              if (isolate.extensionRPCs) {
+                allExtensions.push(...isolate.extensionRPCs);
+              }
+            }
+
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: JSON.stringify([...new Set(allExtensions)], null, 2),
+                },
+              ],
+            };
+          }
           case "get_supported_protocols": {
             const port = handlePortParam();
             return wrapResponse(

@@ -26,7 +26,7 @@ async function generateRpcHandlers() {
     "..",
     "src",
     "servers",
-    "createRpcHandlerMap.generated.ts"
+    "create_rpc_handler_map.generated.ts"
   );
 
   try {
