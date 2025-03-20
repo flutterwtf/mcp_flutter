@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:logging/logging.dart';
 import 'package:shelf/shelf_io.dart' as shelf_io;
 import 'package:shelf_web_socket/shelf_web_socket.dart';
@@ -58,7 +59,7 @@ void main() async {
     print('${record.level.name}: ${record.time}: ${record.message}');
   });
 
-  final port = 8000;
+  final port = 8888;
   final handler = webSocketHandler((
     WebSocketChannel webSocket,
     String? protocol,
@@ -144,7 +145,8 @@ Future<Map<String, dynamic>> getWidgetTree(
   if (isolates.isEmpty) {
     throw Exception('No isolates found.');
   }
-  final isolate = isolates.first;
+
+  final isolate = await vm._detectMainIsolate();
   final isolateId = isolate.id!;
 
   final isWidgetTreeReady = await vmService.callServiceExtension(
@@ -242,4 +244,42 @@ Future<Map<String, dynamic>> _processWidgetTree(
   }
 
   return result;
+}
+
+extension MainIsolateDetection on vm_service.VmService {
+  /// {@template main_isolate_detection}
+  /// Enhanced isolate detection matching DevTools' heuristics:
+  /// 1. Prefer isolates with Flutter extensions
+  /// 2. Fallback to isolates with ':main(' in name
+  /// 3. Use first isolate as final fallback
+  /// {@endtemplate}
+  Future<vm_service.Isolate> _detectMainIsolate() async {
+    final vm = await getVM();
+    final isolates = vm.isolates ?? [];
+
+    if (isolates.isEmpty) {
+      throw StateError('No isolates available');
+    }
+
+    // Check for Flutter-enabled isolate first
+    for (final ref in isolates) {
+      final isolate = await getIsolate(ref.id!);
+      final hasFlutterExtensions = (isolate.extensionRPCs ?? []).any(
+        (rpc) => rpc.startsWith('ext.flutter'),
+      );
+
+      if (hasFlutterExtensions) {
+        return isolate;
+      }
+    }
+
+    // Fallback to main-like isolate names
+    final mainIsolate = isolates.firstWhereOrNull(
+      (ref) => ref.name?.contains(':main(') ?? false,
+    );
+
+    return mainIsolate != null
+        ? await getIsolate(mainIsolate.id!)
+        : await getIsolate(isolates.first.id!);
+  }
 }

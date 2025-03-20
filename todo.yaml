@@ -1,173 +1,21 @@
-project_restructure:
-  files_to_create:
-    1. src/rpc/flutter_rpc.ts:
-      - Contains all Flutter-specific RPC method definitions
-      - Groups methods by category (inspector, debug, performance, etc)
-      - Exports properly typed RPC constants
-      - Includes documentation headers for each method group
-
-    2. src/rpc/utilities_rpc.ts:
-      - Contains utility methods and non-RPC tools
-      - Includes:
-        - get_active_ports
-        - get_supported_protocols 
-        - get_vm_info
-        - get_extension_rpcs
-        - port discovery helpers
-        - connection validation utils
-
-    3. src/handlers/tool_handlers.ts:
-      - Contains handler implementations for:
-        - ListToolsRequestSchema
-        - CallToolRequestSchema
-      - Separates Flutter RPC handlers from utility handlers
-      - Uses dependency injection for RPC clients
-
-    4. src/proxy/proxy_server.ts:
-      - Handles all Dart proxy communication
-      - Manages WebSocket connections
-      - Implements retry logic
-      - Handles message serialization/deserialization
-
-  index_ts_refactor:
-    - Becomes main entry point only
-    - Responsibilities:
-      - Server initialization
-      - Dependency composition
-      - Module wiring
-      - Error handling
-    - Imports from:
-      - rpc/flutter_rpc
-      - rpc/utilities_rpc  
-      - handlers/tool_handlers
-      - proxy/proxy_server
-
-  index_ts_refactor_plan:
-    move_to_flutter_rpc:
-      - All RPC method definitions (FlutterRPC object)
-      - WebSocket connection management
-      - RPC method invocation logic
-      - Type definitions for RPC responses
-      - RPC prefix enums
-      
-    move_to_utilities_rpc:
-      - getActivePorts
-      - verifyFlutterDebugMode
-      - Port discovery helpers
-      - Connection validation utils
-      - WebSocket utility functions
-      
-    move_to_tool_handlers:
-      - All tool handler implementations from setupToolHandlers
-      - Tool request validation logic
-      - Tool response formatting
-      - Error handling for tools
-      
-    move_to_proxy_server:
-      - connectToDartProxy
-      - sendDartProxyRequest
-      - Proxy WebSocket management
-      - Proxy message handling
-      - Proxy connection retry logic
-
-    refactoring_steps:
-      1. Move Types and Interfaces:
-        - Move all interfaces to appropriate modules
-        - Update import statements
-        - Ensure type consistency
-        
-      2. Extract RPC Methods:
-        - Move FlutterRPC object to flutter_rpc.ts
-        - Update method implementations
-        - Add proper error handling
-        
-      3. Extract Utility Functions:
-        - Move utility methods to utilities_rpc.ts
-        - Add proper logging
-        - Improve error handling
-        
-      4. Refactor Tool Handlers:
-        - Split handlers by category
-        - Implement proper dependency injection
-        - Add validation layers
-        
-      5. Extract Proxy Logic:
-        - Move proxy-related code to proxy_server.ts
-        - Implement connection pooling
-        - Add retry mechanisms
-        
-      6. Clean Up index.ts:
-        - Remove moved code
-        - Update imports
-        - Implement clean dependency injection
-        - Add proper error boundaries
-
-    validation_steps:
-      - Verify each tool still works after moving
-      - Check error handling
-      - Ensure proper logging
-      - Test WebSocket connections
-      - Validate proxy communication
-
-implementation_steps:
-  1. Create directory structure:
-    - mkdir -p src/{rpc,handlers,proxy}
-
-  2. Split flutter_rpc:
-    - Move enum rpc_prefix
-    - Move flutter_rpc object structure
-    - Add type definitions for all RPC methods
-    - Export from src/rpc/flutter_rpc.ts
-
-  3. Extract utilities_rpc:
-    - Create new UtilitiesRPC class
-    - Port utility methods from FlutterInspectorServer:
-      - get_active_ports
-      - verify_flutter_debug_mode
-      - connection helpers
-    - Add utility-specific types
-
-  4. Implement tool_handlers:
-    - Create BaseToolHandler abstract class
-    - Implement FlutterToolHandler (extends Base)
-    - Implement UtilityToolHandler (extends Base) 
-    - Move setup_tool_handlers logic here
-    - Use strategy pattern for different tool types
-
-  5. proxy_server implementation:
-    - Create DartProxyClient class
-    - Move proxy-related methods from FlutterInspectorServer:
-      - connect_to_dart_proxy
-      - send_dart_proxy_request
-      - pending_proxy_requests
-    - Add connection pooling
-    - Implement heartbeat mechanism
-
-  6. Update FlutterInspectorServer:
-    - Compose dependencies:
-      - constructor(flutter_rpc, utilities_rpc, tool_handlers, proxy_client)
-    - Remove migrated logic
-    - Keep core server lifecycle management
-
-testing_plan:
-  validation_checklist:
-    - [ ] All RPC methods available after split
-    - [ ] Utility tools work without Flutter connection
-    - [ ] Proxy communication remains functional
-    - [ ] Type definitions match original behavior
-    - [ ] Error handling preserved across modules
-    - [ ] Logging context maintained
-    - [ ] All CLI commands still functional
-
-migration_strategy:
-  phase1: Extract independent modules
-  phase2: Update imports/references
-  phase3: Verify core functionality
-  phase4: Add test coverage
-  phase5: Remove legacy code
-
-documentation_updates:
-  - Add ARCHITECTURE.md explaining new structure
-  - Update README with new module map
-  - Add JSDoc comments to all RPC methods
-  - Create proxy_comms.md for Dart protocol
+---
+todos:
+  - title: Refactor src/index.ts into multiple files
+    steps:
+      - description: Create src/types/types.ts and move interfaces and types from src/index.ts
+        file: src/types/types.ts
+      - description: Create src/rpc/flutter_rpc.ts and move RPCPrefix, FlutterRPC, invokeFlutterMethod, getFlutterIsolate, invokeFlutterExtension, and verifyFlutterDebugMode from src/index.ts
+        file: src/rpc/flutter_rpc.ts
+      - description: Create src/servers/flutter_inspector_server.ts and move the FlutterInspectorServer class from src/index.ts
+        file: src/servers/flutter_inspector_server.ts
+      - description: Create src/utilities/utilities.ts and move the getActivePorts method from src/index.ts
+        file: src/utilities/utilities.ts
+      - description: Create src/utilities/websocket_utilities.ts and move the connectWebSocket and sendWebSocketRequest methods from src/index.ts
+        file: src/utilities/websocket_utilities.ts
+      - description: Create src/utilities/dart_extension_service_utilities.ts and move the connectToDartProxy and sendDartProxyRequest methods from src/index.ts
+        file: src/utilities/dart_extension_service_utilities.ts
+      - description: Create src/handlers/tool_handlers.ts and move the setupToolHandlers method from src/index.ts
+        file: src/handlers/tool_handlers.ts
+      - description: Move the tool handler implementations to separate files under src/handlers/. For example, move the get_active_ports handler to src/handlers/utilities_tool_handler.ts and the debug_dump_render_tree handler to src/handlers/flutter_tool_handler.ts.
+      - description: Update imports in all files to reflect the new file structure.
+        file: all files
