@@ -1,13 +1,13 @@
 # server_tools_handler.yaml
 handlers:
-  - name: get_widget_tree
+  - name: debug_dump_render_tree
     description: Fetches the widget tree.
     rpcMethod: "debug.dumpRenderTree"
     needsDebugVerification: true
     responseWrapper: true
     parameters: {}
 
-  - name: get_widget_details
+  - name: inspector_get_properties
     description: Fetches details for a specific widget.
     rpcMethod: "inspector.getProperties"
     needsDebugVerification: true
@@ -15,14 +15,14 @@ handlers:
     parameters:
       objectId: "arg.objectId"
 
-  - name: get_vm_info
+  - name: get_vm
     description: Fetches VM information.
     rpcMethod: "getVM"
     needsDebugVerification: true
     responseWrapper: true
     parameters: {}
 
-  - name: toggle_debug_paint
+  - name: debug_set_debug_paint
     description: Toggles debug paint mode.
     rpcMethod: "debug.setDebugPaint"
     needsDebugVerification: true
@@ -30,7 +30,7 @@ handlers:
     parameters:
       enabled: ""
 
-  - name: get_root_widget_summary_tree
+  - name: inspector_get_root_widget_summary_tree
     description: Fetches the root widget summary tree using the Dart Service Extension Proxy.
     rpcMethod: "ext.flutter.inspector.getRootWidgetSummaryTree"
     needsDartServiceExtensionProxy: true

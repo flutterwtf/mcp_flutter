@@ -103,7 +103,7 @@ export class FlutterRpcHandlers {
         ? "await this.server.verifyFlutterDebugMode(port);"
         : ""
     }
-    const result = await this.server.invokeFlutterExtension(port, "${rpcMethod}", ${rpcParamsObject.trim()});
+    const result = await this.server.invokeFlutterMethod(port, "${rpcMethod}", ${rpcParamsObject.trim()});
     ${
       responseWrapper
         ? "return this.server.wrapResponse(Promise.resolve(result));"

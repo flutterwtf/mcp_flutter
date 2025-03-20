@@ -60,23 +60,6 @@ export class FlutterInspectorServer {
     this.rpcUtils.log(level, ...args);
   }
 
-  // Public methods that delegate to RpcUtilities
-  public async verifyFlutterDebugMode(port: number): Promise<void> {
-    return this.rpcUtils.verifyFlutterDebugMode(port);
-  }
-
-  public async invokeFlutterExtension(
-    port: number,
-    method: string,
-    params: any = {}
-  ): Promise<any> {
-    return this.rpcUtils.invokeFlutterExtension(port, method, params);
-  }
-
-  public wrapResponse(promise: Promise<unknown>) {
-    return this.rpcUtils.wrapResponse(promise);
-  }
-
   private setupToolHandlers() {
     const serverToolsPath = path.join(__dirname, "server_tools.yaml");
 
@@ -92,11 +75,14 @@ export class FlutterInspectorServer {
 
       // Use the generated function to create the handler map
       const handlerMap = createRpcHandlerMap(rpcHandlers, (request) =>
-        this.handlePortParam(request)
+        this.rpcUtils.handlePortParam(request)
       );
 
       // Get custom handlers
-      const customHandlerMap = createCustomRpcHandlerMap(this.rpcUtils);
+      const customHandlerMap = createCustomRpcHandlerMap(
+        this.rpcUtils,
+        (request) => this.rpcUtils.handlePortParam(request)
+      );
 
       this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const toolName = request.params.name;
@@ -120,10 +106,6 @@ export class FlutterInspectorServer {
       this.log("error", "Error setting up tool handlers:", error);
       throw error;
     }
-  }
-
-  private handlePortParam(request: any): number {
-    return this.rpcUtils.handlePortParam(request);
   }
 
   async run() {

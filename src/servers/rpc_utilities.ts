@@ -266,7 +266,7 @@ export class RpcUtilities {
       ? method
       : `ext.flutter.${method}`;
 
-    return this.invokeFlutterMethod(port, "ext:$" + fullMethod, params);
+    return this.invokeFlutterMethod(port, fullMethod, params);
   }
 
   /**
