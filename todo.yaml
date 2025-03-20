@@ -42,6 +42,73 @@ project_restructure:
       - handlers/tool_handlers
       - proxy/proxy_server
 
+  index_ts_refactor_plan:
+    move_to_flutter_rpc:
+      - All RPC method definitions (FlutterRPC object)
+      - WebSocket connection management
+      - RPC method invocation logic
+      - Type definitions for RPC responses
+      - RPC prefix enums
+      
+    move_to_utilities_rpc:
+      - getActivePorts
+      - verifyFlutterDebugMode
+      - Port discovery helpers
+      - Connection validation utils
+      - WebSocket utility functions
+      
+    move_to_tool_handlers:
+      - All tool handler implementations from setupToolHandlers
+      - Tool request validation logic
+      - Tool response formatting
+      - Error handling for tools
+      
+    move_to_proxy_server:
+      - connectToDartProxy
+      - sendDartProxyRequest
+      - Proxy WebSocket management
+      - Proxy message handling
+      - Proxy connection retry logic
+
+    refactoring_steps:
+      1. Move Types and Interfaces:
+        - Move all interfaces to appropriate modules
+        - Update import statements
+        - Ensure type consistency
+        
+      2. Extract RPC Methods:
+        - Move FlutterRPC object to flutter_rpc.ts
+        - Update method implementations
+        - Add proper error handling
+        
+      3. Extract Utility Functions:
+        - Move utility methods to utilities_rpc.ts
+        - Add proper logging
+        - Improve error handling
+        
+      4. Refactor Tool Handlers:
+        - Split handlers by category
+        - Implement proper dependency injection
+        - Add validation layers
+        
+      5. Extract Proxy Logic:
+        - Move proxy-related code to proxy_server.ts
+        - Implement connection pooling
+        - Add retry mechanisms
+        
+      6. Clean Up index.ts:
+        - Remove moved code
+        - Update imports
+        - Implement clean dependency injection
+        - Add proper error boundaries
+
+    validation_steps:
+      - Verify each tool still works after moving
+      - Check error handling
+      - Ensure proper logging
+      - Test WebSocket connections
+      - Validate proxy communication
+
 implementation_steps:
   1. Create directory structure:
     - mkdir -p src/{rpc,handlers,proxy}
