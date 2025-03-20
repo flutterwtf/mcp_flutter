@@ -739,3 +739,24 @@ tools:
           type: number
           description: "Optional: Custom port number if not using default Flutter debug port 8181"
       required: ["objectId"]
+  - name: inspector_get_properties
+    description: "RPC: Get widget properties."
+    inputSchema:
+      type: object
+      properties:
+        objectId:
+          type: string
+          description: "ID of the widget to get properties for"
+        port:
+          type: number
+          description: "Optional: Custom port number if not using default Flutter debug port 8181"
+      required: ["objectId"]
+  - name: inspector_get_root_widget_summary_tree
+    description: "RPC: Get the root widget summary tree."
+    inputSchema:
+      type: object
+      properties:
+        port:
+          type: number
+          description: "Optional: Custom port number if not using default Flutter debug port 8181"
+      required: []
