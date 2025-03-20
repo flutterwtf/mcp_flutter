@@ -71,7 +71,7 @@ export class FlutterInspectorServer {
         tools: serverTools.tools,
       }));
 
-      const rpcHandlers = new FlutterRpcHandlers(this); // Instantiate FlutterRpcHandlers
+      const rpcHandlers = new FlutterRpcHandlers(this.rpcUtils);
 
       // Use the generated function to create the handler map
       const handlerMap = createRpcHandlerMap(rpcHandlers, (request) =>
