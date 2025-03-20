@@ -2,14 +2,14 @@
 handlers:
   - name: debug_dump_render_tree
     description: Fetches the widget tree.
-    rpcMethod: "debug.dumpRenderTree"
+    rpcMethod: "ext.flutter.debugDumpRenderTree"
     needsDebugVerification: true
     responseWrapper: true
     parameters: {}
 
   - name: inspector_get_properties
     description: Fetches details for a specific widget.
-    rpcMethod: "inspector.getProperties"
+    rpcMethod: "ext.flutter.inspector.getProperties"
     needsDebugVerification: true
     responseWrapper: true
     parameters:
@@ -24,7 +24,7 @@ handlers:
 
   - name: debug_set_debug_paint
     description: Toggles debug paint mode.
-    rpcMethod: "debug.setDebugPaint"
+    rpcMethod: "ext.flutter.debugPaint"
     needsDebugVerification: true
     responseWrapper: true
     parameters:
@@ -39,10 +39,3 @@ handlers:
     parameters:
       includeProperties: "arg.includeProperties"
       subtreeDepth: "arg.subtreeDepth"
-
-  - name: debug_dump_layer_tree
-    description: Dump the layer tree from the Flutter app.
-    rpcMethod: "debug.dumpLayerTree"
-    needsDebugVerification: true
-    responseWrapper: true
-    parameters: {}

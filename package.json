@@ -17,7 +17,7 @@
     "inspector": "npx @modelcontextprotocol/inspector build/index.js",
     "start": "node build/index.js",
     "generate-rpc-handlers": "ts-node scripts/generate_rpc_handlers.ts",
-    "copy-yaml-files": "mkdir -p build/servers && cp src/servers/server_tools.yaml build/servers/ && cp server_tools_handler.yaml build/servers/"
+    "copy-yaml-files": "mkdir -p build/servers && cp src/servers/server_tools_flutter.yaml build/servers/ && cp src/servers/server_tools_custom.yaml build/servers/"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "0.6.0",
