@@ -391,3 +391,155 @@ handlers:
     responseWrapper: true
     parameters:
       enabled: ""
+
+  - name: inspector_widget_location_id_map
+    description: Gets the mapping between widget locations and their IDs.
+    rpcMethod: "ext.flutter.inspector.widgetLocationIdMap"
+    needsDartServiceExtensionProxy: true
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters: {}
+
+  - name: inspector_dispose_all_groups
+    description: Disposes all inspector groups.
+    rpcMethod: "ext.flutter.inspector.disposeAllGroups"
+    needsDartServiceExtensionProxy: true
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters: {}
+
+  - name: inspector_dispose_group
+    description: Disposes a specific inspector group.
+    rpcMethod: "ext.flutter.inspector.disposeGroup"
+    needsDartServiceExtensionProxy: true
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters:
+      groupName: "arg.groupName"
+
+  - name: inspector_is_widget_tree_ready
+    description: Checks if the widget tree is ready for inspection.
+    rpcMethod: "ext.flutter.inspector.isWidgetTreeReady"
+    needsDartServiceExtensionProxy: true
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters: {}
+
+  - name: inspector_dispose_id
+    description: Disposes a specific object by its ID.
+    rpcMethod: "ext.flutter.inspector.disposeId"
+    needsDartServiceExtensionProxy: true
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters:
+      objectId: "arg.objectId"
+
+  - name: inspector_set_pub_root_directories
+    description: Sets the pub root directories.
+    rpcMethod: "ext.flutter.inspector.setPubRootDirectories"
+    needsDartServiceExtensionProxy: true
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters:
+      rootDirectories: "arg.rootDirectories"
+
+  - name: inspector_add_pub_root_directories
+    description: Adds pub root directories.
+    rpcMethod: "ext.flutter.inspector.addPubRootDirectories"
+    needsDartServiceExtensionProxy: true
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters:
+      rootDirectories: "arg.rootDirectories"
+
+  - name: inspector_remove_pub_root_directories
+    description: Removes pub root directories.
+    rpcMethod: "ext.flutter.inspector.removePubRootDirectories"
+    needsDartServiceExtensionProxy: true
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters:
+      rootDirectories: "arg.rootDirectories"
+
+  - name: inspector_get_pub_root_directories
+    description: Gets the pub root directories.
+    rpcMethod: "ext.flutter.inspector.getPubRootDirectories"
+    needsDartServiceExtensionProxy: true
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters: {}
+
+  - name: inspector_get_children
+    description: Gets the children of a widget.
+    rpcMethod: "ext.flutter.inspector.getChildren"
+    needsDartServiceExtensionProxy: true
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters:
+      objectId: "arg.objectId"
+
+  - name: inspector_get_children_details_subtree
+    description: Gets the children details subtree of a widget.
+    rpcMethod: "ext.flutter.inspector.getChildrenDetailsSubtree"
+    needsDartServiceExtensionProxy: true
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters:
+      objectId: "arg.objectId"
+
+  - name: inspector_get_root_widget
+    description: Gets the root widget.
+    rpcMethod: "ext.flutter.inspector.getRootWidget"
+    needsDartServiceExtensionProxy: true
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters: {}
+
+  - name: inspector_get_root_widget_summary_tree_with_previews
+    description: Gets the root widget summary tree with previews.
+    rpcMethod: "ext.flutter.inspector.getRootWidgetSummaryTreeWithPreviews"
+    needsDartServiceExtensionProxy: true
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters:
+      includeProperties: "arg.includeProperties"
+      subtreeDepth: "arg.subtreeDepth"
+
+  - name: inspector_get_root_widget_tree
+    description: Gets the complete root widget tree.
+    rpcMethod: "ext.flutter.inspector.getRootWidgetTree"
+    needsDartServiceExtensionProxy: true
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters: {}
+
+  - name: inspector_set_flex_fit
+    description: Sets the flex fit property of a flex widget.
+    rpcMethod: "ext.flutter.inspector.setFlexFit"
+    needsDartServiceExtensionProxy: true
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters:
+      objectId: "arg.objectId"
+      flexFit: "arg.flexFit"
+
+  - name: inspector_set_flex_factor
+    description: Sets the flex factor property of a flex widget.
+    rpcMethod: "ext.flutter.inspector.setFlexFactor"
+    needsDartServiceExtensionProxy: true
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters:
+      objectId: "arg.objectId"
+      flexFactor: "arg.flexFactor"
+
+  - name: inspector_set_flex_properties
+    description: Sets multiple flex properties of a flex widget.
+    rpcMethod: "ext.flutter.inspector.setFlexProperties"
+    needsDartServiceExtensionProxy: true
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters:
+      objectId: "arg.objectId"
+      flexFactor: "arg.flexFactor"
+      flexFit: "arg.flexFit"

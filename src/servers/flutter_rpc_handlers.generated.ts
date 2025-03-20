@@ -454,4 +454,157 @@ export class FlutterRpcHandlers {
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
+  /**
+   * Gets the mapping between widget locations and their IDs.
+   */
+  async handleInspectorWidgetLocationIdMap(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.sendDartProxyRequest("ext.flutter.inspector.widgetLocationIdMap", port, {});
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Disposes all inspector groups.
+   */
+  async handleInspectorDisposeAllGroups(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.sendDartProxyRequest("ext.flutter.inspector.disposeAllGroups", port, {});
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Disposes a specific inspector group.
+   */
+  async handleInspectorDisposeGroup(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.sendDartProxyRequest("ext.flutter.inspector.disposeGroup", port, { arg: { groupName: params?.groupName } });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Checks if the widget tree is ready for inspection.
+   */
+  async handleInspectorIsWidgetTreeReady(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.sendDartProxyRequest("ext.flutter.inspector.isWidgetTreeReady", port, {});
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Disposes a specific object by its ID.
+   */
+  async handleInspectorDisposeId(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.sendDartProxyRequest("ext.flutter.inspector.disposeId", port, { arg: { objectId: params?.objectId } });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Sets the pub root directories.
+   */
+  async handleInspectorSetPubRootDirectories(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.sendDartProxyRequest("ext.flutter.inspector.setPubRootDirectories", port, { arg: { rootDirectories: params?.rootDirectories } });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Adds pub root directories.
+   */
+  async handleInspectorAddPubRootDirectories(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.sendDartProxyRequest("ext.flutter.inspector.addPubRootDirectories", port, { arg: { rootDirectories: params?.rootDirectories } });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Removes pub root directories.
+   */
+  async handleInspectorRemovePubRootDirectories(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.sendDartProxyRequest("ext.flutter.inspector.removePubRootDirectories", port, { arg: { rootDirectories: params?.rootDirectories } });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Gets the pub root directories.
+   */
+  async handleInspectorGetPubRootDirectories(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.sendDartProxyRequest("ext.flutter.inspector.getPubRootDirectories", port, {});
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Gets the children of a widget.
+   */
+  async handleInspectorGetChildren(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.sendDartProxyRequest("ext.flutter.inspector.getChildren", port, { arg: { objectId: params?.objectId } });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Gets the children details subtree of a widget.
+   */
+  async handleInspectorGetChildrenDetailsSubtree(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.sendDartProxyRequest("ext.flutter.inspector.getChildrenDetailsSubtree", port, { arg: { objectId: params?.objectId } });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Gets the root widget.
+   */
+  async handleInspectorGetRootWidget(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.sendDartProxyRequest("ext.flutter.inspector.getRootWidget", port, {});
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Gets the root widget summary tree with previews.
+   */
+  async handleInspectorGetRootWidgetSummaryTreeWithPreviews(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.sendDartProxyRequest("ext.flutter.inspector.getRootWidgetSummaryTreeWithPreviews", port, { arg: { includeProperties: params?.includeProperties, subtreeDepth: params?.subtreeDepth } });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Gets the complete root widget tree.
+   */
+  async handleInspectorGetRootWidgetTree(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.sendDartProxyRequest("ext.flutter.inspector.getRootWidgetTree", port, {});
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Sets the flex fit property of a flex widget.
+   */
+  async handleInspectorSetFlexFit(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.sendDartProxyRequest("ext.flutter.inspector.setFlexFit", port, { arg: { objectId: params?.objectId, flexFit: params?.flexFit } });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Sets the flex factor property of a flex widget.
+   */
+  async handleInspectorSetFlexFactor(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.sendDartProxyRequest("ext.flutter.inspector.setFlexFactor", port, { arg: { objectId: params?.objectId, flexFactor: params?.flexFactor } });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
+  /**
+   * Sets multiple flex properties of a flex widget.
+   */
+  async handleInspectorSetFlexProperties(port: number, params?: any): Promise<unknown> {
+    await this.rpcUtils.verifyFlutterDebugMode(port);
+    const result = await this.rpcUtils.sendDartProxyRequest("ext.flutter.inspector.setFlexProperties", port, { arg: { objectId: params?.objectId, flexFactor: params?.flexFactor, flexFit: params?.flexFit } });
+    return this.rpcUtils.wrapResponse(Promise.resolve(result));
+  }
+  
 }

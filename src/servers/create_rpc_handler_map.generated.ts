@@ -261,5 +261,90 @@ export function createRpcHandlerMap(
       const params = request.params.arguments;
       return rpcHandlers.handleInspectorTrackRepaintWidgets(port, params);
     },
+    "inspector_widget_location_id_map": (request: any) => {
+      const port = handlePortParam(request);
+      
+      return rpcHandlers.handleInspectorWidgetLocationIdMap(port);
+    },
+    "inspector_dispose_all_groups": (request: any) => {
+      const port = handlePortParam(request);
+      
+      return rpcHandlers.handleInspectorDisposeAllGroups(port);
+    },
+    "inspector_dispose_group": (request: any) => {
+      const port = handlePortParam(request);
+      const params = request.params.arguments;
+      return rpcHandlers.handleInspectorDisposeGroup(port, params);
+    },
+    "inspector_is_widget_tree_ready": (request: any) => {
+      const port = handlePortParam(request);
+      
+      return rpcHandlers.handleInspectorIsWidgetTreeReady(port);
+    },
+    "inspector_dispose_id": (request: any) => {
+      const port = handlePortParam(request);
+      const params = request.params.arguments;
+      return rpcHandlers.handleInspectorDisposeId(port, params);
+    },
+    "inspector_set_pub_root_directories": (request: any) => {
+      const port = handlePortParam(request);
+      const params = request.params.arguments;
+      return rpcHandlers.handleInspectorSetPubRootDirectories(port, params);
+    },
+    "inspector_add_pub_root_directories": (request: any) => {
+      const port = handlePortParam(request);
+      const params = request.params.arguments;
+      return rpcHandlers.handleInspectorAddPubRootDirectories(port, params);
+    },
+    "inspector_remove_pub_root_directories": (request: any) => {
+      const port = handlePortParam(request);
+      const params = request.params.arguments;
+      return rpcHandlers.handleInspectorRemovePubRootDirectories(port, params);
+    },
+    "inspector_get_pub_root_directories": (request: any) => {
+      const port = handlePortParam(request);
+      
+      return rpcHandlers.handleInspectorGetPubRootDirectories(port);
+    },
+    "inspector_get_children": (request: any) => {
+      const port = handlePortParam(request);
+      const params = request.params.arguments;
+      return rpcHandlers.handleInspectorGetChildren(port, params);
+    },
+    "inspector_get_children_details_subtree": (request: any) => {
+      const port = handlePortParam(request);
+      const params = request.params.arguments;
+      return rpcHandlers.handleInspectorGetChildrenDetailsSubtree(port, params);
+    },
+    "inspector_get_root_widget": (request: any) => {
+      const port = handlePortParam(request);
+      
+      return rpcHandlers.handleInspectorGetRootWidget(port);
+    },
+    "inspector_get_root_widget_summary_tree_with_previews": (request: any) => {
+      const port = handlePortParam(request);
+      const params = request.params.arguments;
+      return rpcHandlers.handleInspectorGetRootWidgetSummaryTreeWithPreviews(port, params);
+    },
+    "inspector_get_root_widget_tree": (request: any) => {
+      const port = handlePortParam(request);
+      
+      return rpcHandlers.handleInspectorGetRootWidgetTree(port);
+    },
+    "inspector_set_flex_fit": (request: any) => {
+      const port = handlePortParam(request);
+      const params = request.params.arguments;
+      return rpcHandlers.handleInspectorSetFlexFit(port, params);
+    },
+    "inspector_set_flex_factor": (request: any) => {
+      const port = handlePortParam(request);
+      const params = request.params.arguments;
+      return rpcHandlers.handleInspectorSetFlexFactor(port, params);
+    },
+    "inspector_set_flex_properties": (request: any) => {
+      const port = handlePortParam(request);
+      const params = request.params.arguments;
+      return rpcHandlers.handleInspectorSetFlexProperties(port, params);
+    },
   };
 }
