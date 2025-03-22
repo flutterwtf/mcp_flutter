@@ -30,7 +30,7 @@ const server = new FlutterInspectorServer(args);
 await server.run();
 ```
 
-By default, it will start on port 8142 (defined in `defaultWebClientPort`).
+By default, it will start on port 3334 (defined in `defaultWebClientPort`).
 
 ### Connecting Dart/Flutter Clients
 
@@ -41,7 +41,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'dart:convert';
 
 // Connect to the server
-final wsUrl = Uri.parse('ws://localhost:8142/ws');
+final wsUrl = Uri.parse('ws://localhost:3334/ws');
 final channel = WebSocketChannel.connect(wsUrl);
 
 // Send a JSON-RPC 2.0 request

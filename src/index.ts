@@ -2,7 +2,10 @@
 import * as dotenv from "dotenv";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
-import { FlutterInspectorServer } from "./servers/flutter_inspector_server.js";
+import {
+  defaultMCPServerPort,
+  FlutterInspectorServer,
+} from "./servers/flutter_inspector_server.js";
 import { LogLevel } from "./types/types.js";
 
 // Load environment variables
@@ -37,7 +40,7 @@ export class CommandLineArgs {
           alias: "p",
           description: "Port to run the server on",
           type: "number",
-          default: parseInt(process.env.PORT || "3334", 10),
+          default: parseInt(process.env.PORT || `${defaultMCPServerPort}`, 10),
         },
         stdio: {
           description: "Run in stdio mode instead of HTTP mode",
@@ -47,7 +50,7 @@ export class CommandLineArgs {
         "log-level": {
           description: "Logging level",
           choices: ["error", "warn", "info", "debug"] as const,
-          default: process.env.LOG_LEVEL || "info",
+          default: process.env.LOG_LEVEL || "error",
         },
         host: {
           description: "Host to run the server on",

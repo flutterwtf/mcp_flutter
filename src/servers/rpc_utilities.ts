@@ -6,7 +6,7 @@ import { promisify } from "util";
 import { IsolateResponse, VMInfo } from "../types/types.js";
 import {
   defaultDartVMPort,
-  defaultWebClientPort,
+  defaultFlutterExtensionPort,
 } from "./flutter_inspector_server.js";
 import { Logger } from "./logger.js";
 import { RpcClient } from "./rpc_client.js";
@@ -33,8 +33,8 @@ export class RpcUtilities {
    * Start the RPC Server that can accept connections from Dart clients
    */
   async startRpcServer(
-    port: number = defaultWebClientPort,
-    path: string = "/ws"
+    port: number = defaultFlutterExtensionPort,
+    path: string = "/ext-ws"
   ): Promise<RpcServer> {
     if (this.rpcServer) {
       this.logger.info(
@@ -64,23 +64,6 @@ export class RpcUtilities {
     await this.rpcServer.start(port, path);
     this.logger.info(`Started RPC Server at ws://${this.host}:${port}${path}`);
     return this.rpcServer;
-  }
-
-  /**
-   * Send a message to all connected Dart clients
-   */
-  async broadcastToDartClients(
-    method: string,
-    params: Record<string, unknown> = {}
-  ): Promise<Map<string, unknown>> {
-    if (!this.rpcServer) {
-      throw new McpError(
-        ErrorCode.InternalError,
-        "RPC Server not started. Call startRpcServer first."
-      );
-    }
-
-    return await this.rpcServer.broadcastMethod(method, params);
   }
 
   /**

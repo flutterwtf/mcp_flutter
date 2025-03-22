@@ -3,12 +3,12 @@
 class Envs {
   static const tsRpc = (
     host: String.fromEnvironment('TS_RPC_HOST', defaultValue: 'localhost'),
-    port: int.fromEnvironment('TS_RPC_PORT', defaultValue: 3334),
-    path: String.fromEnvironment('TS_RPC_PATH', defaultValue: 'ws'),
+    port: int.fromEnvironment('TS_RPC_PORT', defaultValue: 3535),
+    path: String.fromEnvironment('TS_RPC_PATH', defaultValue: 'ext-ws'),
   );
   static const flutterRpc = (
     host: String.fromEnvironment('FLUTTER_RPC_HOST', defaultValue: 'localhost'),
-    port: int.fromEnvironment('FLUTTER_RPC_PORT', defaultValue: 8141),
+    port: int.fromEnvironment('FLUTTER_RPC_PORT', defaultValue: 8181),
     path: String.fromEnvironment('FLUTTER_RPC_PATH', defaultValue: 'ws'),
   );
 }

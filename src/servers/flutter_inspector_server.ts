@@ -18,7 +18,8 @@ import { RpcServer } from "./rpc_server.js";
 import { RpcUtilities } from "./rpc_utilities.js";
 
 export const defaultDartVMPort = 8181;
-export const defaultWebClientPort = 3334;
+export const defaultMCPServerPort = 3535;
+export const defaultFlutterExtensionPort = 3535;
 
 // Get the directory name in ESM
 const __filename = fileURLToPath(import.meta.url);
@@ -128,7 +129,7 @@ export class FlutterInspectorServer {
    * Initialize the RPC server to accept connections from Dart clients
    */
   async initializeRpcServer(
-    port: number = defaultWebClientPort
+    port: number = defaultFlutterExtensionPort
   ): Promise<void> {
     try {
       this.rpcServer = await this.rpcUtils.startRpcServer(port);
@@ -139,34 +140,6 @@ export class FlutterInspectorServer {
       this.logger.error("Failed to initialize RPC server:", error);
       throw error;
     }
-  }
-
-  /**
-   * Get the list of connected Dart client IDs
-   */
-  getConnectedDartClients(): string[] {
-    return this.rpcServer?.getConnectedClients() || [];
-  }
-
-  /**
-   * Send a notification to all connected Dart clients
-   */
-  async broadcastToDartClients(
-    method: string,
-    params: Record<string, unknown> = {}
-  ): Promise<Map<string, unknown>> {
-    return await this.rpcUtils.broadcastToDartClients(method, params);
-  }
-
-  /**
-   * Send a message to a specific Dart client
-   */
-  async sendToDartClient(
-    clientId: string,
-    method: string,
-    params: Record<string, unknown> = {}
-  ): Promise<unknown> {
-    return await this.rpcUtils.sendToDartClient(clientId, method, params);
   }
 
   async run() {
