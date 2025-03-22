@@ -1,6 +1,6 @@
 import WebSocket from "ws";
 
-export class FlutterExtensionRpcClient {
+export class RpcClient {
   private ws: WebSocket | null = null;
   private pendingRequests = new Map<
     string,
@@ -19,6 +19,12 @@ export class FlutterExtensionRpcClient {
    * Connect to the Flutter RPC server
    */
   async connect(host: string, port: number): Promise<void> {
+    const readyState = this.ws?.readyState;
+    if (readyState === WebSocket.CLOSED || readyState === WebSocket.CLOSING) {
+      this.ws = null;
+    } else {
+      return;
+    }
     return new Promise((resolve, reject) => {
       const wsUrl = `ws://${host}:${port}`;
       this.ws = new WebSocket(wsUrl);

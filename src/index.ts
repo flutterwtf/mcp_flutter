@@ -11,6 +11,7 @@ export interface CommandLineConfig {
   port: number;
   stdio: boolean;
   logLevel: LogLevel;
+  host: string;
 }
 
 export class CommandLineArgs {
@@ -24,6 +25,9 @@ export class CommandLineArgs {
   }
   get logLevel() {
     return this.config.logLevel as LogLevel;
+  }
+  get host() {
+    return this.config.host;
   }
 
   static fromCommandLine(): CommandLineArgs {
@@ -45,6 +49,11 @@ export class CommandLineArgs {
           choices: ["error", "warn", "info", "debug"] as const,
           default: process.env.LOG_LEVEL || "info",
         },
+        host: {
+          description: "Host to run the server on",
+          type: "string",
+          default: process.env.HOST || "localhost",
+        },
       })
       .help()
       .parseSync();
@@ -53,6 +62,7 @@ export class CommandLineArgs {
       port: argv.port,
       stdio: argv.stdio,
       logLevel: argv["log-level"] as LogLevel,
+      host: argv.host,
     });
   }
 }

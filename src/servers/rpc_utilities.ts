@@ -3,102 +3,40 @@ import { exec } from "child_process";
 import fs from "fs";
 import yaml from "js-yaml";
 import { promisify } from "util";
-import WebSocket from "ws";
-import {
-  IsolateResponse,
-  LogLevel,
-  VMInfo,
-  WebSocketRequest,
-  WebSocketResponse,
-} from "../types/types.js";
-
+import { IsolateResponse, VMInfo } from "../types/types.js";
+import { defaultDartVMPort } from "./flutter_inspector_server.js";
+import { Logger } from "./logger.js";
+import { RpcClient } from "./prc_client.js";
+type ConnectionDestination = "dart-vm" | "flutter-extension";
 export const execAsync = promisify(exec);
 
 /**
  * Utilities for handling RPC communication with Flutter applications
  */
 export class RpcUtilities {
-  private wsConnections: Map<number, WebSocket> = new Map();
-  private pendingRequests: Map<
-    string,
-    { resolve: Function; reject: Function; method: string }
-  > = new Map();
-  private messageId = 0;
-  private logLevel: LogLevel;
+  private dartVmClient: RpcClient;
+  private flutterExtensionClient: RpcClient;
 
-  // Dart proxy properties
-  private dartProxyWs: WebSocket | null = null;
-  private proxyPort = 8888;
-  private pendingProxyRequests = new Map<
-    string,
-    { resolve: Function; reject: Function }
-  >();
-
-  constructor(logLevel: LogLevel = "info") {
-    this.logLevel = logLevel;
+  constructor(
+    private readonly host: string = "localhost",
+    private readonly logger: Logger
+  ) {
+    this.dartVmClient = new RpcClient();
+    this.flutterExtensionClient = new RpcClient();
   }
 
   /**
-   * Generate a unique ID for requests
+   * Connect to the Dart VM
    */
-  private generateId(): string {
-    return `${Date.now()}_${this.messageId++}`;
-  }
-
-  /**
-   * Connect to a WebSocket for the given port
-   */
-  async connectWebSocket(port: number): Promise<WebSocket> {
-    if (this.wsConnections.has(port)) {
-      const ws = this.wsConnections.get(port)!;
-      if (ws.readyState === WebSocket.OPEN) {
-        return ws;
-      }
-      this.wsConnections.delete(port);
+  async connect(
+    port: number,
+    connectionDestination: ConnectionDestination
+  ): Promise<void> {
+    if (connectionDestination === "dart-vm") {
+      await this.dartVmClient.connect(this.host, port);
+    } else {
+      await this.flutterExtensionClient.connect(this.host, port);
     }
-
-    return new Promise((resolve, reject) => {
-      const wsUrl = `ws://localhost:${port}/ws`;
-      const ws = new WebSocket(wsUrl);
-
-      ws.onopen = () => {
-        this.log("debug", `WebSocket connected to ${wsUrl}`);
-        this.wsConnections.set(port, ws);
-        resolve(ws);
-      };
-
-      ws.onerror = (error) => {
-        this.log("error", `WebSocket error for ${wsUrl}:`, error);
-        reject(error);
-      };
-
-      ws.onclose = () => {
-        this.log("debug", `WebSocket closed for ${wsUrl}`);
-        this.wsConnections.delete(port);
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const response = JSON.parse(
-            event.data.toString()
-          ) as WebSocketResponse;
-
-          if (response.id) {
-            const request = this.pendingRequests.get(response.id);
-            if (request) {
-              if (response.error) {
-                request.reject(new Error(response.error.message));
-              } else {
-                request.resolve(response.result);
-              }
-              this.pendingRequests.delete(response.id);
-            }
-          }
-        } catch (error) {
-          this.log("error", "Error parsing WebSocket message:", error);
-        }
-      };
-    });
   }
 
   /**
@@ -107,72 +45,66 @@ export class RpcUtilities {
   async sendWebSocketRequest(
     port: number,
     method: string,
-    params: Record<string, unknown> = {}
+    params: Record<string, unknown> = {},
+    connectionDestination: ConnectionDestination = "dart-vm"
   ): Promise<unknown> {
-    const ws = await this.connectWebSocket(port);
-    const id = this.generateId();
-
-    const request: WebSocketRequest = {
-      jsonrpc: "2.0",
-      id,
-      method,
-      params,
-    };
-
-    return new Promise((resolve, reject) => {
-      this.pendingRequests.set(id, { resolve, reject, method });
-      ws.send(JSON.stringify(request));
-    });
+    await this.connect(port, connectionDestination);
+    switch (connectionDestination) {
+      case "dart-vm":
+        return this.dartVmClient.callMethod(method, params);
+      case "flutter-extension":
+        return this.flutterExtensionClient.callMethod(method, params);
+    }
   }
 
   /**
    * Close all WebSocket connections
    */
   async closeAllConnections(): Promise<void> {
-    for (const ws of this.wsConnections.values()) {
-      ws.close();
-    }
-    if (this.dartProxyWs) {
-      this.dartProxyWs.close();
-    }
+    this.dartVmClient.disconnect();
+    this.flutterExtensionClient.disconnect();
   }
 
   /**
-   * Log a message with the specified level
+   * Forwards a request to the Dart VM
    */
-  log(level: LogLevel, ...args: unknown[]) {
-    const levels: LogLevel[] = ["error", "warn", "info", "debug"];
-    if (levels.indexOf(level) <= levels.indexOf(this.logLevel)) {
-      switch (level) {
-        case "error":
-          console.error(...args);
-          break;
-        case "warn":
-          console.warn(...args);
-          break;
-        case "info":
-          console.info(...args);
-          break;
-        case "debug":
-          console.debug(...args);
-          break;
-      }
-    }
-  }
-
-  /**
-   * Invoke a Flutter method on the specified port
-   */
-  async invokeFlutterMethod(
-    port: number,
+  async callDartVm(
     method: string,
+    port: number,
     params: Record<string, unknown> = {}
   ): Promise<unknown> {
     try {
-      const result = await this.sendWebSocketRequest(port, method, params);
+      const result = await this.sendWebSocketRequest(
+        port,
+        method,
+        params,
+        "dart-vm"
+      );
       return result;
     } catch (error) {
-      this.log("error", `Error invoking Flutter method ${method}:`, error);
+      this.logger.error(`Error invoking Flutter method ${method}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Forwards a request to the Flutter extension
+   */
+  async callFlutterExtension(
+    method: string,
+    port: number,
+    params: Record<string, unknown> = {}
+  ): Promise<unknown> {
+    try {
+      const result = await this.sendWebSocketRequest(
+        port,
+        method,
+        params,
+        "flutter-extension"
+      );
+      return result;
+    } catch (error) {
+      this.logger.error(`Error invoking Flutter method ${method}:`, error);
       throw error;
     }
   }
@@ -181,14 +113,12 @@ export class RpcUtilities {
    * Get the Flutter isolate ID from the VM
    */
   async getFlutterIsolate(port: number): Promise<string> {
-    const vmInfo = (await this.invokeFlutterMethod(port, "getVM")) as VMInfo;
+    const vmInfo = await this.getVmInfo(port);
     const isolates = vmInfo.isolates;
 
     // Find Flutter isolate by checking for Flutter extension RPCs
     for (const isolateRef of isolates) {
-      const isolate = (await this.invokeFlutterMethod(port, "getIsolate", {
-        isolateId: isolateRef.id,
-      })) as IsolateResponse;
+      const isolate = await this.getIsolate(port, isolateRef.id);
 
       // Check if this isolate has Flutter extensions
       const extensionRPCs = isolate.extensionRPCs || [];
@@ -203,11 +133,23 @@ export class RpcUtilities {
     );
   }
 
+  async getVmInfo(port: number): Promise<VMInfo> {
+    const vmInfo = await this.callDartVm("getVM", port);
+    return vmInfo as VMInfo;
+  }
+
+  async getIsolate(port: number, isolateId: string): Promise<IsolateResponse> {
+    const isolate = await this.callDartVm("getIsolate", port, {
+      isolateId,
+    });
+    return isolate as IsolateResponse;
+  }
+
   /**
    * Verify that the Flutter app is running in debug mode
    */
   async verifyFlutterDebugMode(port: number): Promise<void> {
-    const vmInfo = await this.invokeFlutterMethod(port, "getVM");
+    const vmInfo = await this.getVmInfo(port);
     if (!vmInfo) {
       throw new McpError(
         ErrorCode.InternalError,
@@ -217,111 +159,20 @@ export class RpcUtilities {
   }
 
   /**
-   * Invoke a Flutter extension method
-   */
-  async invokeFlutterExtension(
-    port: number,
-    method: string,
-    params: any = {}
-  ): Promise<any> {
-    const fullMethod = method.startsWith("ext.")
-      ? method
-      : `ext.flutter.${method}`;
-
-    return this.invokeFlutterMethod(port, fullMethod, params);
-  }
-
-  /**
    * Wrap a promise response for MCP
    */
-  wrapResponse(promise: Promise<unknown>) {
-    return promise
-      .then((result) => ({
+  async wrapResponse(promise: Promise<unknown>) {
+    try {
+      const result = await promise;
+      return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-      }))
-      .catch((error: Error) => ({
-        content: [{ type: "text", text: `Error: ${error.message}` }],
+      };
+    } catch (error: any) {
+      return {
+        content: [{ type: "text", text: `Error: ${error?.message}` }],
         isError: true,
-      }));
-  }
-
-  /**
-   * Connect to the Dart proxy server
-   */
-  async connectToDartProxy(): Promise<WebSocket> {
-    if (this.dartProxyWs && this.dartProxyWs.readyState === WebSocket.OPEN) {
-      return this.dartProxyWs;
+      };
     }
-
-    return new Promise((resolve, reject) => {
-      const wsUrl = `ws://localhost:${this.proxyPort}`;
-      const ws = new WebSocket(wsUrl);
-
-      ws.onopen = () => {
-        this.log("debug", `WebSocket connected to Dart proxy at ${wsUrl}`);
-        this.dartProxyWs = ws;
-        resolve(ws);
-      };
-
-      ws.onerror = (error) => {
-        this.log("error", `WebSocket error for Dart proxy:`, error);
-        reject(error);
-        this.dartProxyWs = null; // Clear on error
-      };
-
-      ws.onclose = () => {
-        this.log("debug", `WebSocket closed for Dart proxy`);
-        this.dartProxyWs = null;
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const response = JSON.parse(event.data.toString());
-          if (response.id) {
-            const request = this.pendingProxyRequests.get(response.id);
-            if (request) {
-              if (response.error) {
-                request.reject(new Error(response.error));
-              } else {
-                request.resolve(response.result);
-              }
-              this.pendingProxyRequests.delete(response.id);
-            }
-          }
-        } catch (error) {
-          this.log("error", "Error parsing Dart proxy message:", error);
-        }
-      };
-    });
-  }
-
-  /**
-   * Send a request to the Dart proxy
-   */
-  async sendDartProxyRequest(
-    command: string,
-    port: number,
-    args: Record<string, any> = {}
-  ): Promise<any> {
-    const ws = await this.connectToDartProxy();
-    const id = this.generateId();
-
-    // Extract auth token from the VM service URL
-    const vmServiceUrl = await this.invokeFlutterMethod(port, "getVM");
-    const authToken = (vmServiceUrl as any)?.uri?.split("/")?.at(-2);
-
-    const request = {
-      id,
-      command,
-      port,
-      authToken,
-      ...args,
-    };
-
-    return new Promise((resolve, reject) => {
-      this.pendingProxyRequests.set(id, { resolve, reject });
-      ws.send(JSON.stringify(request));
-    });
   }
 
   /**
@@ -339,7 +190,10 @@ export class RpcUtilities {
   /**
    * Helper to extract port parameter from a request
    */
-  handlePortParam(request: any, defaultPort: number = 8181): number {
+  handlePortParam(
+    request: any,
+    defaultPort: number = defaultDartVMPort
+  ): number {
     const port = request.params.arguments?.port as number | undefined;
     return port || defaultPort;
   }

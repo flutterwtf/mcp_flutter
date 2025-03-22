@@ -16,6 +16,61 @@ export function createRpcHandlerMap(
   handlePortParam: (request: any) => number
 ): Record<string, any> {
   return {
+    "get_vm": (request: any) => {
+      const port = handlePortParam(request);
+      
+      return rpcHandlers.handleGetVm(port);
+    },
+    "dart_io_socket_profiling_enabled": (request: any) => {
+      const port = handlePortParam(request);
+      const params = request.params.arguments;
+      return rpcHandlers.handleDartIoSocketProfilingEnabled(port, params);
+    },
+    "dart_io_http_enable_timeline_logging": (request: any) => {
+      const port = handlePortParam(request);
+      const params = request.params.arguments;
+      return rpcHandlers.handleDartIoHttpEnableTimelineLogging(port, params);
+    },
+    "dart_io_get_version": (request: any) => {
+      const port = handlePortParam(request);
+      
+      return rpcHandlers.handleDartIoGetVersion(port);
+    },
+    "dart_io_get_http_profile_request": (request: any) => {
+      const port = handlePortParam(request);
+      const params = request.params.arguments;
+      return rpcHandlers.handleDartIoGetHttpProfileRequest(port, params);
+    },
+    "dart_io_get_socket_profile": (request: any) => {
+      const port = handlePortParam(request);
+      
+      return rpcHandlers.handleDartIoGetSocketProfile(port);
+    },
+    "dart_io_clear_socket_profile": (request: any) => {
+      const port = handlePortParam(request);
+      
+      return rpcHandlers.handleDartIoClearSocketProfile(port);
+    },
+    "dart_io_get_http_profile": (request: any) => {
+      const port = handlePortParam(request);
+      
+      return rpcHandlers.handleDartIoGetHttpProfile(port);
+    },
+    "dart_io_clear_http_profile": (request: any) => {
+      const port = handlePortParam(request);
+      
+      return rpcHandlers.handleDartIoClearHttpProfile(port);
+    },
+    "dart_io_get_open_files": (request: any) => {
+      const port = handlePortParam(request);
+      
+      return rpcHandlers.handleDartIoGetOpenFiles(port);
+    },
+    "dart_io_get_open_file_by_id": (request: any) => {
+      const port = handlePortParam(request);
+      const params = request.params.arguments;
+      return rpcHandlers.handleDartIoGetOpenFileById(port, params);
+    },
     "debug_dump_render_tree": (request: any) => {
       const port = handlePortParam(request);
       
@@ -25,11 +80,6 @@ export function createRpcHandlerMap(
       const port = handlePortParam(request);
       const params = request.params.arguments;
       return rpcHandlers.handleInspectorGetProperties(port, params);
-    },
-    "get_vm": (request: any) => {
-      const port = handlePortParam(request);
-      
-      return rpcHandlers.handleGetVm(port);
     },
     "debug_set_debug_paint": (request: any) => {
       const port = handlePortParam(request);
@@ -90,26 +140,6 @@ export function createRpcHandlerMap(
       const port = handlePortParam(request);
       const params = request.params.arguments;
       return rpcHandlers.handleDebugAllowBanner(port, params);
-    },
-    "dart_io_socket_profiling_enabled": (request: any) => {
-      const port = handlePortParam(request);
-      const params = request.params.arguments;
-      return rpcHandlers.handleDartIoSocketProfilingEnabled(port, params);
-    },
-    "dart_io_http_enable_timeline_logging": (request: any) => {
-      const port = handlePortParam(request);
-      const params = request.params.arguments;
-      return rpcHandlers.handleDartIoHttpEnableTimelineLogging(port, params);
-    },
-    "dart_io_get_version": (request: any) => {
-      const port = handlePortParam(request);
-      
-      return rpcHandlers.handleDartIoGetVersion(port);
-    },
-    "dart_io_get_http_profile_request": (request: any) => {
-      const port = handlePortParam(request);
-      const params = request.params.arguments;
-      return rpcHandlers.handleDartIoGetHttpProfileRequest(port, params);
     },
     "flutter_core_invert_oversized_images": (request: any) => {
       const port = handlePortParam(request);
@@ -195,36 +225,6 @@ export function createRpcHandlerMap(
       const port = handlePortParam(request);
       const params = request.params.arguments;
       return rpcHandlers.handleInspectorShow(port, params);
-    },
-    "dart_io_get_socket_profile": (request: any) => {
-      const port = handlePortParam(request);
-      
-      return rpcHandlers.handleDartIoGetSocketProfile(port);
-    },
-    "dart_io_clear_socket_profile": (request: any) => {
-      const port = handlePortParam(request);
-      
-      return rpcHandlers.handleDartIoClearSocketProfile(port);
-    },
-    "dart_io_get_http_profile": (request: any) => {
-      const port = handlePortParam(request);
-      
-      return rpcHandlers.handleDartIoGetHttpProfile(port);
-    },
-    "dart_io_clear_http_profile": (request: any) => {
-      const port = handlePortParam(request);
-      
-      return rpcHandlers.handleDartIoClearHttpProfile(port);
-    },
-    "dart_io_get_open_files": (request: any) => {
-      const port = handlePortParam(request);
-      
-      return rpcHandlers.handleDartIoGetOpenFiles(port);
-    },
-    "dart_io_get_open_file_by_id": (request: any) => {
-      const port = handlePortParam(request);
-      const params = request.params.arguments;
-      return rpcHandlers.handleDartIoGetOpenFileById(port, params);
     },
     "flutter_core_profile_platform_channels": (request: any) => {
       const port = handlePortParam(request);

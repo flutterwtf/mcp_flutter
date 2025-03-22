@@ -8,12 +8,16 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import path from "path";
 import { fileURLToPath } from "url";
-import { CommandLineConfig } from "../index.js";
+import { CommandLineArgs } from "../index.js";
 import { LogLevel } from "../types/types.js";
 import { createCustomRpcHandlerMap } from "./create_custom_rpc_handler_map.js";
 import { createRpcHandlerMap } from "./create_rpc_handler_map.generated.js";
 import { FlutterRpcHandlers } from "./flutter_rpc_handlers.generated.js";
+import { Logger } from "./logger.js";
 import { RpcUtilities } from "./rpc_utilities.js";
+
+export const defaultDartVMPort = 8181;
+export const defaultFlutterExtensionPort = 8141;
 
 // Get the directory name in ESM
 const __filename = fileURLToPath(import.meta.url);
@@ -24,11 +28,12 @@ export class FlutterInspectorServer {
   private port: number;
   private logLevel: LogLevel;
   private rpcUtils: RpcUtilities;
-
-  constructor(args: CommandLineConfig) {
+  private logger: Logger;
+  constructor(args: CommandLineArgs) {
     this.port = args.port;
     this.logLevel = args.logLevel;
-    this.rpcUtils = new RpcUtilities(this.logLevel);
+    this.logger = new Logger(this.logLevel);
+    this.rpcUtils = new RpcUtilities(args.host, this.logger);
 
     this.server = new Server(
       {
@@ -47,17 +52,13 @@ export class FlutterInspectorServer {
   }
 
   private setupErrorHandling() {
-    this.server.onerror = (error) => this.log("error", "[MCP Error]", error);
+    this.server.onerror = (error) => this.logger.error("[MCP Error]", error);
 
     process.on("SIGINT", async () => {
       await this.rpcUtils.closeAllConnections();
       await this.server.close();
       process.exit(0);
     });
-  }
-
-  private log(level: LogLevel, ...args: unknown[]) {
-    this.rpcUtils.log(level, ...args);
   }
 
   private setupToolHandlers() {
@@ -92,6 +93,7 @@ export class FlutterInspectorServer {
       // Get custom handlers
       const customHandlerMap = createCustomRpcHandlerMap(
         this.rpcUtils,
+        this.logger,
         (request) => this.rpcUtils.handlePortParam(request)
       );
 
@@ -114,7 +116,7 @@ export class FlutterInspectorServer {
         );
       });
     } catch (error) {
-      this.log("error", "Error setting up tool handlers:", error);
+      this.logger.error("Error setting up tool handlers:", error);
       throw error;
     }
   }
@@ -122,8 +124,7 @@ export class FlutterInspectorServer {
   async run() {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    this.log(
-      "info",
+    this.logger.info(
       `Flutter Inspector MCP server running on stdio, port ${this.port}`
     );
   }

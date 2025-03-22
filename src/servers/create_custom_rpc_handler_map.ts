@@ -1,9 +1,5 @@
-import {
-  FlutterPort,
-  IsolateInfo,
-  IsolateResponse,
-  VMInfo,
-} from "../types/types.js";
+import { FlutterPort, IsolateInfo } from "../types/types.js";
+import { Logger } from "./logger.js";
 import { execAsync, RpcUtilities } from "./rpc_utilities.js";
 
 // Define a type for the handler function
@@ -19,11 +15,12 @@ interface CustomRpcHandlerMap {
  */
 export function createCustomRpcHandlerMap(
   rpcUtils: RpcUtilities,
+  logger: Logger,
   handlePortParam: (request: any) => number
 ): CustomRpcHandlerMap {
   return {
     get_active_ports: async () => {
-      const ports = await _getActivePorts(rpcUtils);
+      const ports = await _getActivePorts(logger);
       return {
         content: [
           {
@@ -41,20 +38,11 @@ export function createCustomRpcHandlerMap(
           isRawResponse?: boolean;
         }) || {};
 
-      const vmInfo = (await rpcUtils.invokeFlutterMethod(
-        port,
-        "getVM"
-      )) as VMInfo;
+      const vmInfo = await rpcUtils.getVmInfo(port);
       const isolates = vmInfo.isolates;
 
       if (isolateId) {
-        const isolate = (await rpcUtils.invokeFlutterMethod(
-          port,
-          "getIsolate",
-          {
-            isolateId,
-          }
-        )) as IsolateResponse;
+        const isolate = await rpcUtils.getIsolate(port, isolateId);
 
         if (isRawResponse) {
           return {
@@ -80,9 +68,7 @@ export function createCustomRpcHandlerMap(
       if (isRawResponse) {
         const allIsolates = await Promise.all(
           isolates.map((isolateRef: IsolateInfo) =>
-            rpcUtils.invokeFlutterMethod(port, "getIsolate", {
-              isolateId: isolateRef.id,
-            })
+            rpcUtils.getIsolate(port, isolateRef.id)
           )
         );
         return {
@@ -97,13 +83,8 @@ export function createCustomRpcHandlerMap(
 
       const allExtensions: string[] = [];
       for (const isolateRef of isolates) {
-        const isolate = (await rpcUtils.invokeFlutterMethod(
-          port,
-          "getIsolate",
-          {
-            isolateId: isolateRef.id,
-          }
-        )) as IsolateResponse;
+        const isolate = await rpcUtils.getIsolate(port, isolateRef.id);
+
         if (isolate.extensionRPCs) {
           allExtensions.push(...isolate.extensionRPCs);
         }
@@ -124,7 +105,7 @@ export function createCustomRpcHandlerMap(
 /**
  * Get active ports for Flutter/Dart processes
  */
-async function _getActivePorts(rpcUtils: RpcUtilities): Promise<FlutterPort[]> {
+async function _getActivePorts(logger: Logger): Promise<FlutterPort[]> {
   try {
     const { stdout } = await execAsync("lsof -i -P -n | grep LISTEN");
     const ports: FlutterPort[] = [];
@@ -153,7 +134,7 @@ async function _getActivePorts(rpcUtils: RpcUtilities): Promise<FlutterPort[]> {
 
     return ports;
   } catch (error) {
-    rpcUtils.log("error", "Error getting active ports:", error);
+    logger.error("Error getting active ports:", error);
     return [];
   }
 }
