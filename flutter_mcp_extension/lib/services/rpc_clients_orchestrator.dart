@@ -64,18 +64,18 @@ class RpcClientsOrchestrator with ChangeNotifier {
   /// {@macro rpc_clients_orchestrator}
   RpcClientsOrchestrator() {
     // Initialize the TS client from environment variables
-    _tsClient = RpcClientInfo(
-      name: 'TypeScript',
-      host: Envs.tsRpc.host,
-      port: Envs.tsRpc.port,
-      path: Envs.tsRpc.path,
-    );
+    // _tsClient = RpcClientInfo(
+    //   name: 'TypeScript',
+    //   host: Envs.tsRpc.host,
+    //   port: Envs.tsRpc.port,
+    //   path: Envs.tsRpc.path,
+    // );
 
     // Create the service extension bridge using the TS client
     _serviceBridge = ServiceExtensionBridge(rpcClient: _tsClient.client);
 
     // Listen to changes in the clients
-    _tsClient.addListener(notifyListeners);
+    // _tsClient.addListener(notifyListeners);
     _serviceBridge.addListener(notifyListeners);
   }
 
@@ -86,12 +86,12 @@ class RpcClientsOrchestrator with ChangeNotifier {
   ServiceExtensionBridge get serviceBridge => _serviceBridge;
 
   /// TypeScript RPC client information
-  RpcClientInfo get tsClient => _tsClient;
+  // RpcClientInfo get tsClient => _tsClient;
 
   /// Initialize and connect all clients
   Future<void> initializeAll() async {
     // Connect TS client
-    await _tsClient.connect();
+    // await _tsClient.connect();
     await _serviceBridge.connectToVmService();
   }
 
@@ -106,7 +106,7 @@ class RpcClientsOrchestrator with ChangeNotifier {
 
   @override
   void dispose() {
-    _tsClient.removeListener(notifyListeners);
+    // _tsClient.removeListener(notifyListeners);
     _serviceBridge.removeListener(notifyListeners);
     super.dispose();
   }

@@ -2,7 +2,11 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:devtools_app_shared/service.dart' as devtools_service;
+import 'package:devtools_app/devtools_app.dart';
+import 'package:devtools_app_shared/service.dart';
+import 'package:devtools_app_shared/utils.dart';
+import 'package:devtools_extensions/api.dart';
+import 'package:devtools_extensions/devtools_extensions.dart';
 import 'package:devtools_shared/service.dart' as devtools_shared;
 import 'package:flutter_mcp_extension/common_imports.dart';
 import 'package:vm_service/vm_service.dart';
@@ -24,13 +28,13 @@ class ServiceExtensionBridge with ChangeNotifier {
   final RpcClient rpcClient;
 
   /// The service manager instance
-  final _serviceManager = devtools_service.ServiceManager();
+  final _serviceManager = ServiceManager();
 
   /// Stores the VM service URI when connected
   Uri? _vmServiceUri;
 
   /// Gets the current service manager
-  devtools_service.ServiceManager get serviceManager => _serviceManager;
+  ServiceManager get serviceManager => _serviceManager;
 
   /// Register RPC methods that can be called from TypeScript
   void _registerRpcMethods() {
@@ -55,23 +59,58 @@ class ServiceExtensionBridge with ChangeNotifier {
     final Map<String, dynamic> params,
   ) async {
     try {
+      setGlobal(ServiceManager, _serviceManager);
+      print('Take screenshot');
       if (!_serviceManager.connectedState.value.connected) {
         return {'success': false, 'error': 'Not connected to VM service'};
       }
-
+      print('Take screenshot 2');
       final format = params['format'] as String? ?? 'png';
       final isolateId = _serviceManager.isolateManager.mainIsolate.value?.id;
-
+      print('Take screenshot 3');
       if (isolateId == null) {
         return {'success': false, 'error': 'No main isolate available'};
       }
-
+      print('Take screenshot 4');
       // Call the VM service to take a screenshot using the private Flutter API
       final result = await _serviceManager.service!.callServiceExtension(
         '_flutter.screenshot',
       );
+      print('Take screenshot 5');
+      try {
+        // Convert screenshot data to PNG blob
+        // final pngBlob = result.json!['screenshot'] as String;
+        print('Screenshot PNG blob: ${result.json}');
 
-      // The response contains base64-encoded image data
+        final serviceConnectionManager =
+            globals[ServiceConnectionManager]! as ServiceConnectionManager;
+
+        final rootWidget = (serviceConnectionManager.inspectorService!
+                    .createObjectGroup('[root]')
+                as ObjectGroup)
+            .getRoot(FlutterTreeType.widget);
+        print('Root widget: $rootWidget');
+
+        // final bytes = base64Decode(pngBlob);
+        // print('Screenshot PNG blob size: ${bytes.length} bytes');
+      } catch (e) {
+        print('Screenshot Error: $e');
+      }
+
+      extensionManager.registerEventHandler(
+        DevToolsExtensionEventType.vmServiceConnection,
+        (final event) {
+          print('VM Service Connection Event: $event');
+          if (event.json!.containsKey('screenshot')) {
+            final screenshotData = event.json!['screenshot'] as String;
+            final decodedData = base64Decode(screenshotData);
+
+            return {'success': true, 'data': decodedData, 'format': format};
+          } else {
+            return {'success': false, 'error': 'Screenshot data not available'};
+          }
+        },
+      );
       if (result.json!.containsKey('screenshot')) {
         final screenshotData = result.json!['screenshot'] as String;
         final decodedData = base64Decode(screenshotData);
@@ -119,6 +158,8 @@ class ServiceExtensionBridge with ChangeNotifier {
         vmService,
         onClosed: finishedCompleter.future,
       );
+
+      await _takeScreenshot({});
 
       notifyListeners();
       return true;

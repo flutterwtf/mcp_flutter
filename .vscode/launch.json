@@ -9,7 +9,7 @@
       "flutterMode": "debug",
       "args": [
         "--debug",
-        "--device=macos",
+        // "-d=macos",
         "--observatory-port=8181",
         "--enable-vm-service",
         "--disable-service-auth-codes"
@@ -21,7 +21,7 @@
       "type": "dart",
       "cwd": "flutter_mcp_extension",
       "flutterMode": "debug",
-      "args": ["--debug", "-d=chrome", "--web-port=3434"]
+      "args": ["--debug", "--web-port=3434"]
     }
   ]
 }

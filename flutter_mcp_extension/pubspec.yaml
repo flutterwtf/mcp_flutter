@@ -33,6 +33,11 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.6
+  devtools_app:
+    git:
+      url: https://github.com/flutter/devtools.git
+      path: packages/devtools_app
+
   devtools_app_shared: ^0.3.1
   devtools_extensions: ^0.3.1
   devtools_shared: ^11.2.0
@@ -48,6 +53,9 @@ dependencies:
   vm_service: "^15.0.0"
   web_socket_channel: ^3.0.2
   xsoulspace_foundation: ^0.0.11
+
+dependency_overrides:
+  intl: ^0.20.2
 
 dev_dependencies:
   build_runner: ^2.4.15

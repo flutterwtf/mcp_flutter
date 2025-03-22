@@ -91,9 +91,9 @@ class ServerDashboard extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('RPC Servers Dashboard'),
-        actions: [
-          RpcConnectionStatus(client: orchestrator.tsClient.client),
-          const SizedBox(width: 16),
+        actions: const [
+          // RpcConnectionStatus(client: orchestrator.tsClient.client),
+          SizedBox(width: 16),
         ],
       ),
       body: Padding(
@@ -101,8 +101,7 @@ class ServerDashboard extends StatelessWidget {
         child: ListView(
           children: [
             // TypeScript server card
-            _ServerCard(clientInfo: orchestrator.tsClient),
-
+            // _ServerCard(clientInfo: orchestrator.tsClient),
             const SizedBox(height: 24),
 
             // VM Service bridge card
@@ -117,7 +116,7 @@ class ServerDashboard extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             _MethodsList(
-              tsClient: orchestrator.tsClient.client,
+              // tsClient: orchestrator.tsClient.client,
               vmServiceBridge: orchestrator.serviceBridge,
             ),
           ],
@@ -417,14 +416,17 @@ class _VmServiceBridgeCardState extends State<_VmServiceBridgeCard> {
 
 /// Displays registered RPC methods
 class _MethodsList extends StatelessWidget {
-  const _MethodsList({required this.tsClient, required this.vmServiceBridge});
+  const _MethodsList({
+    // required this.tsClient,
+    required this.vmServiceBridge,
+  });
 
-  final RpcClient tsClient;
+  // final RpcClient tsClient;
   final ServiceExtensionBridge vmServiceBridge;
 
   @override
   Widget build(final BuildContext context) {
-    final tsMethods = tsClient.registeredMethods;
+    // final tsMethods = tsClient.registeredMethods;
     final bridgeMethods = vmServiceBridge.rpcClient.registeredMethods;
 
     return Card(
@@ -434,35 +436,34 @@ class _MethodsList extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (tsMethods.isEmpty && bridgeMethods.isEmpty)
-              const Text(
-                'No methods registered yet',
-                style: TextStyle(fontStyle: FontStyle.italic),
-              )
-            else
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (tsMethods.isNotEmpty) ...[
-                    const Text(
-                      'TypeScript Server Methods',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    ..._buildMethodsList(tsMethods),
-                    const SizedBox(height: 16),
-                  ],
-
-                  if (bridgeMethods.isNotEmpty) ...[
-                    const Text(
-                      'VM Service Bridge Methods',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    ..._buildMethodsList(bridgeMethods),
-                  ],
+            // if (tsMethods.isEmpty && bridgeMethods.isEmpty)
+            //   const Text(
+            //     'No methods registered yet',
+            //     style: TextStyle(fontStyle: FontStyle.italic),
+            //   )
+            // else
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // if (tsMethods.isNotEmpty) ...[
+                //   const Text(
+                //     'TypeScript Server Methods',
+                //     style: TextStyle(fontWeight: FontWeight.bold),
+                //   ),
+                //   const SizedBox(height: 8),
+                //   ..._buildMethodsList(tsMethods),
+                //   const SizedBox(height: 16),
+                // ],
+                if (bridgeMethods.isNotEmpty) ...[
+                  const Text(
+                    'VM Service Bridge Methods',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  ..._buildMethodsList(bridgeMethods),
                 ],
-              ),
+              ],
+            ),
           ],
         ),
       ),
