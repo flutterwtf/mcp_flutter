@@ -21,13 +21,21 @@ class RpcClient extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> connect({final int port = Envs.rpcPort}) async {
-    await _startClient(port);
+  Future<void> connect({
+    required final int port,
+    required final String host,
+    required final String path,
+  }) async {
+    await _startClient(port, host, path);
   }
 
-  Future<void> _startClient(final int port) async {
+  Future<void> _startClient(
+    final int port,
+    final String host,
+    final String path,
+  ) async {
     try {
-      final wsUrl = 'ws://${Envs.rpcHost}:$port';
+      final wsUrl = 'ws://$host:$port/$path';
       print('Client connecting to $wsUrl');
 
       // Use the WebSocketChannel to connect to the server
@@ -48,7 +56,7 @@ class RpcClient extends ChangeNotifier {
           Future.delayed(const Duration(seconds: 2), () {
             if (!_connected) {
               print('Attempting to reconnect...');
-              connect(port: port);
+              connect(port: port, host: host, path: path);
             }
           });
         },
@@ -62,7 +70,7 @@ class RpcClient extends ChangeNotifier {
           Future.delayed(const Duration(seconds: 2), () {
             if (!_connected) {
               print('Attempting to reconnect after error...');
-              connect(port: port);
+              connect(port: port, host: host, path: path);
             }
           });
         },
@@ -78,7 +86,7 @@ class RpcClient extends ChangeNotifier {
       Future.delayed(const Duration(seconds: 2), () {
         if (!_connected) {
           print('Attempting to reconnect after failure...');
-          connect(port: port);
+          connect(port: port, host: host, path: path);
         }
       });
     }

@@ -63,13 +63,13 @@ class ServerDashboard extends StatelessWidget {
                   const _ServerStatusItem(
                     icon: Icons.public,
                     label: 'Host',
-                    value: Envs.rpcHost,
+                    value: Envs.tsRpcHost,
                   ),
                   const SizedBox(height: 8),
                   _ServerStatusItem(
                     icon: Icons.numbers,
                     label: 'Port',
-                    value: Envs.rpcPort.toString(),
+                    value: Envs.tsRpcPort.toString(),
                   ),
                   const SizedBox(height: 8),
                   const _ServerStatusItem(

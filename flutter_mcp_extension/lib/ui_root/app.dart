@@ -61,7 +61,7 @@ class InspectorApp extends StatelessWidget {
   Future<RpcClient> _initRpcClient() async {
     final rpcClient = RpcClient();
     try {
-      await rpcClient.connect();
+      await rpcClient.connect(port: Envs.tsRpc.port, host: Envs.tsRpc.host);
       return rpcClient;
     } catch (e) {
       print('Error starting RPC server: $e');
