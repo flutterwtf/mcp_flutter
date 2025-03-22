@@ -9,11 +9,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function generateRpcHandlers() {
-  const yamlFilePath = path.resolve(
-    __dirname,
-    "..",
-    "server_tools_handler.yaml"
-  );
+  const yamlFilePath = path.resolve(__dirname, "server_tools_handler.yaml");
   const generatedFilePath = path.resolve(
     __dirname,
     "..",

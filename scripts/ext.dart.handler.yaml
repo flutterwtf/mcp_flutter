@@ -1,0 +1,8 @@
+# server_tools_handler.yaml
+handlers:
+  - name: get_vm
+    description: Fetches VM information.
+    rpcMethod: "getVM"
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters: {}

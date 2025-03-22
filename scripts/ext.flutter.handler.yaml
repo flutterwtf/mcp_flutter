@@ -16,13 +16,6 @@ handlers:
     parameters:
       objectId: "arg.objectId"
 
-  - name: get_vm
-    description: Fetches VM information.
-    rpcMethod: "getVM"
-    needsDebugVerification: true
-    responseWrapper: true
-    parameters: {}
-
   - name: debug_set_debug_paint
     description: Toggles debug paint mode.
     rpcMethod: "ext.flutter.debugPaint"
