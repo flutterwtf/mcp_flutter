@@ -23,13 +23,51 @@ class InspectorApp extends StatelessWidget {
       ),
       useMaterial3: true,
     ),
-    home: ChangeNotifierProvider(
-      create: (final context) {
-        final rpcServer = RpcServer();
-        unawaited(rpcServer.start());
-        return rpcServer;
+    home: FutureBuilder(
+      // ignore: discarded_futures
+      future: _initRpcClient(),
+      builder: (final context, final snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Scaffold(
+            body: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                  const SizedBox(height: 16),
+                  Text('Error initializing RPC server: ${snapshot.error}'),
+                ],
+              ),
+            ),
+          );
+        }
+
+        final rpcClient = snapshot.data!;
+
+        return ChangeNotifierProvider.value(
+          value: rpcClient,
+          child: const ServerDashboard(),
+        );
       },
-      child: const ServerDashboard(),
     ),
   );
+
+  Future<RpcClient> _initRpcClient() async {
+    final rpcClient = RpcClient();
+    try {
+      await rpcClient.connect();
+      return rpcClient;
+    } catch (e) {
+      print('Error starting RPC server: $e');
+      // Still return the server even if there was an error,
+      // so we can display connection status in the UI
+      return rpcClient;
+    }
+  }
 }

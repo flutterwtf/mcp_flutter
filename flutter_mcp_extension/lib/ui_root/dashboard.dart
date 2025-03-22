@@ -8,7 +8,7 @@ class RpcConnectionStatus extends StatelessWidget {
 
   @override
   Widget build(final BuildContext context) {
-    final rpc = context.watch<RpcServer>();
+    final rpc = context.watch<RpcClient>();
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -94,22 +94,14 @@ class ServerDashboard extends StatelessWidget {
           const SizedBox(height: 16),
           Builder(
             builder: (final context) {
-              final rpc = context.read<RpcServer>();
+              final rpc = context.read<RpcClient>();
               return Row(
                 children: [
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.restart_alt),
-                    label: const Text('Restart Server'),
-                    onPressed: () async {
-                      await rpc.stop();
-                      await rpc.start();
-                    },
-                  ),
                   const SizedBox(width: 16),
                   OutlinedButton.icon(
                     icon: const Icon(Icons.stop),
-                    label: const Text('Stop Server'),
-                    onPressed: rpc.stop,
+                    label: const Text('Connect Server'),
+                    onPressed: rpc.connect,
                   ),
                 ],
               );
@@ -161,7 +153,7 @@ class _MethodsList extends StatelessWidget {
 
   @override
   Widget build(final BuildContext context) {
-    final methods = context.watch<RpcServer>().registeredMethods;
+    final methods = context.watch<RpcClient>().registeredMethods;
 
     return Card(
       elevation: 2,
