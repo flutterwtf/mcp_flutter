@@ -86,16 +86,21 @@ class ServiceExtensionBridge with ChangeNotifier {
   }
 
   /// Connect to a VM service
-  Future<bool> connectToVmService(final Uri uri) async {
+  Future<bool> connectToVmService([final Uri? uri]) async {
+    // Store the URI for later use
+    _vmServiceUri =
+        uri ??
+        Uri(
+          host: Envs.flutterRpc.host,
+          port: Envs.flutterRpc.port,
+          path: Envs.flutterRpc.path,
+        );
     try {
-      // Store the URI for later use
-      _vmServiceUri = uri;
-
       final finishedCompleter = Completer<void>();
 
       // Use package:devtools_shared to connect to the VM
       final vmService = await devtools_shared.connect<VmService>(
-        uri: uri,
+        uri: _vmServiceUri!,
         finishedCompleter: finishedCompleter,
         serviceFactory: VmService.defaultFactory,
       );

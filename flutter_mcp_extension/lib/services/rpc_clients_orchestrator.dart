@@ -92,18 +92,12 @@ class RpcClientsOrchestrator with ChangeNotifier {
   Future<void> initializeAll() async {
     // Connect TS client
     await _tsClient.connect();
-    await _serviceBridge.connectToVmService(
-      Uri(
-        host: Envs.flutterRpc.host,
-        port: Envs.flutterRpc.port,
-        path: Envs.flutterRpc.path,
-      ),
-    );
+    await _serviceBridge.connectToVmService();
   }
 
   /// Connect to the Flutter VM service
-  Future<bool> connectToFlutterVmService(final Uri uri) async =>
-      _serviceBridge.connectToVmService(uri);
+  Future<bool> connectToFlutterVmService() async =>
+      _serviceBridge.connectToVmService();
 
   /// Disconnect from the Flutter VM service
   Future<void> disconnectFromFlutterVmService() async {

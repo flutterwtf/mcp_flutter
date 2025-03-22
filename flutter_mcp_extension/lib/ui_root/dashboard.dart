@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_mcp_extension/common_imports.dart';
+import 'package:flutter_mcp_extension/services/service_extension_bridge.dart';
 
 /// {@template rpc_connection_status}
 /// Displays real-time RPC connection status with animated indicators
@@ -32,6 +33,50 @@ class RpcConnectionStatus extends StatelessWidget {
   );
 }
 
+/// {@template vm_service_connection_status}
+/// Displays real-time VM service connection status
+/// {@endtemplate}
+class VmServiceConnectionStatus extends StatelessWidget {
+  /// {@macro vm_service_connection_status}
+  const VmServiceConnectionStatus({required this.serviceBridge, super.key});
+
+  /// The service bridge to monitor
+  final ServiceExtensionBridge serviceBridge;
+
+  @override
+  Widget build(final BuildContext context) {
+    // Get the connected state from service manager
+    final connectedState = serviceBridge.serviceManager.connectedState;
+
+    // Use AnimatedBuilder to rebuild when connection state changes
+    return AnimatedBuilder(
+      animation: connectedState,
+      builder: (final context, _) {
+        final isConnected = connectedState.value.connected;
+
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isConnected ? Icons.flutter_dash : Icons.flutter_dash_outlined,
+              color: isConnected ? Colors.blue : Colors.grey,
+              size: 28,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              isConnected ? 'VM Connected' : 'VM Disconnected',
+              style: TextStyle(
+                color: isConnected ? Colors.blue : Colors.grey,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
 /// {@template server_dashboard}
 /// Main server dashboard screen showing connection status and controls
 /// {@endtemplate}
@@ -60,8 +105,8 @@ class ServerDashboard extends StatelessWidget {
 
             const SizedBox(height: 24),
 
-            // Flutter server card
-            _ServerCard(clientInfo: orchestrator.flutterClient),
+            // VM Service bridge card
+            _VmServiceBridgeCard(serviceBridge: orchestrator.serviceBridge),
 
             const SizedBox(height: 24),
 
@@ -73,7 +118,7 @@ class ServerDashboard extends StatelessWidget {
             const SizedBox(height: 16),
             _MethodsList(
               tsClient: orchestrator.tsClient.client,
-              flutterClient: orchestrator.flutterClient.client,
+              vmServiceBridge: orchestrator.serviceBridge,
             ),
           ],
         ),
@@ -241,17 +286,146 @@ class _ServerCardState extends State<_ServerCard> {
   );
 }
 
+/// {@template vm_service_bridge_card}
+/// Card displaying VM service bridge status and controls
+/// {@endtemplate}
+class _VmServiceBridgeCard extends StatefulWidget {
+  /// {@macro vm_service_bridge_card}
+  const _VmServiceBridgeCard({required this.serviceBridge});
+
+  /// The service bridge to display
+  final ServiceExtensionBridge serviceBridge;
+
+  @override
+  State<_VmServiceBridgeCard> createState() => _VmServiceBridgeCardState();
+}
+
+class _VmServiceBridgeCardState extends State<_VmServiceBridgeCard> {
+  late TextEditingController _uriController;
+
+  @override
+  void initState() {
+    super.initState();
+    _uriController = TextEditingController(
+      text:
+          'ws://${Envs.flutterRpc.host}:${Envs.flutterRpc.port}/${Envs.flutterRpc.path}',
+    );
+  }
+
+  @override
+  void dispose() {
+    _uriController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(final BuildContext context) {
+    // Get the connected state from service manager for real-time updates
+    final connectedState = widget.serviceBridge.serviceManager.connectedState;
+
+    return AnimatedBuilder(
+      animation: connectedState,
+      builder: (final context, _) {
+        final isConnected = connectedState.value.connected;
+
+        return Card(
+          elevation: 2,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Text(
+                      'Flutter VM Service',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Spacer(),
+                    VmServiceConnectionStatus(
+                      serviceBridge: widget.serviceBridge,
+                    ),
+                  ],
+                ),
+                const Divider(),
+
+                // Connection parameters
+                const Text(
+                  'VM Service URI',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+
+                // URI input
+                TextField(
+                  controller: _uriController,
+                  decoration: const InputDecoration(
+                    labelText: 'WebSocket URI',
+                    prefixIcon: Icon(Icons.link),
+                    border: OutlineInputBorder(),
+                    hintText: 'ws://localhost:8181/ws',
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // Action buttons
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    if (isConnected)
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.close),
+                        label: const Text('Disconnect'),
+                        onPressed: () async {
+                          await widget.serviceBridge.disconnectFromVmService();
+                        },
+                      )
+                    else
+                      FilledButton.icon(
+                        icon: const Icon(Icons.connecting_airports),
+                        label: const Text('Connect'),
+                        onPressed: () async {
+                          try {
+                            final uri = Uri.parse(_uriController.text);
+                            await widget.serviceBridge.connectToVmService(uri);
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error connecting: $e'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
+                        },
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
 /// Displays registered RPC methods
 class _MethodsList extends StatelessWidget {
-  const _MethodsList({required this.tsClient, required this.flutterClient});
+  const _MethodsList({required this.tsClient, required this.vmServiceBridge});
 
   final RpcClient tsClient;
-  final RpcClient flutterClient;
+  final ServiceExtensionBridge vmServiceBridge;
 
   @override
   Widget build(final BuildContext context) {
     final tsMethods = tsClient.registeredMethods;
-    final flutterMethods = flutterClient.registeredMethods;
+    final bridgeMethods = vmServiceBridge.rpcClient.registeredMethods;
 
     return Card(
       elevation: 2,
@@ -260,7 +434,7 @@ class _MethodsList extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (tsMethods.isEmpty && flutterMethods.isEmpty)
+            if (tsMethods.isEmpty && bridgeMethods.isEmpty)
               const Text(
                 'No methods registered yet',
                 style: TextStyle(fontStyle: FontStyle.italic),
@@ -279,13 +453,13 @@ class _MethodsList extends StatelessWidget {
                     const SizedBox(height: 16),
                   ],
 
-                  if (flutterMethods.isNotEmpty) ...[
+                  if (bridgeMethods.isNotEmpty) ...[
                     const Text(
-                      'Flutter Server Methods',
+                      'VM Service Bridge Methods',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
-                    ..._buildMethodsList(flutterMethods),
+                    ..._buildMethodsList(bridgeMethods),
                   ],
                 ],
               ),
