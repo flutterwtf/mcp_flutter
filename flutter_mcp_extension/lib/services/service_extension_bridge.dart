@@ -95,6 +95,15 @@ class ServiceExtensionBridge with ChangeNotifier {
           port: Envs.flutterRpc.port,
           path: Envs.flutterRpc.path,
         );
+
+    // Use the [connectedState] notifier to listen for connection updates.
+    serviceManager.connectedState.addListener(() {
+      if (serviceManager.connectedState.value.connected) {
+        print('Manager connected to VM service');
+      } else {
+        print('Manager not connected to VM service');
+      }
+    });
     try {
       final finishedCompleter = Completer<void>();
 
