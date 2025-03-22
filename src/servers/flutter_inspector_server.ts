@@ -19,7 +19,7 @@ import { RpcUtilities } from "./rpc_utilities.js";
 
 export const defaultDartVMPort = 8181;
 export const defaultMCPServerPort = 3535;
-export const defaultFlutterExtensionPort = 3535;
+export const defaultFlutterExtensionPort = 8142;
 
 // Get the directory name in ESM
 const __filename = fileURLToPath(import.meta.url);
@@ -143,13 +143,27 @@ export class FlutterInspectorServer {
   }
 
   async run() {
-    // Start the RPC server for web clients
-    await this.initializeRpcServer();
-
+    // 1. First initialize async resources
     const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-    this.logger.info(
-      `Flutter Inspector MCP server running on stdio, port ${this.port}`
-    );
+
+    // 2. Start servers in parallel with proper cleanup
+    await Promise.all([
+      this.initializeRpcServer(),
+      this.server.connect(transport),
+    ]);
+
+    // 3. Add coordinated shutdown
+    const cleanup = async () => {
+      await this.rpcServer?.stop();
+      await transport.close();
+    };
+
+    process.on("SIGINT", cleanup);
+    process.on("SIGTERM", cleanup);
+
+    this.logger.info(`
+      MCP Server: Ready on stdio (port ${this.port})
+      RPC Server: Listening on ws://localhost:${defaultFlutterExtensionPort}/ext-ws
+    `);
   }
 }

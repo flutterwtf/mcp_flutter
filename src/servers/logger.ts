@@ -11,6 +11,7 @@ export class Logger {
    * Log a message with the specified level
    */
   log(level: LogLevel, ...args: unknown[]) {
+    console.log(`[${level}]`, ...args);
     const levels: LogLevel[] = ["error", "warn", "info", "debug"];
     if (levels.indexOf(level) <= levels.indexOf(this.logLevel)) {
       switch (level) {
