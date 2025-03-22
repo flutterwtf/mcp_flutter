@@ -14,6 +14,7 @@
     "build": "npm run generate-rpc-handlers && tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\" && npm run copy-yaml-files",
     "prepare": "npm run build",
     "watch": "tsc --watch",
+    "bi": "npm run prepare && npm run inspector",
     "inspector": "npx @modelcontextprotocol/inspector build/index.js",
     "start": "node build/index.js",
     "generate-rpc-handlers": "ts-node scripts/generate_rpc_handlers.ts",
