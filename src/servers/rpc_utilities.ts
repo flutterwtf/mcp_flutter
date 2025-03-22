@@ -6,7 +6,7 @@ import { promisify } from "util";
 import { IsolateResponse, VMInfo } from "../types/types.js";
 import { defaultDartVMPort } from "./flutter_inspector_server.js";
 import { Logger } from "./logger.js";
-import { RpcClient } from "./prc_client.js";
+import { RpcClient } from "./rpc_client.js";
 type ConnectionDestination = "dart-vm" | "flutter-extension";
 export const execAsync = promisify(exec);
 

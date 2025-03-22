@@ -21,11 +21,20 @@ export class RpcClient {
   async connect(host: string, port: number, path: string): Promise<void> {
     const readyState = this.ws?.readyState;
     console.log(`readyState: ${readyState}`);
-    if (readyState === WebSocket.CLOSED || readyState === WebSocket.CLOSING) {
-      this.ws = null;
-    } else {
-      return;
+
+    // Only return early if the WebSocket is in OPEN state
+    if (readyState === WebSocket.OPEN) {
+      console.log(`Already connected to Flutter RPC server`);
+      return Promise.resolve();
     }
+
+    // If WebSocket exists but is not open, close and recreate it
+    if (this.ws) {
+      this.ws.close();
+      this.ws = null;
+    }
+
+    // Create new WebSocket connection
     return new Promise((resolve, reject) => {
       const wsUrl = `ws://${host}:${port}${path}`;
       this.ws = new WebSocket(wsUrl);
