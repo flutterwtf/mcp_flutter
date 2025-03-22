@@ -5,13 +5,12 @@ yarn-debug.log*
 yarn-error.log*
 
 # Build output
-build/
+/build/
 dist/
 *.tsbuildinfo
 
 # IDE
 .idea/
-.vscode/
 *.swp
 *.swo
 
