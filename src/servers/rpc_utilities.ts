@@ -6,7 +6,7 @@ import { promisify } from "util";
 import { IsolateResponse, VMInfo } from "../types/types.js";
 import {
   defaultDartVMPort,
-  defaultFlutterExtensionPort,
+  defaultWebClientPort,
 } from "./flutter_inspector_server.js";
 import { Logger } from "./logger.js";
 import { RpcClient } from "./rpc_client.js";
@@ -33,7 +33,7 @@ export class RpcUtilities {
    * Start the RPC Server that can accept connections from Dart clients
    */
   async startRpcServer(
-    port: number = defaultFlutterExtensionPort,
+    port: number = defaultWebClientPort,
     path: string = "/ws"
   ): Promise<RpcServer> {
     if (this.rpcServer) {

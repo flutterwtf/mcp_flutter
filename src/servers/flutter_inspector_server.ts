@@ -18,8 +18,7 @@ import { RpcServer } from "./rpc_server.js";
 import { RpcUtilities } from "./rpc_utilities.js";
 
 export const defaultDartVMPort = 8181;
-export const defaultFlutterExtensionPort = 8141;
-export const defaultWebClientPort = 8142;
+export const defaultWebClientPort = 3334;
 
 // Get the directory name in ESM
 const __filename = fileURLToPath(import.meta.url);
