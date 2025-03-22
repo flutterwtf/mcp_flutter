@@ -18,16 +18,18 @@ export class RpcClient {
   /**
    * Connect to the Flutter RPC server
    */
-  async connect(host: string, port: number): Promise<void> {
+  async connect(host: string, port: number, path: string): Promise<void> {
     const readyState = this.ws?.readyState;
+    console.log(`readyState: ${readyState}`);
     if (readyState === WebSocket.CLOSED || readyState === WebSocket.CLOSING) {
       this.ws = null;
     } else {
       return;
     }
     return new Promise((resolve, reject) => {
-      const wsUrl = `ws://${host}:${port}`;
+      const wsUrl = `ws://${host}:${port}${path}`;
       this.ws = new WebSocket(wsUrl);
+      console.log(`Connecting to Flutter RPC server at ${wsUrl}`);
 
       this.ws.onopen = () => {
         console.log(`Connected to Flutter RPC server at ${wsUrl}`);
@@ -74,7 +76,9 @@ export class RpcClient {
     params: Record<string, unknown> = {}
   ): Promise<unknown> {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      throw new Error("Not connected to Flutter RPC server");
+      throw new Error(
+        `Not connected to Flutter RPC server ${this.ws?.readyState}`
+      );
     }
 
     const id = this.generateId();

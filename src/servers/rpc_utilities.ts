@@ -33,9 +33,9 @@ export class RpcUtilities {
     connectionDestination: ConnectionDestination
   ): Promise<void> {
     if (connectionDestination === "dart-vm") {
-      await this.dartVmClient.connect(this.host, port);
+      await this.dartVmClient.connect(this.host, port, "/ws");
     } else {
-      await this.flutterExtensionClient.connect(this.host, port);
+      await this.flutterExtensionClient.connect(this.host, port, "/");
     }
   }
 
