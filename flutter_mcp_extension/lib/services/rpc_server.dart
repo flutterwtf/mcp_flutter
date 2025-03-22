@@ -13,9 +13,13 @@ class RpcServer extends ChangeNotifier {
 
   bool get connected => _connected;
 
+  /// Returns a list of registered method names
+  List<String> get registeredMethods => _methods.keys.toList();
+
   // Register RPC methods that can be called by the TypeScript client
   void registerMethod(final String methodName, final Function handler) {
     _methods[methodName] = handler;
+    notifyListeners();
   }
 
   Future<void> start({final int port = Envs.rpcPort}) async {
