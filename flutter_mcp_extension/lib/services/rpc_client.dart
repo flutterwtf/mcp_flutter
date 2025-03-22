@@ -156,7 +156,7 @@ class RpcClient extends ChangeNotifier {
     final response = {
       'jsonrpc': '2.0',
       'id': id,
-      if (result != null) 'params': {'result': result},
+      if (result != null) 'result': result,
       if (error != null) 'error': error,
     };
 
