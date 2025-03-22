@@ -4,9 +4,14 @@ import fs from "fs";
 import yaml from "js-yaml";
 import { promisify } from "util";
 import { IsolateResponse, VMInfo } from "../types/types.js";
-import { defaultDartVMPort } from "./flutter_inspector_server.js";
+import {
+  defaultDartVMPort,
+  defaultFlutterExtensionPort,
+} from "./flutter_inspector_server.js";
 import { Logger } from "./logger.js";
 import { RpcClient } from "./rpc_client.js";
+import { RpcServer } from "./rpc_server.js";
+
 type ConnectionDestination = "dart-vm" | "flutter-extension";
 export const execAsync = promisify(exec);
 
@@ -16,6 +21,7 @@ export const execAsync = promisify(exec);
 export class RpcUtilities {
   private dartVmClient: RpcClient;
   private flutterExtensionClient: RpcClient;
+  private rpcServer: RpcServer | null = null;
 
   constructor(
     private readonly host: string = "localhost",
@@ -23,6 +29,68 @@ export class RpcUtilities {
   ) {
     this.dartVmClient = new RpcClient();
     this.flutterExtensionClient = new RpcClient();
+  }
+
+  /**
+   * Start the RPC Server that can accept connections from Dart clients
+   */
+  async startRpcServer(
+    port: number = defaultFlutterExtensionPort,
+    path: string = "/ws"
+  ): Promise<RpcServer> {
+    if (this.rpcServer) {
+      this.logger.info(
+        `RPC Server already running at ws://${this.host}:${port}${path}`
+      );
+      return this.rpcServer;
+    }
+
+    this.rpcServer = new RpcServer();
+    await this.rpcServer.start(port, path);
+    this.logger.info(`Started RPC Server at ws://${this.host}:${port}${path}`);
+    return this.rpcServer;
+  }
+
+  /**
+   * Get the active RPC server instance
+   */
+  getRpcServer(): RpcServer | null {
+    return this.rpcServer;
+  }
+
+  /**
+   * Send a message to all connected Dart clients
+   */
+  async broadcastToDartClients(
+    method: string,
+    params: Record<string, unknown> = {}
+  ): Promise<Map<string, unknown>> {
+    if (!this.rpcServer) {
+      throw new McpError(
+        ErrorCode.InternalError,
+        "RPC Server not started. Call startRpcServer first."
+      );
+    }
+
+    return await this.rpcServer.broadcastMethod(method, params);
+  }
+
+  /**
+   * Send a message to a specific connected Dart client
+   */
+  async sendToDartClient(
+    clientId: string,
+    method: string,
+    params: Record<string, unknown> = {}
+  ): Promise<unknown> {
+    if (!this.rpcServer) {
+      throw new McpError(
+        ErrorCode.InternalError,
+        "RPC Server not started. Call startRpcServer first."
+      );
+    }
+
+    return await this.rpcServer.callClientMethod(clientId, method, params);
   }
 
   /**
@@ -63,6 +131,11 @@ export class RpcUtilities {
   async closeAllConnections(): Promise<void> {
     this.dartVmClient.disconnect();
     this.flutterExtensionClient.disconnect();
+
+    if (this.rpcServer) {
+      await this.rpcServer.stop();
+      this.rpcServer = null;
+    }
   }
 
   /**

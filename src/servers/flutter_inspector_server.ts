@@ -14,10 +14,12 @@ import { createCustomRpcHandlerMap } from "./create_custom_rpc_handler_map.js";
 import { createRpcHandlerMap } from "./create_rpc_handler_map.generated.js";
 import { FlutterRpcHandlers } from "./flutter_rpc_handlers.generated.js";
 import { Logger } from "./logger.js";
+import { RpcServer } from "./rpc_server.js";
 import { RpcUtilities } from "./rpc_utilities.js";
 
 export const defaultDartVMPort = 8181;
 export const defaultFlutterExtensionPort = 8141;
+export const defaultWebClientPort = 8142;
 
 // Get the directory name in ESM
 const __filename = fileURLToPath(import.meta.url);
@@ -29,6 +31,8 @@ export class FlutterInspectorServer {
   private logLevel: LogLevel;
   private rpcUtils: RpcUtilities;
   private logger: Logger;
+  private rpcServer: RpcServer | null = null;
+
   constructor(args: CommandLineArgs) {
     this.port = args.port;
     this.logLevel = args.logLevel;
@@ -121,7 +125,55 @@ export class FlutterInspectorServer {
     }
   }
 
+  /**
+   * Initialize the RPC server to accept connections from Dart clients
+   */
+  async initializeRpcServer(
+    port: number = defaultWebClientPort
+  ): Promise<void> {
+    try {
+      this.rpcServer = await this.rpcUtils.startRpcServer(port);
+      this.logger.info(
+        `RPC server for web clients initialized on port ${port}`
+      );
+    } catch (error) {
+      this.logger.error("Failed to initialize RPC server:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get the list of connected Dart client IDs
+   */
+  getConnectedDartClients(): string[] {
+    return this.rpcServer?.getConnectedClients() || [];
+  }
+
+  /**
+   * Send a notification to all connected Dart clients
+   */
+  async broadcastToDartClients(
+    method: string,
+    params: Record<string, unknown> = {}
+  ): Promise<Map<string, unknown>> {
+    return await this.rpcUtils.broadcastToDartClients(method, params);
+  }
+
+  /**
+   * Send a message to a specific Dart client
+   */
+  async sendToDartClient(
+    clientId: string,
+    method: string,
+    params: Record<string, unknown> = {}
+  ): Promise<unknown> {
+    return await this.rpcUtils.sendToDartClient(clientId, method, params);
+  }
+
   async run() {
+    // Start the RPC server for web clients
+    await this.initializeRpcServer();
+
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
     this.logger.info(
