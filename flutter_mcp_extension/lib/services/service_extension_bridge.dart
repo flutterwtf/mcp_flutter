@@ -5,8 +5,6 @@ import 'dart:convert';
 import 'package:devtools_app/devtools_app.dart';
 import 'package:devtools_app_shared/service.dart';
 import 'package:devtools_app_shared/utils.dart';
-import 'package:devtools_extensions/api.dart';
-import 'package:devtools_extensions/devtools_extensions.dart';
 import 'package:devtools_shared/service.dart' as devtools_shared;
 import 'package:flutter_mcp_extension/common_imports.dart';
 import 'package:vm_service/vm_service.dart';
@@ -97,20 +95,6 @@ class ServiceExtensionBridge with ChangeNotifier {
         print('Screenshot Error: $e');
       }
 
-      extensionManager.registerEventHandler(
-        DevToolsExtensionEventType.vmServiceConnection,
-        (final event) {
-          print('VM Service Connection Event: $event');
-          if (event.json!.containsKey('screenshot')) {
-            final screenshotData = event.json!['screenshot'] as String;
-            final decodedData = base64Decode(screenshotData);
-
-            return {'success': true, 'data': decodedData, 'format': format};
-          } else {
-            return {'success': false, 'error': 'Screenshot data not available'};
-          }
-        },
-      );
       if (result.json!.containsKey('screenshot')) {
         final screenshotData = result.json!['screenshot'] as String;
         final decodedData = base64Decode(screenshotData);
