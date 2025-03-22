@@ -1,15 +1,30 @@
+import EventEmitter from "events";
 import http, { IncomingMessage } from "http";
 import WebSocket, * as ws from "ws";
 
-export class RpcServer {
+/**
+ * RPC Server class that handles WebSocket connections from Dart/Flutter clients
+ *
+ * @emits clientConnected - When a new client connects (parameter: clientId)
+ * @emits clientDisconnected - When a client disconnects (parameter: clientId)
+ * @emits clientError - When a client connection has an error (parameters: clientId, error)
+ * @emits serverError - When the server encounters an error (parameter: error)
+ * @emits messageReceived - When a client sends a message (parameters: clientId, method, params, id)
+ */
+export class RpcServer extends EventEmitter {
   private server: http.Server | null = null;
-  private wss: ws.Server | null = null;
-  private clients: Map<string, WebSocket> = new Map();
+  private wss: ws.WebSocketServer | null = null;
+  public clients: Map<string, WebSocket> = new Map();
+  public lastClientId: string | null = null;
   private pendingRequests = new Map<
     string,
     { resolve: Function; reject: Function; method: string }
   >();
   private messageId = 0;
+
+  constructor() {
+    super();
+  }
 
   /**
    * Generate a unique ID for requests
@@ -20,6 +35,9 @@ export class RpcServer {
 
   /**
    * Start the RPC server
+   *
+   * @param port - The port to run the server on
+   * @param path - The WebSocket path (default: "/ws")
    */
   async start(port: number, path: string = "/ws"): Promise<void> {
     if (this.wss) {
@@ -32,7 +50,8 @@ export class RpcServer {
         // Create HTTP server
         this.server = http.createServer();
 
-        // Create WebSocket server instance
+        // Create WebSocket server instance.
+        // !!DO NOT TRY TO CHANGE - IT IS WORKING!!
         this.wss = new ws.WebSocketServer({
           server: this.server,
           path,
@@ -46,6 +65,12 @@ export class RpcServer {
           // Store client connection
           this.clients.set(clientId, ws);
 
+          // Store the last client ID
+          this.lastClientId = clientId;
+
+          // Emit client connected event
+          this.emit("clientConnected", clientId);
+
           // Handle client messages
           ws.on("message", (message: WebSocket.Data) => {
             this.handleMessage(clientId, message);
@@ -55,11 +80,15 @@ export class RpcServer {
           ws.on("close", () => {
             console.log(`Client disconnected: ${clientId}`);
             this.clients.delete(clientId);
+
+            // Emit client disconnected event
+            this.emit("clientDisconnected", clientId);
           });
 
           // Handle errors
           ws.on("error", (error: Error) => {
             console.error(`WebSocket error for client ${clientId}:`, error);
+            this.emit("clientError", clientId, error);
           });
         });
 
@@ -72,6 +101,7 @@ export class RpcServer {
         // Handle server errors
         this.server.on("error", (error) => {
           console.error("Server error:", error);
+          this.emit("serverError", error);
           reject(error);
         });
       } catch (error) {
@@ -102,6 +132,15 @@ export class RpcServer {
       }
       // Handle RPC request (has id and method)
       else if (message.id && message.method) {
+        // Emit message received event
+        this.emit(
+          "messageReceived",
+          clientId,
+          message.method,
+          message.params,
+          message.id
+        );
+
         // Here you would implement handling of client methods
         // For now, we'll just echo back a success response
         this.sendResponse(clientId, message.id, {
@@ -137,6 +176,11 @@ export class RpcServer {
 
   /**
    * Call a method on a specific client
+   *
+   * @param clientId - The ID of the client to send the message to
+   * @param method - The method name to call
+   * @param params - The parameters to send with the method call
+   * @returns A promise that resolves with the result of the method call
    */
   async callClientMethod(
     clientId: string,
@@ -164,6 +208,10 @@ export class RpcServer {
 
   /**
    * Broadcast a method call to all connected clients
+   *
+   * @param method - The method name to call
+   * @param params - The parameters to send with the method call
+   * @returns A map of client IDs to their responses
    */
   async broadcastMethod(
     method: string,
@@ -192,6 +240,8 @@ export class RpcServer {
 
   /**
    * Get all connected clients
+   *
+   * @returns An array of client IDs
    */
   getConnectedClients(): string[] {
     return Array.from(this.clients.keys());
