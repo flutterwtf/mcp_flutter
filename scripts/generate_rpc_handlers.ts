@@ -9,7 +9,15 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function generateRpcHandlers() {
-  const yamlFilePath = path.resolve(__dirname, "server_tools_handler.yaml");
+  const dartHandlerYamlFilePath = path.resolve(
+    __dirname,
+    "ext.dart.handler.yaml"
+  );
+  const flutterHandlerYamlFilePath = path.resolve(
+    __dirname,
+    "ext.flutter.handler.yaml"
+  );
+
   const generatedFilePath = path.resolve(
     __dirname,
     "..",
@@ -26,8 +34,24 @@ async function generateRpcHandlers() {
   );
 
   try {
-    const yamlContent = fs.readFileSync(yamlFilePath, "utf8");
-    const handlerConfig = yaml.load(yamlContent) as { handlers: any[] };
+    const dartHandlerYamlContent = fs.readFileSync(
+      dartHandlerYamlFilePath,
+      "utf8"
+    );
+    const flutterHandlerYamlContent = fs.readFileSync(
+      flutterHandlerYamlFilePath,
+      "utf8"
+    );
+    const dartHandlerConfig = yaml.load(dartHandlerYamlContent) as {
+      handlers: any[];
+    };
+    const flutterHandlerConfig = yaml.load(flutterHandlerYamlContent) as {
+      handlers: any[];
+    };
+    const handlers = [
+      ...dartHandlerConfig.handlers,
+      ...flutterHandlerConfig.handlers,
+    ];
 
     let generatedCode = `
 import { RpcUtilities } from "./rpc_utilities.js";
@@ -46,7 +70,7 @@ export class FlutterRpcHandlers {
   }
 `;
 
-    for (const handler of handlerConfig.handlers) {
+    for (const handler of handlers) {
       const methodName = `handle${handler.name
         .split("_")
         .map((part: string) => part.charAt(0).toUpperCase() + part.slice(1))
@@ -142,7 +166,7 @@ export function createRpcHandlerMap(
   return {
 `;
 
-    for (const handler of handlerConfig.handlers) {
+    for (const handler of handlers) {
       const handlerName = handler.name;
       const methodName = `handle${handlerName
         .split("_")
