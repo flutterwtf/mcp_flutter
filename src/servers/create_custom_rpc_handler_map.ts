@@ -1,5 +1,10 @@
-import { IsolateInfo, IsolateResponse, VMInfo } from "../types/types.js";
-import { RpcUtilities } from "./rpc_utilities.js";
+import {
+  FlutterPort,
+  IsolateInfo,
+  IsolateResponse,
+  VMInfo,
+} from "../types/types.js";
+import { execAsync, RpcUtilities } from "./rpc_utilities.js";
 
 // Define a type for the handler function
 type RpcHandler = (request: any) => Promise<any>;
@@ -18,7 +23,7 @@ export function createCustomRpcHandlerMap(
 ): CustomRpcHandlerMap {
   return {
     get_active_ports: async () => {
-      const ports = await rpcUtils.getActivePorts();
+      const ports = await _getActivePorts(rpcUtils);
       return {
         content: [
           {
@@ -114,4 +119,41 @@ export function createCustomRpcHandlerMap(
       };
     },
   };
+}
+
+/**
+ * Get active ports for Flutter/Dart processes
+ */
+async function _getActivePorts(rpcUtils: RpcUtilities): Promise<FlutterPort[]> {
+  try {
+    const { stdout } = await execAsync("lsof -i -P -n | grep LISTEN");
+    const ports: FlutterPort[] = [];
+    const lines = stdout.split("\n");
+
+    for (const line of lines) {
+      if (
+        line.toLowerCase().includes("dart") ||
+        line.toLowerCase().includes("flutter")
+      ) {
+        const parts = line.split(/\s+/);
+        const pid = parts[1];
+        const command = parts[0];
+        const addressPart = parts[8];
+        const portMatch = addressPart.match(/:(\d+)$/);
+
+        if (portMatch) {
+          ports.push({
+            port: parseInt(portMatch[1], 10),
+            pid,
+            command,
+          });
+        }
+      }
+    }
+
+    return ports;
+  } catch (error) {
+    rpcUtils.log("error", "Error getting active ports:", error);
+    return [];
+  }
 }
