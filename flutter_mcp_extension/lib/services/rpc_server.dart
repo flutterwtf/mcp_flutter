@@ -1,9 +1,9 @@
 // ignore_for_file: avoid_catches_without_on_clauses
 
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter_mcp_extension/common_imports.dart';
+import 'package:universal_io/io.dart';
 
 class RpcServer extends ChangeNotifier {
   HttpServer? _server;

@@ -1,5 +1,6 @@
+import 'dart:async';
+
 import 'package:flutter_mcp_extension/common_imports.dart';
-import 'package:flutter_mcp_extension/ui_root/ui_root.dart';
 
 /// {@template inspector_app}
 /// Root application widget for the Flutter Inspector
@@ -23,7 +24,11 @@ class InspectorApp extends StatelessWidget {
       useMaterial3: true,
     ),
     home: ChangeNotifierProvider(
-      create: (final context) => RpcServer(),
+      create: (final context) {
+        final rpcServer = RpcServer();
+        unawaited(rpcServer.start());
+        return rpcServer;
+      },
       child: const ServerDashboard(),
     ),
   );
