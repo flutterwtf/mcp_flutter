@@ -25,7 +25,7 @@ class InspectorApp extends StatelessWidget {
     ),
     home: FutureBuilder(
       // ignore: discarded_futures
-      future: _initRpcClient(),
+      future: _initRpcClients(),
       builder: (final context, final snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
@@ -41,33 +41,33 @@ class InspectorApp extends StatelessWidget {
                 children: [
                   const Icon(Icons.error_outline, size: 48, color: Colors.red),
                   const SizedBox(height: 16),
-                  Text('Error initializing RPC server: ${snapshot.error}'),
+                  Text('Error initializing RPC servers: ${snapshot.error}'),
                 ],
               ),
             ),
           );
         }
 
-        final rpcClient = snapshot.data!;
+        final rpcOrchestrator = snapshot.data!;
 
         return ChangeNotifierProvider.value(
-          value: rpcClient,
+          value: rpcOrchestrator,
           child: const ServerDashboard(),
         );
       },
     ),
   );
 
-  Future<RpcClient> _initRpcClient() async {
-    final rpcClient = RpcClient();
+  Future<RpcClientsOrchestrator> _initRpcClients() async {
+    final orchestrator = RpcClientsOrchestrator();
     try {
-      await rpcClient.connect(port: Envs.tsRpc.port, host: Envs.tsRpc.host);
-      return rpcClient;
+      await orchestrator.initializeAll();
+      return orchestrator;
     } catch (e) {
-      print('Error starting RPC server: $e');
-      // Still return the server even if there was an error,
+      print('Error starting RPC servers: $e');
+      // Still return the orchestrator even if there were errors,
       // so we can display connection status in the UI
-      return rpcClient;
+      return orchestrator;
     }
   }
 }
