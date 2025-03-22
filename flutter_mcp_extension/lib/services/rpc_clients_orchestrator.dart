@@ -1,4 +1,5 @@
 import 'package:flutter_mcp_extension/common_imports.dart';
+import 'package:flutter_mcp_extension/services/service_extension_bridge.dart';
 
 /// {@template rpc_client_info}
 /// Holds connection information for an RPC client
@@ -62,14 +63,7 @@ class RpcClientInfo with ChangeNotifier {
 class RpcClientsOrchestrator with ChangeNotifier {
   /// {@macro rpc_clients_orchestrator}
   RpcClientsOrchestrator() {
-    // Initialize the clients from environment variables
-    _flutterClient = RpcClientInfo(
-      name: 'Flutter',
-      host: Envs.flutterRpc.host,
-      port: Envs.flutterRpc.port,
-      path: Envs.flutterRpc.path,
-    );
-
+    // Initialize the TS client from environment variables
     _tsClient = RpcClientInfo(
       name: 'TypeScript',
       host: Envs.tsRpc.host,
@@ -77,29 +71,49 @@ class RpcClientsOrchestrator with ChangeNotifier {
       path: Envs.tsRpc.path,
     );
 
+    // Create the service extension bridge using the TS client
+    _serviceBridge = ServiceExtensionBridge(rpcClient: _tsClient.client);
+
     // Listen to changes in the clients
-    _flutterClient.addListener(notifyListeners);
     _tsClient.addListener(notifyListeners);
+    _serviceBridge.addListener(notifyListeners);
   }
 
-  late final RpcClientInfo _flutterClient;
+  late final ServiceExtensionBridge _serviceBridge;
   late final RpcClientInfo _tsClient;
 
-  /// Flutter RPC client information
-  RpcClientInfo get flutterClient => _flutterClient;
+  /// Service extension bridge for Flutter VM interaction
+  ServiceExtensionBridge get serviceBridge => _serviceBridge;
 
   /// TypeScript RPC client information
   RpcClientInfo get tsClient => _tsClient;
 
   /// Initialize and connect all clients
   Future<void> initializeAll() async {
-    await Future.wait([_flutterClient.connect(), _tsClient.connect()]);
+    // Connect TS client
+    await _tsClient.connect();
+    await _serviceBridge.connectToVmService(
+      Uri(
+        host: Envs.flutterRpc.host,
+        port: Envs.flutterRpc.port,
+        path: Envs.flutterRpc.path,
+      ),
+    );
+  }
+
+  /// Connect to the Flutter VM service
+  Future<bool> connectToFlutterVmService(final Uri uri) async =>
+      _serviceBridge.connectToVmService(uri);
+
+  /// Disconnect from the Flutter VM service
+  Future<void> disconnectFromFlutterVmService() async {
+    await _serviceBridge.disconnectFromVmService();
   }
 
   @override
   void dispose() {
-    _flutterClient.removeListener(notifyListeners);
     _tsClient.removeListener(notifyListeners);
+    _serviceBridge.removeListener(notifyListeners);
     super.dispose();
   }
 }
