@@ -16,6 +16,10 @@ The forwarding server provides a WebSocket-based bi-directional communication la
 └─────────────────┘         └──────────────────┘         └─────────────────┘
 ```
 
+## TS Forwarding Server Architecture
+
+located in `forwarding-server/src`
+
 ### 1. Forwarding Server (`forwarding-server.ts`)
 
 - Core WebSocket server managing bidirectional connections
@@ -42,6 +46,15 @@ The forwarding server provides a WebSocket-based bi-directional communication la
 - Server bootstrapping and command-line interface
 - Exports public API components
 - Manages graceful shutdown
+
+## Dart Forwarding Client Architecture
+
+### Forwarding Client (`forwarding_client.dart`)
+
+- Browser-compatible client implementation using WebSocket
+- API parity with Typescript Browser Client
+- Supports JSON-RPC method calls and event-based messaging
+- Manages automatic reconnection and request tracking
 
 ## Communication Protocol
 
