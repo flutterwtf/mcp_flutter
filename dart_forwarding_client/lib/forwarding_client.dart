@@ -36,8 +36,10 @@ class ForwardingClient {
 
   /// Add an event listener
   void on(String event, Function callback) {
+    print('Adding event listener for: $event');
     _eventHandlers.putIfAbsent(event, () => {});
     _eventHandlers[event]!.add(callback);
+    print('Event handlers for $event: ${_eventHandlers[event]!.length}');
   }
 
   /// Remove an event listener
@@ -54,6 +56,7 @@ class ForwardingClient {
     final handlers = _eventHandlers[event];
     if (handlers != null) {
       for (final handler in handlers) {
+        print('Calling handler for event: $event');
         Function.apply(handler, args);
       }
     }
@@ -61,13 +64,18 @@ class ForwardingClient {
     // Special handling for 'method' event to also trigger method:${methodName} events
     if (event == 'method' && args.isNotEmpty) {
       final methodName = args[0];
+      print('Looking for handlers for method:$methodName');
       final methodHandlers = _eventHandlers['method:$methodName'];
       if (methodHandlers != null) {
+        print('Found ${methodHandlers.length} handlers for method:$methodName');
         // Skip the method name in args for specific method handlers
         final methodArgs = args.sublist(1);
         for (final handler in methodHandlers) {
+          print('Calling handler for method:$methodName');
           Function.apply(handler, methodArgs);
         }
+      } else {
+        print('No handlers found for method:$methodName');
       }
     }
   }
@@ -95,7 +103,12 @@ class ForwardingClient {
 
     // If WebSocket exists but is not connected, close and recreate it
     if (_ws != null) {
-      await _ws!.sink.close();
+      print('Closing existing WebSocket connection');
+      try {
+        await _ws!.sink.close();
+      } catch (e) {
+        print('Error closing WebSocket: $e');
+      }
       _ws = null;
     }
 
@@ -112,14 +125,25 @@ class ForwardingClient {
           'ws://$host:$port$path?clientType=${clientType.name}&clientId=$clientId';
       print('Connecting to forwarding server at $wsUrl');
 
-      // Create the WebSocket connection
-      _ws = WebSocketChannel.connect(Uri.parse(wsUrl));
+      // Create the WebSocket connection with more detailed error handling
+      try {
+        _ws = WebSocketChannel.connect(Uri.parse(wsUrl));
+        print('WebSocket connection initiated');
+      } catch (e, st) {
+        print('Failed to create WebSocket connection: $e');
+        print('Stack trace: $st');
+        if (!completer.isCompleted) {
+          completer.completeError(e);
+        }
+        return completer.future;
+      }
 
       // Setup a listener for incoming messages
       _ws!.stream.listen(
         (dynamic message) {
           try {
             final String messageStr = message.toString();
+            print('Received WebSocket message: $messageStr');
             final Map<String, dynamic> parsedMessage =
                 json.decode(messageStr) as Map<String, dynamic>;
 
@@ -129,28 +153,42 @@ class ForwardingClient {
             // Handle method calls
             if (parsedMessage.containsKey('method') &&
                 parsedMessage.containsKey('id')) {
+              print(
+                'Processing method call: ${parsedMessage['method']} with id: ${parsedMessage['id']}',
+              );
               _emit('method', [
                 parsedMessage['method'],
                 parsedMessage['params'],
                 (result) {
+                  print(
+                    'Respond callback called for method ${parsedMessage['method']} with result: $result',
+                  );
                   _sendResponse(parsedMessage['id'] as String, result);
                 },
               ]);
             }
             // Handle JSON-RPC responses
             else if (parsedMessage.containsKey('id')) {
+              print('Processing response for id: ${parsedMessage['id']}');
               final request = _pendingRequests[parsedMessage['id']];
               if (request != null) {
+                print('Found pending request for id: ${parsedMessage['id']}');
                 if (parsedMessage.containsKey('error')) {
+                  print('Completing with error: ${parsedMessage['error']}');
                   request.completer.completeError(
                     Exception(
                       parsedMessage['error']['message'] ?? 'Unknown error',
                     ),
                   );
                 } else {
+                  print('Completing with result: ${parsedMessage['result']}');
                   request.completer.complete(parsedMessage['result']);
                 }
                 _pendingRequests.remove(parsedMessage['id']);
+              } else {
+                print(
+                  'No pending request found for id: ${parsedMessage['id']}',
+                );
               }
             }
           } catch (error) {
@@ -218,7 +256,17 @@ class ForwardingClient {
       response['result'] = result;
     }
 
-    _ws!.sink.add(json.encode(response));
+    final String jsonResponse = json.encode(response);
+    final int responseLength = jsonResponse.length;
+
+    print('Sending response for ID $id of size $responseLength bytes');
+    try {
+      _ws!.sink.add(jsonResponse);
+      print('Response sent successfully');
+    } catch (e, st) {
+      print('Error sending WebSocket response: $e');
+      print('Stack trace: $st');
+    }
   }
 
   /// Setup automatic reconnection
@@ -287,9 +335,12 @@ class ForwardingClient {
     String method,
     Future<dynamic> Function(dynamic) handler,
   ) {
+    print('Registering method handler for: $method');
     on('method:$method', (dynamic params, Function respond) async {
+      print('Method $method called with params: $params');
       try {
         final result = await handler(params);
+        print('Method $method completed with result: $result');
         respond(result);
       } catch (error) {
         print('Error handling method $method: $error');

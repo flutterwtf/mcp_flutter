@@ -36,8 +36,7 @@ class RPCResponse {
   };
 
   @override
-  String toString() =>
-      'RPCResponse(success: $success, data: $data, error: $error)';
+  String toString() => 'RPCResponse(success: $success,  error: $error)';
 }
 
 /// {@template service_extension_bridge}
@@ -103,8 +102,7 @@ class DevtoolsService with ChangeNotifier {
         vmService,
         onClosed: finishedCompleter.future,
       );
-
-      await takeScreenshot({});
+      setGlobal(ServiceManager, _serviceManager);
 
       notifyListeners();
       return true;
@@ -129,7 +127,6 @@ extension DevtoolsServiceExtension on DevtoolsService {
   /// Take a screenshot of the current UI
   Future<RPCResponse> takeScreenshot(final Map<String, dynamic> params) async {
     try {
-      setGlobal(ServiceManager, _serviceManager);
       print('Take screenshot');
       if (!_serviceManager.connectedState.value.connected) {
         return RPCResponse.error('Not connected to VM service');
