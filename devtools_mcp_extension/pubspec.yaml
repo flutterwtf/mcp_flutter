@@ -33,6 +33,8 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.6
+  dart_forwarding_client:
+    path: ../dart_forwarding_client
   devtools_app_shared: ^0.3.1
   devtools_extensions: ^0.3.1
   devtools_shared: ^11.2.0

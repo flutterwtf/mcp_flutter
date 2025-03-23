@@ -2,7 +2,7 @@
 
 import 'dart:convert';
 
-import 'package:flutter_mcp_extension/common_imports.dart';
+import 'package:devtools_mcp_extension/common_imports.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class RpcClient extends ChangeNotifier {

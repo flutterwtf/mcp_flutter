@@ -19,7 +19,7 @@
       "name": "Flutter MCP extension debug",
       "request": "launch",
       "type": "dart",
-      "cwd": "flutter_mcp_extension",
+      "cwd": "devtools_mcp_extension",
       "flutterMode": "debug",
       "args": ["--debug", "--web-port=3434"]
     }

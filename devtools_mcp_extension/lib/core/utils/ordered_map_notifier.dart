@@ -1,4 +1,4 @@
-import 'package:flutter_mcp_extension/common_imports.dart';
+import 'package:devtools_mcp_extension/common_imports.dart';
 
 class OrderedMapNotifier<K, V> extends ImmutableOrderedMap<K, V>
     with ChangeNotifier {

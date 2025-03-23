@@ -1,4 +1,5 @@
-import 'package:flutter_mcp_extension/common_imports.dart';
+import 'package:dart_forwarding_client/dart_forwarding_client.dart';
+import 'package:devtools_mcp_extension/common_imports.dart';
 
 /// {@template rpc_client_info}
 /// Holds connection information for an RPC client
@@ -66,7 +67,7 @@ class RpcClientsOrchestrator with ChangeNotifier {
     _serviceBridge = ServiceExtensionBridge();
 
     // Initialize the forwarding service
-    _forwardingService = ForwardingService();
+    _forwardingService = ForwardingClient('');
 
     // Listen to changes in services
     _serviceBridge.addListener(notifyListeners);

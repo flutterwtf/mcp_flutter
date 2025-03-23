@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter_mcp_extension/common_imports.dart';
+import 'package:devtools_mcp_extension/common_imports.dart';
 
 /// {@template inspector_app}
 /// Root application widget for the Flutter Inspector

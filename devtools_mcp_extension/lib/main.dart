@@ -1,4 +1,4 @@
-import 'package:flutter_mcp_extension/common_imports.dart';
+import 'package:devtools_mcp_extension/common_imports.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();

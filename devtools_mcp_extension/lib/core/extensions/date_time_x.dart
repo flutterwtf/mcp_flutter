@@ -1,4 +1,4 @@
-import 'package:flutter_mcp_extension/common_imports.dart';
+import 'package:devtools_mcp_extension/common_imports.dart';
 
 extension DateTimeX on DateTime {
   String format({final String pattern = 'dd/MM/yyyy', final String? locale}) {

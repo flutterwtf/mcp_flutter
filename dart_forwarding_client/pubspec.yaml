@@ -7,13 +7,10 @@ environment:
   sdk: ">=3.7.0 <4.0.0"
 
 dependencies:
-  web_socket_channel: ^2.4.0
+  web_socket_channel: ^3.0.2
   uuid: ^4.2.2
 
 dev_dependencies:
   lints: ^3.0.0
   test: ^1.24.9
-  jaspr: ^0.10.0
-  jaspr_builder: ^0.10.0
-  jaspr_bootstrap: ^0.3.0
   build_runner: ^2.4.8

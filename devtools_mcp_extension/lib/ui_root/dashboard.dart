@@ -1,6 +1,5 @@
+import 'package:devtools_mcp_extension/common_imports.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_mcp_extension/common_imports.dart';
-import 'package:flutter_mcp_extension/services/service_extension_bridge.dart';
 
 /// {@template rpc_connection_status}
 /// Displays real-time RPC connection status with animated indicators

@@ -4,8 +4,8 @@ import 'dart:convert';
 
 import 'package:devtools_app_shared/service.dart';
 import 'package:devtools_app_shared/utils.dart';
+import 'package:devtools_mcp_extension/common_imports.dart';
 import 'package:devtools_shared/service.dart' as devtools_shared;
-import 'package:flutter_mcp_extension/common_imports.dart';
 import 'package:vm_service/vm_service.dart';
 
 /// {@template service_extension_bridge}
