@@ -48,7 +48,7 @@ export async function startServer() {
   process.on("SIGTERM", cleanup);
 
   console.log(
-    `Forwarding Server running at ws://localhost:${argv.port}${argv.path}`
+    `Forwarding Server started at ws://localhost:${argv.port}${argv.path}`
   );
 }
 

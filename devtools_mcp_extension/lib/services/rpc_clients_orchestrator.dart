@@ -89,9 +89,7 @@ class RpcClientsOrchestrator with ChangeNotifier {
   Future<void> initializeAll() async {
     // Connect to VM service
     await _serviceBridge.connectToVmService();
-
-    // Connect to forwarding server
-    _forwardingRpcListener.init();
+    await connectToForwardingService();
   }
 
   /// Connect to the Flutter VM service
@@ -101,5 +99,26 @@ class RpcClientsOrchestrator with ChangeNotifier {
   /// Disconnect from the Flutter VM service
   Future<void> disconnectFromFlutterVmService() async {
     await _serviceBridge.disconnectFromVmService();
+  }
+
+  /// Connect to the forwarding service
+  Future<void> connectToForwardingService({
+    final String? host,
+    final int? port,
+    final String? path,
+  }) async {
+    final h = host ?? Envs.forwardingServer.host;
+    final p = port ?? Envs.forwardingServer.port;
+    final pth = path ?? Envs.forwardingServer.path;
+
+    await _forwardingClient.connect(h, p, path: pth);
+    _forwardingRpcListener.init();
+    notifyListeners();
+  }
+
+  /// Disconnect from the forwarding service
+  Future<void> disconnectFromForwardingService() async {
+    _forwardingClient.disconnect();
+    notifyListeners();
   }
 }

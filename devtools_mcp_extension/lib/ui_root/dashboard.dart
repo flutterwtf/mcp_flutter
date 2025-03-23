@@ -282,6 +282,61 @@ class _ForwardingClientCardState extends State<_ForwardingClientCard> {
             label: 'Client Type',
             value: widget.forwardingClient.getClientType().toString(),
           ),
+
+          const SizedBox(height: 8),
+
+          // Action buttons
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              if (widget.forwardingClient.isConnected())
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.close, size: 16),
+                  label: const Text(
+                    'Disconnect',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    minimumSize: const Size(0, 28),
+                  ),
+                  onPressed: () async {
+                    final orchestrator = context.read<RpcClientsOrchestrator>();
+                    await orchestrator.disconnectFromForwardingService();
+                  },
+                )
+              else
+                FilledButton.icon(
+                  icon: const Icon(Icons.connecting_airports, size: 16),
+                  label: const Text('Connect', style: TextStyle(fontSize: 12)),
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    minimumSize: const Size(0, 28),
+                  ),
+                  onPressed: () async {
+                    try {
+                      final uri = Uri.parse(_uriController.text);
+                      final orchestrator =
+                          context.read<RpcClientsOrchestrator>();
+                      await orchestrator.connectToForwardingService(
+                        host: uri.host,
+                        port: uri.port,
+                        path: uri.path,
+                      );
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Error connecting: $e'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                ),
+            ],
+          ),
         ],
       ),
     ),

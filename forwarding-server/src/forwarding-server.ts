@@ -84,7 +84,7 @@ export class ForwardingServer extends EventEmitter {
         this.server.listen(port, () => {
           this.isRunning = true;
           console.log(
-            `Forwarding Server running at ws://localhost:${port}${path}`
+            `Forwarding Server running at ws://localhost:${port}${path}.`
           );
           resolve();
         });
