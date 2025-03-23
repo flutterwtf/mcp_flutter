@@ -1,12 +1,40 @@
 // Import necessary packages
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:devtools_app_shared/service.dart';
 import 'package:devtools_app_shared/utils.dart';
 import 'package:devtools_mcp_extension/common_imports.dart';
+import 'package:devtools_mcp_extension/services/forwarding_rpc_listener.dart';
 import 'package:devtools_shared/service.dart' as devtools_shared;
 import 'package:vm_service/vm_service.dart';
+
+class RPCResponse {
+  RPCResponse._({
+    required this.data,
+    required this.success,
+    required this.error,
+  });
+
+  factory RPCResponse.successMap(final Map<String, dynamic> data) =>
+      RPCResponse._(data: data, success: true, error: null);
+  factory RPCResponse.successString(final String data) =>
+      RPCResponse._(data: data, success: true, error: null);
+
+  factory RPCResponse.error(
+    final String error, [
+    final StackTrace? stackTrace,
+  ]) => RPCResponse._(data: {}, success: false, error: '$error\n$stackTrace');
+
+  final dynamic data;
+  final bool success;
+  final String? error;
+
+  Map<String, dynamic> toJson() => {
+    'success': success,
+    'data': data,
+    'error': error,
+  };
+}
 
 /// {@template service_extension_bridge}
 /// Bridges RPC calls from TypeScript server to Flutter's ServiceManager
@@ -17,13 +45,7 @@ import 'package:vm_service/vm_service.dart';
 /// {@endtemplate}
 class DevtoolsService with ChangeNotifier {
   /// {@macro service_extension_bridge}
-  DevtoolsService({final RpcClient? rpcClient})
-    : rpcClient = rpcClient ?? RpcClient() {
-    _registerRpcMethods();
-  }
-
-  /// The RPC client that receives calls from TypeScript
-  final RpcClient rpcClient;
+  DevtoolsService();
 
   /// The service manager instance
   final _serviceManager = ServiceManager();
@@ -34,75 +56,13 @@ class DevtoolsService with ChangeNotifier {
   /// Gets the current service manager
   ServiceManager get serviceManager => _serviceManager;
 
-  /// Register RPC methods that can be called from TypeScript
-  void _registerRpcMethods() {
-    // Only register the two required methods
-    rpcClient
-      ..registerMethod('getConnectedState', _getConnectedState)
-      ..registerMethod('takeScreenshot', _takeScreenshot);
-  }
-
   /// Gets the current connection state
-  Map<String, dynamic> _getConnectedState(final Map<String, dynamic> params) {
+  (bool connected, String? vmServiceUri) getVmConnectedState(
+    final Map<String, dynamic> params,
+  ) {
     final connectedState = _serviceManager.connectedState.value;
 
-    return {
-      'connected': connectedState.connected,
-      'vmServiceUri': _vmServiceUri?.toString(),
-    };
-  }
-
-  /// Take a screenshot of the current UI
-  Future<Map<String, dynamic>> _takeScreenshot(
-    final Map<String, dynamic> params,
-  ) async {
-    try {
-      setGlobal(ServiceManager, _serviceManager);
-      print('Take screenshot');
-      if (!_serviceManager.connectedState.value.connected) {
-        return {'success': false, 'error': 'Not connected to VM service'};
-      }
-      print('Take screenshot 2');
-      final format = params['format'] as String? ?? 'png';
-      final isolateId = _serviceManager.isolateManager.mainIsolate.value?.id;
-      print('Take screenshot 3');
-      if (isolateId == null) {
-        return {'success': false, 'error': 'No main isolate available'};
-      }
-      print('Take screenshot 4');
-      // Call the VM service to take a screenshot using the private Flutter API
-      final result = await _serviceManager.service!.callServiceExtension(
-        '_flutter.screenshot',
-      );
-      print('Take screenshot 5');
-      try {
-        // Convert screenshot data to PNG blob
-        // final pngBlob = result.json!['screenshot'] as String;
-        print('Screenshot PNG blob: ${result.json}');
-
-        const serviceExtensionPrefix = 'ext.flutter.inspector';
-        final callMethodName =
-            '$serviceExtensionPrefix.${WidgetInspectorServiceExtensions.getRootWidgetTree.name}';
-        final rootWidgetTree = await serviceManager
-            .callServiceExtensionOnMainIsolate(callMethodName);
-        print('Root widget tree: $rootWidgetTree');
-        // final bytes = base64Decode(pngBlob);
-        // print('Screenshot PNG blob size: ${bytes.length} bytes');
-      } catch (e) {
-        print('Screenshot Error: $e');
-      }
-
-      if (result.json!.containsKey('screenshot')) {
-        final screenshotData = result.json!['screenshot'] as String;
-        final decodedData = base64Decode(screenshotData);
-
-        return {'success': true, 'data': decodedData, 'format': format};
-      } else {
-        return {'success': false, 'error': 'Screenshot data not available'};
-      }
-    } catch (e) {
-      return {'success': false, 'error': 'Error taking screenshot: $e'};
-    }
+    return (connectedState.connected, _vmServiceUri?.toString());
   }
 
   /// Connect to a VM service
@@ -140,14 +100,15 @@ class DevtoolsService with ChangeNotifier {
         onClosed: finishedCompleter.future,
       );
 
-      await _takeScreenshot({});
+      await takeScreenshot({});
 
       notifyListeners();
       return true;
-    } catch (e) {
+    } catch (e, stackTrace) {
       // Clear the URI if connection fails
       _vmServiceUri = null;
       print('Error connecting to VM service: $e');
+      print('Stack trace: $stackTrace');
       return false;
     }
   }
@@ -157,5 +118,76 @@ class DevtoolsService with ChangeNotifier {
     await _serviceManager.vmServiceClosed();
     _vmServiceUri = null;
     notifyListeners();
+  }
+}
+
+extension DevtoolsServiceExtension on DevtoolsService {
+  /// Take a screenshot of the current UI
+  Future<RPCResponse> takeScreenshot(final Map<String, dynamic> params) async {
+    try {
+      setGlobal(ServiceManager, _serviceManager);
+      print('Take screenshot');
+      if (!_serviceManager.connectedState.value.connected) {
+        return RPCResponse.error('Not connected to VM service');
+      }
+      print('Take screenshot 2');
+      final isolateId = _serviceManager.isolateManager.mainIsolate.value?.id;
+      print('Take screenshot 3');
+      if (isolateId == null) {
+        return RPCResponse.error('No main isolate available');
+      }
+      print('Take screenshot 4');
+      // Call the VM service to take a screenshot using the private Flutter API
+      final result = await _serviceManager.service!.callServiceExtension(
+        '_flutter.screenshot',
+      );
+      print('Take screenshot 5');
+      try {
+        // Convert screenshot data to PNG blob
+        // final pngBlob = result.json!['screenshot'] as String;
+        print('Screenshot PNG blob: ${result.json}');
+
+        // final bytes = base64Decode(pngBlob);
+        // print('Screenshot PNG blob size: ${bytes.length} bytes');
+      } catch (e, stackTrace) {
+        print('Screenshot Error: $e');
+        return RPCResponse.error('Error taking screenshot: $e', stackTrace);
+      }
+      final screenshotData = result.json?['screenshot'] as String?;
+      if (screenshotData != null) {
+        return RPCResponse.successString(screenshotData);
+      } else {
+        return RPCResponse.error('Screenshot data not available');
+      }
+    } catch (e, stackTrace) {
+      return RPCResponse.error(
+        'Error taking screenshot: $e, stackTrace: $stackTrace',
+      );
+    }
+  }
+
+  Future<RPCResponse> getRootWidgetTree() async {
+    try {
+      final callMethodName =
+          '$flutterInspectorName.'
+          '${WidgetInspectorServiceExtensions.getRootWidgetTree.name}';
+      final rootWidgetTree = await serviceManager
+          .callServiceExtensionOnMainIsolate(callMethodName);
+      print('Root widget tree: $rootWidgetTree');
+      if (rootWidgetTree.json == null) {
+        return RPCResponse.error(
+          'Root widget tree not available, '
+          'rootWidgetTree: ${rootWidgetTree.toJson()}',
+        );
+      }
+      return RPCResponse.successMap(rootWidgetTree.json!);
+    } catch (e, stackTrace) {
+      print('Error getting root widget tree: $e');
+      print('Stack trace: $stackTrace');
+      return RPCResponse.error(
+        'Error getting root widget tree: $e',
+        stackTrace,
+      );
+    }
   }
 }

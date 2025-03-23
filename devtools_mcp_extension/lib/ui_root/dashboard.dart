@@ -424,62 +424,22 @@ class _MethodsList extends StatelessWidget {
   final DevtoolsService vmServiceBridge;
 
   @override
-  Widget build(final BuildContext context) {
-    // final tsMethods = tsClient.registeredMethods;
-    final bridgeMethods = vmServiceBridge.rpcClient.registeredMethods;
-
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // if (tsMethods.isEmpty && bridgeMethods.isEmpty)
-            //   const Text(
-            //     'No methods registered yet',
-            //     style: TextStyle(fontStyle: FontStyle.italic),
-            //   )
-            // else
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // if (tsMethods.isNotEmpty) ...[
-                //   const Text(
-                //     'TypeScript Server Methods',
-                //     style: TextStyle(fontWeight: FontWeight.bold),
-                //   ),
-                //   const SizedBox(height: 8),
-                //   ..._buildMethodsList(tsMethods),
-                //   const SizedBox(height: 16),
-                // ],
-                if (bridgeMethods.isNotEmpty) ...[
-                  const Text(
-                    'VM Service Bridge Methods',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  ..._buildMethodsList(bridgeMethods),
-                ],
-              ],
-            ),
-          ],
-        ),
+  Widget build(final BuildContext context) => const Card(
+    elevation: 2,
+    child: Padding(
+      padding: EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // if (tsMethods.isEmpty && bridgeMethods.isEmpty)
+          //   const Text(
+          //     'No methods registered yet',
+          //     style: TextStyle(fontStyle: FontStyle.italic),
+          //   )
+          // else
+          Column(crossAxisAlignment: CrossAxisAlignment.start),
+        ],
       ),
-    );
-  }
-
-  List<Widget> _buildMethodsList(final List<String> methods) => [
-    for (final method in methods)
-      Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          children: [
-            const Icon(Icons.api, size: 18, color: Colors.blueGrey),
-            const SizedBox(width: 8),
-            Text(method),
-          ],
-        ),
-      ),
-  ];
+    ),
+  );
 }

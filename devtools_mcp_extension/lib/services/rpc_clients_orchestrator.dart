@@ -71,7 +71,7 @@ class RpcClientsOrchestrator with ChangeNotifier {
     _forwardingClient = ForwardingClient(ForwardingClientType.flutter);
     _forwardingRpcListener = ForwardingRpcListener(
       forwardingClient: _forwardingClient,
-      serviceBridge: _serviceBridge,
+      devtoolsService: _serviceBridge,
     );
   }
 
