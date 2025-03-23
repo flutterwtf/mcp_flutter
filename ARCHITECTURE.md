@@ -49,6 +49,8 @@ located in `forwarding-server/src`
 
 ## Dart Forwarding Client Architecture
 
+located in `dart_forwarding_client`
+
 ### Forwarding Client (`forwarding_client.dart`)
 
 - Browser-compatible client implementation using WebSocket
