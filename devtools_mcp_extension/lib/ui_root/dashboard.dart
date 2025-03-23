@@ -1,5 +1,5 @@
+import 'package:dart_forwarding_client/dart_forwarding_client.dart';
 import 'package:devtools_mcp_extension/common_imports.dart';
-import 'package:flutter/services.dart';
 
 /// {@template rpc_connection_status}
 /// Displays real-time RPC connection status with animated indicators
@@ -18,14 +18,49 @@ class RpcConnectionStatus extends StatelessWidget {
       Icon(
         client.connected ? Icons.cloud_done : Icons.cloud_off,
         color: client.connected ? Colors.green : Colors.red,
-        size: 28,
+        size: 20,
       ),
-      const SizedBox(width: 8),
+      const SizedBox(width: 4),
       Text(
         client.connected ? 'Connected' : 'Disconnected',
         style: TextStyle(
           color: client.connected ? Colors.green : Colors.red,
           fontWeight: FontWeight.w500,
+          fontSize: 13,
+        ),
+      ),
+    ],
+  );
+}
+
+/// {@template forwarding_client_status}
+/// Displays real-time forwarding client connection status
+/// {@endtemplate}
+class ForwardingClientStatus extends StatelessWidget {
+  /// {@macro forwarding_client_status}
+  const ForwardingClientStatus({required this.forwardingClient, super.key});
+
+  /// The forwarding client to monitor
+  final ForwardingClient forwardingClient;
+
+  @override
+  Widget build(final BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Icon(
+        forwardingClient.isConnected()
+            ? Icons.swap_horiz
+            : Icons.swap_horiz_outlined,
+        color: forwardingClient.isConnected() ? Colors.orange : Colors.grey,
+        size: 20,
+      ),
+      const SizedBox(width: 4),
+      Text(
+        forwardingClient.isConnected() ? 'Forwarding' : 'Disconnected',
+        style: TextStyle(
+          color: forwardingClient.isConnected() ? Colors.orange : Colors.grey,
+          fontWeight: FontWeight.w500,
+          fontSize: 13,
         ),
       ),
     ],
@@ -59,14 +94,15 @@ class VmServiceConnectionStatus extends StatelessWidget {
             Icon(
               isConnected ? Icons.flutter_dash : Icons.flutter_dash_outlined,
               color: isConnected ? Colors.blue : Colors.grey,
-              size: 28,
+              size: 20,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 4),
             Text(
-              isConnected ? 'VM Connected' : 'VM Disconnected',
+              isConnected ? 'VM' : 'VM Off',
               style: TextStyle(
                 color: isConnected ? Colors.blue : Colors.grey,
                 fontWeight: FontWeight.w500,
+                fontSize: 13,
               ),
             ),
           ],
@@ -90,33 +126,41 @@ class ServerDashboard extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('RPC Servers Dashboard'),
-        actions: const [
-          // RpcConnectionStatus(client: orchestrator.tsClient.client),
-          SizedBox(width: 16),
+        centerTitle: false,
+        titleSpacing: 0,
+        actions: [
+          VmServiceConnectionStatus(serviceBridge: orchestrator.serviceBridge),
+          const SizedBox(width: 8),
+          ForwardingClientStatus(
+            forwardingClient: orchestrator.forwardingService,
+          ),
+          const SizedBox(width: 8),
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: ListView(
+        padding: const EdgeInsets.all(8),
+        child: Column(
           children: [
-            // TypeScript server card
-            // _ServerCard(clientInfo: orchestrator.tsClient),
-            const SizedBox(height: 24),
-
-            // VM Service bridge card
-            _VmServiceBridgeCard(serviceBridge: orchestrator.serviceBridge),
-
-            const SizedBox(height: 24),
-
-            // Registered methods section
-            const Text(
-              'Registered Methods',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            _MethodsList(
-              // tsClient: orchestrator.tsClient.client,
-              vmServiceBridge: orchestrator.serviceBridge,
+            // Service cards in a row
+            Expanded(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Forwarding client card
+                  Expanded(
+                    child: _ForwardingClientCard(
+                      forwardingClient: orchestrator.forwardingService,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // VM Service bridge card
+                  Expanded(
+                    child: _VmServiceBridgeCard(
+                      serviceBridge: orchestrator.serviceBridge,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -140,143 +184,103 @@ class _ServerStatusItem extends StatelessWidget {
   @override
   Widget build(final BuildContext context) => Row(
     children: [
-      Icon(icon, size: 20, color: Colors.blueGrey),
-      const SizedBox(width: 8),
-      Text('$label:', style: const TextStyle(fontWeight: FontWeight.w500)),
-      const SizedBox(width: 8),
-      Expanded(child: Text(value)),
+      Icon(icon, size: 16, color: Colors.blueGrey),
+      const SizedBox(width: 4),
+      Text(
+        '$label:',
+        style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
+      ),
+      const SizedBox(width: 4),
+      Expanded(child: Text(value, style: const TextStyle(fontSize: 12))),
     ],
   );
 }
 
-/// {@template server_card}
-/// Card displaying server status and controls
+/// {@template forwarding_client_card}
+/// Card displaying forwarding client status and controls
 /// {@endtemplate}
-class _ServerCard extends StatefulWidget {
-  /// {@macro server_card}
-  const _ServerCard({required this.clientInfo});
+class _ForwardingClientCard extends StatefulWidget {
+  /// {@macro forwarding_client_card}
+  const _ForwardingClientCard({required this.forwardingClient});
 
-  /// The client information to display
-  final RpcClientInfo clientInfo;
+  /// The forwarding client to display
+  final ForwardingClient forwardingClient;
 
   @override
-  State<_ServerCard> createState() => _ServerCardState();
+  State<_ForwardingClientCard> createState() => _ForwardingClientCardState();
 }
 
-class _ServerCardState extends State<_ServerCard> {
-  late TextEditingController _hostController;
-  late TextEditingController _portController;
-  late TextEditingController _pathController;
+class _ForwardingClientCardState extends State<_ForwardingClientCard> {
+  late TextEditingController _uriController;
 
   @override
   void initState() {
     super.initState();
-    _hostController = TextEditingController(text: widget.clientInfo.host);
-    _portController = TextEditingController(
-      text: widget.clientInfo.port.toString(),
+    _uriController = TextEditingController(
+      text:
+          'ws://${Envs.forwardingServer.host}:${Envs.forwardingServer.port}/${Envs.forwardingServer.path}',
     );
-    _pathController = TextEditingController(text: widget.clientInfo.path);
   }
 
   @override
   void dispose() {
-    _hostController.dispose();
-    _portController.dispose();
-    _pathController.dispose();
+    _uriController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(final BuildContext context) => Card(
-    elevation: 2,
+    elevation: 1,
+    margin: EdgeInsets.zero,
     child: Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Text(
-                '${widget.clientInfo.name} Server',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+              const Text(
+                'Forwarding Service',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               ),
               const Spacer(),
-              RpcConnectionStatus(client: widget.clientInfo.client),
+              ForwardingClientStatus(forwardingClient: widget.forwardingClient),
             ],
           ),
-          const Divider(),
+          const Divider(height: 16),
 
           // Connection parameters
           const Text(
-            'Connection Settings',
-            style: TextStyle(fontWeight: FontWeight.bold),
+            'WebSocket URI',
+            style: TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 4),
 
-          // Host input
+          // URI input
           TextField(
-            controller: _hostController,
+            controller: _uriController,
+            style: const TextStyle(fontSize: 12),
             decoration: const InputDecoration(
-              labelText: 'Host',
-              prefixIcon: Icon(Icons.public),
+              isDense: true,
+              contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
               border: OutlineInputBorder(),
+              hintText: 'ws://localhost:8143/forward',
             ),
           ),
+
           const SizedBox(height: 8),
 
-          // Port input
-          TextField(
-            controller: _portController,
-            decoration: const InputDecoration(
-              labelText: 'Port',
-              prefixIcon: Icon(Icons.numbers),
-              border: OutlineInputBorder(),
-            ),
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          // Client info
+          _ServerStatusItem(
+            icon: Icons.fingerprint,
+            label: 'Client ID',
+            value: widget.forwardingClient.getClientId(),
           ),
-          const SizedBox(height: 8),
-
-          // Path input
-          TextField(
-            controller: _pathController,
-            decoration: const InputDecoration(
-              labelText: 'Path',
-              prefixIcon: Icon(Icons.link),
-              border: OutlineInputBorder(),
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Action buttons
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              OutlinedButton.icon(
-                icon: const Icon(Icons.save),
-                label: const Text('Update'),
-                onPressed: () {
-                  widget.clientInfo.updateConnection(
-                    host: _hostController.text,
-                    port:
-                        int.tryParse(_portController.text) ??
-                        widget.clientInfo.port,
-                    path: _pathController.text,
-                  );
-                },
-              ),
-              const SizedBox(width: 8),
-              FilledButton.icon(
-                icon: const Icon(Icons.refresh),
-                label: const Text('Restart'),
-                onPressed: () async {
-                  await widget.clientInfo.restart();
-                },
-              ),
-            ],
+          const SizedBox(height: 4),
+          _ServerStatusItem(
+            icon: Icons.category,
+            label: 'Client Type',
+            value: widget.forwardingClient.getClientType().toString(),
           ),
         ],
       ),
@@ -327,9 +331,10 @@ class _VmServiceBridgeCardState extends State<_VmServiceBridgeCard> {
         final isConnected = connectedState.value.connected;
 
         return Card(
-          elevation: 2,
+          elevation: 1,
+          margin: EdgeInsets.zero,
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -338,7 +343,7 @@ class _VmServiceBridgeCardState extends State<_VmServiceBridgeCard> {
                     const Text(
                       'Flutter VM Service',
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -348,27 +353,31 @@ class _VmServiceBridgeCardState extends State<_VmServiceBridgeCard> {
                     ),
                   ],
                 ),
-                const Divider(),
+                const Divider(height: 16),
 
                 // Connection parameters
                 const Text(
-                  'VM Service URI',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  'WebSocket URI',
+                  style: TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 4),
 
                 // URI input
                 TextField(
                   controller: _uriController,
+                  style: const TextStyle(fontSize: 12),
                   decoration: const InputDecoration(
-                    labelText: 'WebSocket URI',
-                    prefixIcon: Icon(Icons.link),
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 8,
+                    ),
                     border: OutlineInputBorder(),
                     hintText: 'ws://localhost:8181/ws',
                   ),
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
 
                 // Action buttons
                 Row(
@@ -376,16 +385,30 @@ class _VmServiceBridgeCardState extends State<_VmServiceBridgeCard> {
                   children: [
                     if (isConnected)
                       OutlinedButton.icon(
-                        icon: const Icon(Icons.close),
-                        label: const Text('Disconnect'),
+                        icon: const Icon(Icons.close, size: 16),
+                        label: const Text(
+                          'Disconnect',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          minimumSize: const Size(0, 28),
+                        ),
                         onPressed: () async {
                           await widget.serviceBridge.disconnectFromVmService();
                         },
                       )
                     else
                       FilledButton.icon(
-                        icon: const Icon(Icons.connecting_airports),
-                        label: const Text('Connect'),
+                        icon: const Icon(Icons.connecting_airports, size: 16),
+                        label: const Text(
+                          'Connect',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                        style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          minimumSize: const Size(0, 28),
+                        ),
                         onPressed: () async {
                           try {
                             final uri = Uri.parse(_uriController.text);
@@ -411,35 +434,4 @@ class _VmServiceBridgeCardState extends State<_VmServiceBridgeCard> {
       },
     );
   }
-}
-
-/// Displays registered RPC methods
-class _MethodsList extends StatelessWidget {
-  const _MethodsList({
-    // required this.tsClient,
-    required this.vmServiceBridge,
-  });
-
-  // final RpcClient tsClient;
-  final DevtoolsService vmServiceBridge;
-
-  @override
-  Widget build(final BuildContext context) => const Card(
-    elevation: 2,
-    child: Padding(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // if (tsMethods.isEmpty && bridgeMethods.isEmpty)
-          //   const Text(
-          //     'No methods registered yet',
-          //     style: TextStyle(fontStyle: FontStyle.italic),
-          //   )
-          // else
-          Column(crossAxisAlignment: CrossAxisAlignment.start),
-        ],
-      ),
-    ),
-  );
 }
