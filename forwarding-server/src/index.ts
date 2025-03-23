@@ -58,7 +58,13 @@ export { ForwardingClient } from "./client.js";
 export { ClientType, ForwardingServer } from "./forwarding-server.js";
 
 // Only start the server if this module is executed directly (not imported)
-if (import.meta.url === `file://${process.argv[1]}`) {
+// This check works in both ES modules and when compiled by TypeScript
+const isMainModule =
+  import.meta.url.startsWith("file:") &&
+  process.argv[1] &&
+  import.meta.url.endsWith(process.argv[1]);
+
+if (isMainModule) {
   startServer().catch((error) => {
     console.error("Failed to start server:", error);
     process.exit(1);
