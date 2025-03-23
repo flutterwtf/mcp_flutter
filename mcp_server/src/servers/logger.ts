@@ -1,49 +1,74 @@
+import util from "util";
 import { LogLevel } from "../types/types.js";
 
 export class Logger {
-  private logLevel: LogLevel;
+  private level: LogLevel;
 
-  constructor(logLevel: LogLevel = "info") {
-    this.logLevel = logLevel;
+  constructor(level: LogLevel = "info") {
+    this.level = level;
   }
 
-  /**
-   * Log a message with the specified level
-   */
-  log(level: LogLevel, ...args: unknown[]) {
-    console.log(`[${level}]`, ...args);
-    const levels: LogLevel[] = ["error", "warn", "info", "debug"];
-    if (levels.indexOf(level) <= levels.indexOf(this.logLevel)) {
-      switch (level) {
-        case "error":
-          console.error(...args);
-          break;
-        case "warn":
-          console.warn(...args);
-          break;
-        case "info":
-          console.info(...args);
-          break;
-        case "debug":
-          console.debug(...args);
-          break;
-      }
+  private shouldLog(messageLevel: LogLevel): boolean {
+    const levels: Record<LogLevel, number> = {
+      error: 0,
+      warn: 1,
+      info: 2,
+      debug: 3,
+    };
+
+    return levels[messageLevel] <= levels[this.level];
+  }
+
+  private formatArgs(args: any[]): string {
+    return args
+      .map((arg) => {
+        if (typeof arg === "string") {
+          return arg;
+        }
+
+        // Better formatting for objects and errors
+        return util.inspect(arg, {
+          depth: 5,
+          colors: true,
+          maxArrayLength: 20,
+          compact: false,
+        });
+      })
+      .join(" ");
+  }
+
+  error(...args: any[]): void {
+    if (this.shouldLog("error")) {
+      console.error(`[ERROR] ${this.formatArgs(args)}`);
     }
   }
 
-  error(...args: unknown[]) {
-    this.log("error", ...args);
+  warn(...args: any[]): void {
+    if (this.shouldLog("warn")) {
+      console.warn(`[WARN] ${this.formatArgs(args)}`);
+    }
   }
 
-  warn(...args: unknown[]) {
-    this.log("warn", ...args);
+  info(...args: any[]): void {
+    if (this.shouldLog("info")) {
+      console.info(`[INFO] ${this.formatArgs(args)}`);
+    }
   }
 
-  info(...args: unknown[]) {
-    this.log("info", ...args);
+  debug(...args: any[]): void {
+    if (this.shouldLog("debug")) {
+      console.debug(`[DEBUG] ${this.formatArgs(args)}`);
+    }
   }
 
-  debug(...args: unknown[]) {
-    this.log("debug", ...args);
+  // Helper method to temporarily increase log level for a specific operation
+  withLogLevel<T>(tempLevel: LogLevel, fn: () => T): T {
+    const originalLevel = this.level;
+    this.level = tempLevel;
+    try {
+      return fn();
+    } finally {
+      this.level = originalLevel;
+    }
   }
 }

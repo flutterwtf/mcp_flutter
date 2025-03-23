@@ -29,6 +29,30 @@ export class RpcUtilities {
       ClientType.INSPECTOR,
       "flutter-inspector"
     );
+
+    // Set up event listeners for debugging forwarding client
+    this.forwardingClient.on("connected", () => {
+      this.logger.info(
+        "[ForwardingClient] Successfully connected to forwarding server"
+      );
+    });
+
+    this.forwardingClient.on("disconnected", () => {
+      this.logger.warn(
+        "[ForwardingClient] Disconnected from forwarding server"
+      );
+    });
+
+    this.forwardingClient.on("error", (error) => {
+      this.logger.error("[ForwardingClient] Connection error:", error);
+    });
+
+    this.forwardingClient.on("message", (message) => {
+      this.logger.debug(
+        "[ForwardingClient] Received message:",
+        JSON.stringify(message, null, 2)
+      );
+    });
   }
 
   /**
@@ -60,7 +84,57 @@ export class RpcUtilities {
       if (connectionDestination === "dart-vm") {
         await this.dartVmClient.connect(this.host, port, "/ws");
       } else {
+        this.logger.info(
+          `[ForwardingClient] Attempting to connect to ws://${this.host}:${port}/forward as clientType=${ClientType.INSPECTOR}, clientId=flutter-inspector`
+        );
         await this.forwardingClient.connect(this.host, port, "/forward");
+
+        // Register a test method handler to verify bidirectional communication
+        this.forwardingClient.registerMethod(
+          "flutter.inspector.ping",
+          async (params) => {
+            this.logger.info(
+              `[ForwardingClient] Received ping with params:`,
+              params
+            );
+            return {
+              success: true,
+              timestamp: Date.now(),
+              message: "MCP Server is responsive",
+            };
+          }
+        );
+
+        // Send a test message after connecting successfully
+        if (this.forwardingClient.isConnected()) {
+          setTimeout(async () => {
+            try {
+              this.logger.info(
+                `[ForwardingClient] Sending test message to Flutter clients`
+              );
+              const result = await this.forwardingClient.callMethod(
+                "flutter.test.ping",
+                {
+                  timestamp: Date.now(),
+                  source: "mcp-server",
+                }
+              );
+              this.logger.info(
+                `[ForwardingClient] Received response to test ping:`,
+                result
+              );
+            } catch (err) {
+              this.logger.error(
+                `[ForwardingClient] Error sending test message:`,
+                err
+              );
+            }
+          }, 2000);
+        } else {
+          this.logger.warn(
+            `[ForwardingClient] Connection reported as not established after connect() completed`
+          );
+        }
       }
     } catch (error) {
       // Log the error but don't crash the application
@@ -134,16 +208,53 @@ export class RpcUtilities {
     params: Record<string, unknown> = {}
   ): Promise<unknown> {
     try {
+      this.logger.info(
+        `[ForwardingClient] Calling Flutter extension method: ${method} with params:`,
+        params
+      );
+
+      if (!this.forwardingClient.isConnected()) {
+        this.logger.warn(
+          `[ForwardingClient] Not connected when attempting to call ${method}, trying to reconnect...`
+        );
+        await this.connect(port, "flutter-extension");
+      }
+
+      // Check again after reconnection attempt
+      if (!this.forwardingClient.isConnected()) {
+        this.logger.error(
+          `[ForwardingClient] Still not connected after reconnection attempt, method call ${method} will likely fail`
+        );
+      } else {
+        this.logger.info(
+          `[ForwardingClient] Connected and ready to send ${method}`
+        );
+      }
+
       const result = await this.sendWebSocketRequest(
         port,
         method,
         params,
         "flutter-extension"
       );
+
+      this.logger.info(`[ForwardingClient] Method ${method} result:`, result);
       return result;
     } catch (error) {
-      this.logger.error(`Error invoking Flutter method ${method}:`, error);
-      throw error;
+      this.logger.error(
+        `[ForwardingClient] Error invoking Flutter method ${method}:`,
+        error
+      );
+      // Create a more detailed error object with context
+      const contextError = new Error(
+        `Error calling ${method}: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+      (contextError as any).originalError = error;
+      (contextError as any).method = method;
+      (contextError as any).params = params;
+      throw contextError;
     }
   }
 
