@@ -1,6 +1,7 @@
 import { ErrorCode, McpError } from "@modelcontextprotocol/sdk/types.js";
 import { exec } from "child_process";
 import { ForwardingClient } from "forwarding-server";
+import { ClientType } from "forwarding-server/dist/forwarding-server.js";
 import fs from "fs";
 import yaml from "js-yaml";
 import { promisify } from "util";
@@ -25,7 +26,7 @@ export class RpcUtilities {
   ) {
     this.dartVmClient = new RpcClient();
     this.forwardingClient = new ForwardingClient(
-      "inspector",
+      ClientType.INSPECTOR,
       "flutter-inspector"
     );
   }
@@ -55,10 +56,19 @@ export class RpcUtilities {
     port: number,
     connectionDestination: ConnectionDestination
   ): Promise<void> {
-    if (connectionDestination === "dart-vm") {
-      await this.dartVmClient.connect(this.host, port, "/ws");
-    } else {
-      await this.forwardingClient.connect(this.host, port, "/ws");
+    try {
+      if (connectionDestination === "dart-vm") {
+        await this.dartVmClient.connect(this.host, port, "/ws");
+      } else {
+        await this.forwardingClient.connect(this.host, port, "/forward");
+      }
+    } catch (error) {
+      // Log the error but don't crash the application
+      this.logger.error(
+        `Failed to connect to ${connectionDestination} on port ${port}:`,
+        error
+      );
+      // Don't rethrow the error to allow the application to continue
     }
   }
 
@@ -71,12 +81,17 @@ export class RpcUtilities {
     params: Record<string, unknown> = {},
     connectionDestination: ConnectionDestination = "dart-vm"
   ): Promise<unknown> {
-    await this.connect(port, connectionDestination);
+    try {
+      await this.connect(port, connectionDestination);
 
-    if (connectionDestination === "dart-vm") {
-      return this.dartVmClient.callMethod(method, params);
-    } else {
-      return this.forwardingClient.callMethod(method, params);
+      if (connectionDestination === "dart-vm") {
+        return this.dartVmClient.callMethod(method, params);
+      } else {
+        return this.forwardingClient.callMethod(method, params);
+      }
+    } catch (error) {
+      this.logger.error(`WebSocket request failed (${method}):`, error);
+      return null; // Return null instead of propagating the error
     }
   }
 
@@ -187,6 +202,7 @@ export class RpcUtilities {
   async wrapResponse(promise: Promise<unknown>) {
     try {
       const result = await promise;
+      console.log(`Wrap response: ${JSON.stringify(result, null, 2)}`);
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
       };

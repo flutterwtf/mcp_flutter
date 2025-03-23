@@ -18,14 +18,15 @@ import { RpcUtilities } from "./rpc_utilities.js";
 
 export const defaultDartVMPort = 8181;
 export const defaultMCPServerPort = 3535;
-export const defaultForwardingServerPort = 3536;
+export const defaultForwardingServerPort = 8143;
 
 // Get the directory name in ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export class FlutterInspectorServer {
-  private server: Server;
+  // Declare server with any type to work around type issues
+  private server: any; // Server<Request, Notification, Result>;
   private port: number;
   private logLevel: LogLevel;
   private rpcUtils: RpcUtilities;
@@ -54,7 +55,8 @@ export class FlutterInspectorServer {
   }
 
   private setupErrorHandling() {
-    this.server.onerror = (error) => this.logger.error("[MCP Error]", error);
+    this.server.onerror = (error: Error) =>
+      this.logger.error("[MCP Error]", error);
 
     process.on("SIGINT", async () => {
       await this.rpcUtils.closeAllConnections();
@@ -99,24 +101,27 @@ export class FlutterInspectorServer {
         (request) => this.rpcUtils.handlePortParam(request)
       );
 
-      this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-        const toolName = request.params.name;
+      this.server.setRequestHandler(
+        CallToolRequestSchema,
+        async (request: any) => {
+          const toolName = request.params.name;
 
-        // Check generated handlers first
-        if (handlerMap[toolName]) {
-          return handlerMap[toolName](request);
+          // Check generated handlers first
+          if (handlerMap[toolName]) {
+            return handlerMap[toolName](request);
+          }
+
+          // Then check custom handlers
+          if (customHandlerMap[toolName]) {
+            return customHandlerMap[toolName](request);
+          }
+
+          throw new McpError(
+            ErrorCode.MethodNotFound,
+            `Unknown tool: ${request.params.name}`
+          );
         }
-
-        // Then check custom handlers
-        if (customHandlerMap[toolName]) {
-          return customHandlerMap[toolName](request);
-        }
-
-        throw new McpError(
-          ErrorCode.MethodNotFound,
-          `Unknown tool: ${request.params.name}`
-        );
-      });
+      );
     } catch (error) {
       this.logger.error("Error setting up tool handlers:", error);
       throw error;
@@ -128,22 +133,34 @@ export class FlutterInspectorServer {
     const transport = new StdioServerTransport();
 
     // 2. Start servers in parallel with proper cleanup
-    this.rpcUtils.connect(defaultDartVMPort, "dart-vm");
-    this.rpcUtils.connect(defaultForwardingServerPort, "flutter-extension");
+    try {
+      // Setup the transport first
+      await this.server.connect(transport);
 
-    // 3. Add coordinated shutdown
-    const cleanup = async () => {
-      await this.rpcUtils.closeAllConnections();
-      await transport.close();
-    };
+      // Now try to connect to the services - these connections are now resilient to failure
+      await this.rpcUtils.connect(defaultDartVMPort, "dart-vm");
+      await this.rpcUtils.connect(
+        defaultForwardingServerPort,
+        "flutter-extension"
+      );
 
-    process.on("SIGINT", cleanup);
-    process.on("SIGTERM", cleanup);
+      // 3. Add coordinated shutdown
+      const cleanup = async () => {
+        await this.rpcUtils.closeAllConnections();
+        await transport.close();
+      };
 
-    this.logger.info(`
-      MCP Server: Ready on stdio (port ${this.port})
-      RPC Server: Listening on ws://localhost:${defaultDartVMPort}/ws
-      Forwarding Client: Connected to ws://localhost:${defaultForwardingServerPort}/ws
-    `);
+      process.on("SIGINT", cleanup);
+      process.on("SIGTERM", cleanup);
+
+      this.logger.info(`
+        MCP Server: Ready on stdio (port ${this.port})
+        RPC Server: Attempting to connect to ws://localhost:${defaultDartVMPort}/ws
+        Forwarding Client: Attempting to connect to ws://localhost:${defaultForwardingServerPort}/forward
+      `);
+    } catch (error) {
+      this.logger.error("Failed to start server:", error);
+      process.exit(1);
+    }
   }
 }

@@ -50,6 +50,7 @@ class ForwardingClient {
 
   /// Emit an event
   void _emit(String event, [List<dynamic> args = const []]) {
+    print('Emitting event: $event with args: $args');
     final handlers = _eventHandlers[event];
     if (handlers != null) {
       for (final handler in handlers) {
@@ -108,7 +109,7 @@ class ForwardingClient {
     try {
       // Include clientType and clientId as query parameters
       final wsUrl =
-          'ws://$host:$port$path?clientType=$clientType&clientId=$clientId';
+          'ws://$host:$port$path?clientType=${clientType.name}&clientId=$clientId';
       print('Connecting to forwarding server at $wsUrl');
 
       // Create the WebSocket connection

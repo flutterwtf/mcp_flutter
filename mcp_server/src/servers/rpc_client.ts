@@ -7,6 +7,7 @@ export class RpcClient {
     { resolve: Function; reject: Function; method: string }
   >();
   private messageId = 0;
+  private connectionInProgress: Promise<void> | null = null;
 
   /**
    * Generate a unique ID for requests
@@ -16,42 +17,76 @@ export class RpcClient {
   }
 
   /**
-   * Connect to the Flutter RPC server
+   * Connect to the RPC server with timeout protection
    */
-  async connect(host: string, port: number, path: string): Promise<void> {
+  async connect(
+    host: string,
+    port: number,
+    path: string,
+    timeoutMs = 100000
+  ): Promise<void> {
+    console.log(`Connecting to RPC server at ${host}:${port}${path}`);
+    // If already connecting, return the existing promise
+    if (this.connectionInProgress) {
+      console.log(`Already connecting to RPC server. Ignoring new request.`);
+      return this.connectionInProgress;
+    }
+
     const readyState = this.ws?.readyState;
     console.log(`readyState: ${readyState}`);
 
     // Only return early if the WebSocket is in OPEN state
     if (readyState === WebSocket.OPEN) {
-      console.log(`Already connected to Flutter RPC server`);
+      console.log(`Already connected to RPC server`);
       return Promise.resolve();
     }
 
     // If WebSocket exists but is not open, close and recreate it
     if (this.ws) {
+      console.log(`Closing existing WebSocket connection`);
       this.ws.close();
       this.ws = null;
     }
 
-    // Create new WebSocket connection
-    return new Promise((resolve, reject) => {
+    // Create new WebSocket connection with timeout
+    this.connectionInProgress = new Promise<void>((resolve, reject) => {
       const wsUrl = `ws://${host}:${port}${path}`;
       this.ws = new WebSocket(wsUrl);
-      console.log(`Connecting to Flutter RPC server at ${wsUrl}`);
+      console.log(`Connecting to RPC server at ${wsUrl}`);
+
+      // Create a timeout to prevent hanging
+      const timeoutId = setTimeout(() => {
+        const error = new Error(
+          `Connection to ${wsUrl} timed out after ${timeoutMs}ms`
+        );
+        if (this.ws) {
+          this.ws.close();
+          this.ws = null;
+        }
+        reject(error);
+      }, timeoutMs);
 
       this.ws.onopen = () => {
-        console.log(`Connected to Flutter RPC server at ${wsUrl}`);
+        console.log(`Connected to RPC server at ${wsUrl}`);
+        clearTimeout(timeoutId);
         resolve();
       };
 
-      this.ws.onerror = (error) => {
+      this.ws.onerror = (error: any) => {
         console.error(`WebSocket error:`, error);
+        clearTimeout(timeoutId);
+
+        if (this.ws) {
+          this.ws.close();
+          this.ws = null;
+        }
+
         reject(error);
       };
 
       this.ws.onclose = () => {
-        console.log(`Disconnected from Flutter RPC server`);
+        console.log(`Disconnected from RPC server`);
+        clearTimeout(timeoutId);
         this.ws = null;
       };
 
@@ -74,20 +109,22 @@ export class RpcClient {
           console.error("Error parsing WebSocket message:", error);
         }
       };
+    }).finally(() => {
+      this.connectionInProgress = null;
     });
+
+    return this.connectionInProgress;
   }
 
   /**
-   * Call a method on the Flutter RPC server
+   * Call a method on the RPC server
    */
   async callMethod(
     method: string,
     params: Record<string, unknown> = {}
   ): Promise<unknown> {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      throw new Error(
-        `Not connected to Flutter RPC server ${this.ws?.readyState}`
-      );
+      throw new Error(`Not connected to RPC server ${this.ws?.readyState}`);
     }
 
     const id = this.generateId();
@@ -100,13 +137,32 @@ export class RpcClient {
     };
 
     return new Promise((resolve, reject) => {
-      this.pendingRequests.set(id, { resolve, reject, method });
+      // Add a timeout to prevent indefinite hanging
+      const timeoutId = setTimeout(() => {
+        if (this.pendingRequests.has(id)) {
+          this.pendingRequests.delete(id);
+          reject(new Error(`Request ${method} timed out after 30000ms`));
+        }
+      }, 30000);
+
+      this.pendingRequests.set(id, {
+        resolve: (result: any) => {
+          clearTimeout(timeoutId);
+          resolve(result);
+        },
+        reject: (error: Error) => {
+          clearTimeout(timeoutId);
+          reject(error);
+        },
+        method,
+      });
+
       this.ws!.send(JSON.stringify(request));
     });
   }
 
   /**
-   * Disconnect from the Flutter RPC server
+   * Disconnect from the RPC server
    */
   disconnect(): void {
     if (this.ws) {

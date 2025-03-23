@@ -18,7 +18,7 @@ export class FlutterRpcHandlers {
    */
   async handleGetVm(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callFlutterExtension("getVM", port,{});
+    const result = await this.rpcUtils.callDartVm("getVM", port, {});
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -27,7 +27,7 @@ export class FlutterRpcHandlers {
    */
   async handleDartIoSocketProfilingEnabled(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callFlutterExtension("ext.dart.io.socketProfilingEnabled", port,{ enabled: params?.enabled });
+    const result = await this.rpcUtils.callDartVm("ext.dart.io.socketProfilingEnabled", port, { enabled: params?.enabled });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -36,7 +36,7 @@ export class FlutterRpcHandlers {
    */
   async handleDartIoHttpEnableTimelineLogging(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callFlutterExtension("ext.dart.io.httpEnableTimelineLogging", port,{ enabled: params?.enabled });
+    const result = await this.rpcUtils.callDartVm("ext.dart.io.httpEnableTimelineLogging", port, { enabled: params?.enabled });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -45,7 +45,7 @@ export class FlutterRpcHandlers {
    */
   async handleDartIoGetVersion(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callFlutterExtension("ext.dart.io.getVersion", port,{});
+    const result = await this.rpcUtils.callDartVm("ext.dart.io.getVersion", port, {});
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -54,7 +54,7 @@ export class FlutterRpcHandlers {
    */
   async handleDartIoGetHttpProfileRequest(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callFlutterExtension("ext.dart.io.getHttpProfileRequest", port,{ requestId: params?.requestId });
+    const result = await this.rpcUtils.callDartVm("ext.dart.io.getHttpProfileRequest", port, { requestId: params?.requestId });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -63,7 +63,7 @@ export class FlutterRpcHandlers {
    */
   async handleDartIoGetSocketProfile(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callFlutterExtension("ext.dart.io.getSocketProfile", port,{});
+    const result = await this.rpcUtils.callDartVm("ext.dart.io.getSocketProfile", port, {});
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -72,7 +72,7 @@ export class FlutterRpcHandlers {
    */
   async handleDartIoClearSocketProfile(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callFlutterExtension("ext.dart.io.clearSocketProfile", port,{});
+    const result = await this.rpcUtils.callDartVm("ext.dart.io.clearSocketProfile", port, {});
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -81,7 +81,7 @@ export class FlutterRpcHandlers {
    */
   async handleDartIoGetHttpProfile(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callFlutterExtension("ext.dart.io.getHttpProfile", port,{});
+    const result = await this.rpcUtils.callDartVm("ext.dart.io.getHttpProfile", port, {});
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -90,7 +90,7 @@ export class FlutterRpcHandlers {
    */
   async handleDartIoClearHttpProfile(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callFlutterExtension("ext.dart.io.clearHttpProfile", port,{});
+    const result = await this.rpcUtils.callDartVm("ext.dart.io.clearHttpProfile", port, {});
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -99,7 +99,7 @@ export class FlutterRpcHandlers {
    */
   async handleDartIoGetOpenFiles(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callFlutterExtension("ext.dart.io.getOpenFiles", port,{});
+    const result = await this.rpcUtils.callDartVm("ext.dart.io.getOpenFiles", port, {});
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -108,7 +108,7 @@ export class FlutterRpcHandlers {
    */
   async handleDartIoGetOpenFileById(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callFlutterExtension("ext.dart.io.getOpenFileById", port,{ fileId: params?.fileId });
+    const result = await this.rpcUtils.callDartVm("ext.dart.io.getOpenFileById", port, { fileId: params?.fileId });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -117,7 +117,7 @@ export class FlutterRpcHandlers {
    */
   async handleDebugDumpRenderTree(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.debugDumpRenderTree", port,{});
+    const result = await this.rpcUtils.callDartVm("ext.flutter.debugDumpRenderTree", port, {});
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -126,7 +126,7 @@ export class FlutterRpcHandlers {
    */
   async handleInspectorGetProperties(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callDartVm("ext.flutter.inspector.getProperties", port, { arg: { objectId: params?.objectId } });
+    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.inspector.getProperties", port,{ arg: { objectId: params?.objectId } });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -135,7 +135,7 @@ export class FlutterRpcHandlers {
    */
   async handleDebugSetDebugPaint(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.debugPaint", port,{ enabled: params?.enabled });
+    const result = await this.rpcUtils.callDartVm("ext.flutter.debugPaint", port, { enabled: params?.enabled });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -144,7 +144,7 @@ export class FlutterRpcHandlers {
    */
   async handleInspectorGetRootWidgetSummaryTree(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callDartVm("ext.flutter.inspector.getRootWidgetSummaryTree", port, { arg: { includeProperties: params?.includeProperties, subtreeDepth: params?.subtreeDepth } });
+    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.inspector.getRootWidgetSummaryTree", port,{ arg: { includeProperties: params?.includeProperties, subtreeDepth: params?.subtreeDepth } });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -153,7 +153,7 @@ export class FlutterRpcHandlers {
    */
   async handleDebugDumpLayerTree(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.debugDumpLayerTree", port,{});
+    const result = await this.rpcUtils.callDartVm("ext.flutter.debugDumpLayerTree", port, {});
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -162,7 +162,7 @@ export class FlutterRpcHandlers {
    */
   async handleDebugDumpSemanticsTree(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.debugDumpSemanticsTreeInTraversalOrder", port,{});
+    const result = await this.rpcUtils.callDartVm("ext.flutter.debugDumpSemanticsTreeInTraversalOrder", port, {});
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -171,7 +171,7 @@ export class FlutterRpcHandlers {
    */
   async handleDebugDumpSemanticsTreeInverse(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.debugDumpSemanticsTreeInInverseHitTestOrder", port,{});
+    const result = await this.rpcUtils.callDartVm("ext.flutter.debugDumpSemanticsTreeInInverseHitTestOrder", port, {});
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -180,7 +180,7 @@ export class FlutterRpcHandlers {
    */
   async handleDebugDumpFocusTree(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.debugDumpFocusTree", port,{});
+    const result = await this.rpcUtils.callDartVm("ext.flutter.debugDumpFocusTree", port, {});
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -189,7 +189,7 @@ export class FlutterRpcHandlers {
    */
   async handleDebugPaintBaselinesEnabled(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.debugPaintBaselinesEnabled", port,{ enabled: params?.enabled });
+    const result = await this.rpcUtils.callDartVm("ext.flutter.debugPaintBaselinesEnabled", port, { enabled: params?.enabled });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -198,7 +198,7 @@ export class FlutterRpcHandlers {
    */
   async handleDebugDisableClipLayers(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.debugDisableClipLayers", port,{ enabled: params?.enabled });
+    const result = await this.rpcUtils.callDartVm("ext.flutter.debugDisableClipLayers", port, { enabled: params?.enabled });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -207,7 +207,7 @@ export class FlutterRpcHandlers {
    */
   async handleDebugDisablePhysicalShapeLayers(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.debugDisablePhysicalShapeLayers", port,{ enabled: params?.enabled });
+    const result = await this.rpcUtils.callDartVm("ext.flutter.debugDisablePhysicalShapeLayers", port, { enabled: params?.enabled });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -216,7 +216,7 @@ export class FlutterRpcHandlers {
    */
   async handleDebugDisableOpacityLayers(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.debugDisableOpacityLayers", port,{ enabled: params?.enabled });
+    const result = await this.rpcUtils.callDartVm("ext.flutter.debugDisableOpacityLayers", port, { enabled: params?.enabled });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -225,7 +225,7 @@ export class FlutterRpcHandlers {
    */
   async handleRepaintRainbow(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.repaintRainbow", port,{ enabled: params?.enabled });
+    const result = await this.rpcUtils.callDartVm("ext.flutter.repaintRainbow", port, { enabled: params?.enabled });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -234,7 +234,7 @@ export class FlutterRpcHandlers {
    */
   async handleDebugAllowBanner(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.debugAllowBanner", port,{ enabled: params?.enabled });
+    const result = await this.rpcUtils.callDartVm("ext.flutter.debugAllowBanner", port, { enabled: params?.enabled });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -243,7 +243,7 @@ export class FlutterRpcHandlers {
    */
   async handleFlutterCoreInvertOversizedImages(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.invertOversizedImages", port,{ enabled: params?.enabled });
+    const result = await this.rpcUtils.callDartVm("ext.flutter.invertOversizedImages", port, { enabled: params?.enabled });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -252,7 +252,7 @@ export class FlutterRpcHandlers {
    */
   async handleFlutterCorePlatformOverride(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.platformOverride", port,{ platform: params?.platform });
+    const result = await this.rpcUtils.callDartVm("ext.flutter.platformOverride", port, { platform: params?.platform });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -261,7 +261,7 @@ export class FlutterRpcHandlers {
    */
   async handleFlutterCoreBrightnessOverride(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.brightnessOverride", port,{ brightness: params?.brightness });
+    const result = await this.rpcUtils.callDartVm("ext.flutter.brightnessOverride", port, { brightness: params?.brightness });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -270,7 +270,7 @@ export class FlutterRpcHandlers {
    */
   async handleFlutterCoreTimeDilation(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.timeDilation", port,{ dilation: params?.dilation });
+    const result = await this.rpcUtils.callDartVm("ext.flutter.timeDilation", port, { dilation: params?.dilation });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -279,7 +279,7 @@ export class FlutterRpcHandlers {
    */
   async handleFlutterCoreEvict(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.evict", port,{ asset: params?.asset });
+    const result = await this.rpcUtils.callDartVm("ext.flutter.evict", port, { asset: params?.asset });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -288,7 +288,7 @@ export class FlutterRpcHandlers {
    */
   async handleInspectorScreenshot(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callDartVm("ext.flutter.inspector.screenshot", port, {});
+    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.inspector.screenshot", port,{});
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -297,7 +297,7 @@ export class FlutterRpcHandlers {
    */
   async handleInspectorGetLayoutExplorerNode(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callDartVm("ext.flutter.inspector.getLayoutExplorerNode", port, { arg: { objectId: params?.objectId } });
+    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.inspector.getLayoutExplorerNode", port,{ arg: { objectId: params?.objectId } });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -306,7 +306,7 @@ export class FlutterRpcHandlers {
    */
   async handleInspectorTrackRebuildDirtyWidgets(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callDartVm("ext.flutter.inspector.trackRebuildDirtyWidgets", port, { enabled: params?.enabled });
+    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.inspector.trackRebuildDirtyWidgets", port,{ enabled: params?.enabled });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -315,7 +315,7 @@ export class FlutterRpcHandlers {
    */
   async handleInspectorSetSelectionById(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callDartVm("ext.flutter.inspector.setSelectionById", port, { arg: { selectionId: params?.selectionId } });
+    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.inspector.setSelectionById", port,{ arg: { selectionId: params?.selectionId } });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -324,7 +324,7 @@ export class FlutterRpcHandlers {
    */
   async handleInspectorGetParentChain(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callDartVm("ext.flutter.inspector.getParentChain", port, { arg: { objectId: params?.objectId } });
+    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.inspector.getParentChain", port,{ arg: { objectId: params?.objectId } });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -333,7 +333,7 @@ export class FlutterRpcHandlers {
    */
   async handleInspectorGetChildrenSummaryTree(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callDartVm("ext.flutter.inspector.getChildrenSummaryTree", port, { arg: { objectId: params?.objectId } });
+    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.inspector.getChildrenSummaryTree", port,{ arg: { objectId: params?.objectId } });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -342,7 +342,7 @@ export class FlutterRpcHandlers {
    */
   async handleInspectorGetDetailsSubtree(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callDartVm("ext.flutter.inspector.getDetailsSubtree", port, { arg: { objectId: params?.objectId } });
+    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.inspector.getDetailsSubtree", port,{ arg: { objectId: params?.objectId } });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -351,7 +351,7 @@ export class FlutterRpcHandlers {
    */
   async handleInspectorGetSelectedWidget(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callDartVm("ext.flutter.inspector.getSelectedWidget", port, {});
+    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.inspector.getSelectedWidget", port,{});
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -360,7 +360,7 @@ export class FlutterRpcHandlers {
    */
   async handleInspectorGetSelectedSummaryWidget(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callDartVm("ext.flutter.inspector.getSelectedSummaryWidget", port, {});
+    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.inspector.getSelectedSummaryWidget", port,{});
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -369,7 +369,7 @@ export class FlutterRpcHandlers {
    */
   async handleInspectorIsWidgetCreationTracked(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callDartVm("ext.flutter.inspector.isWidgetCreationTracked", port, {});
+    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.inspector.isWidgetCreationTracked", port,{});
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -378,7 +378,7 @@ export class FlutterRpcHandlers {
    */
   async handleInspectorStructuredErrors(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callDartVm("ext.flutter.inspector.structuredErrors", port, { enabled: params?.enabled });
+    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.inspector.structuredErrors", port,{ enabled: params?.enabled });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -387,7 +387,7 @@ export class FlutterRpcHandlers {
    */
   async handleInspectorShow(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callDartVm("ext.flutter.inspector.show", port, { arg: { options: params?.options } });
+    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.inspector.show", port,{ arg: { options: params?.options } });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -396,7 +396,7 @@ export class FlutterRpcHandlers {
    */
   async handleFlutterCoreProfilePlatformChannels(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.profilePlatformChannels", port,{ enabled: params?.enabled });
+    const result = await this.rpcUtils.callDartVm("ext.flutter.profilePlatformChannels", port, { enabled: params?.enabled });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -405,7 +405,7 @@ export class FlutterRpcHandlers {
    */
   async handleFlutterCoreProfileRenderObjectPaints(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.profileRenderObjectPaints", port,{ enabled: params?.enabled });
+    const result = await this.rpcUtils.callDartVm("ext.flutter.profileRenderObjectPaints", port, { enabled: params?.enabled });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -414,7 +414,7 @@ export class FlutterRpcHandlers {
    */
   async handleFlutterCoreProfileRenderObjectLayouts(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.profileRenderObjectLayouts", port,{ enabled: params?.enabled });
+    const result = await this.rpcUtils.callDartVm("ext.flutter.profileRenderObjectLayouts", port, { enabled: params?.enabled });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -423,7 +423,7 @@ export class FlutterRpcHandlers {
    */
   async handleFlutterCoreShowPerformanceOverlay(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.showPerformanceOverlay", port,{ enabled: params?.enabled });
+    const result = await this.rpcUtils.callDartVm("ext.flutter.showPerformanceOverlay", port, { enabled: params?.enabled });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -432,7 +432,7 @@ export class FlutterRpcHandlers {
    */
   async handleFlutterCoreProfileWidgetBuilds(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.profileWidgetBuilds", port,{ enabled: params?.enabled });
+    const result = await this.rpcUtils.callDartVm("ext.flutter.profileWidgetBuilds", port, { enabled: params?.enabled });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -441,7 +441,7 @@ export class FlutterRpcHandlers {
    */
   async handleFlutterCoreProfileUserWidgetBuilds(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.profileUserWidgetBuilds", port,{ enabled: params?.enabled });
+    const result = await this.rpcUtils.callDartVm("ext.flutter.profileUserWidgetBuilds", port, { enabled: params?.enabled });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -450,7 +450,7 @@ export class FlutterRpcHandlers {
    */
   async handleInspectorTrackRepaintWidgets(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callDartVm("ext.flutter.inspector.trackRepaintWidgets", port, { enabled: params?.enabled });
+    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.inspector.trackRepaintWidgets", port,{ enabled: params?.enabled });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -459,7 +459,7 @@ export class FlutterRpcHandlers {
    */
   async handleInspectorWidgetLocationIdMap(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callDartVm("ext.flutter.inspector.widgetLocationIdMap", port, {});
+    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.inspector.widgetLocationIdMap", port,{});
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -468,7 +468,7 @@ export class FlutterRpcHandlers {
    */
   async handleInspectorDisposeAllGroups(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callDartVm("ext.flutter.inspector.disposeAllGroups", port, {});
+    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.inspector.disposeAllGroups", port,{});
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -477,7 +477,7 @@ export class FlutterRpcHandlers {
    */
   async handleInspectorDisposeGroup(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callDartVm("ext.flutter.inspector.disposeGroup", port, { arg: { groupName: params?.groupName } });
+    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.inspector.disposeGroup", port,{ arg: { groupName: params?.groupName } });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -486,7 +486,7 @@ export class FlutterRpcHandlers {
    */
   async handleInspectorIsWidgetTreeReady(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callDartVm("ext.flutter.inspector.isWidgetTreeReady", port, {});
+    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.inspector.isWidgetTreeReady", port,{});
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -495,7 +495,7 @@ export class FlutterRpcHandlers {
    */
   async handleInspectorDisposeId(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callDartVm("ext.flutter.inspector.disposeId", port, { arg: { objectId: params?.objectId } });
+    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.inspector.disposeId", port,{ arg: { objectId: params?.objectId } });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -504,7 +504,7 @@ export class FlutterRpcHandlers {
    */
   async handleInspectorSetPubRootDirectories(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callDartVm("ext.flutter.inspector.setPubRootDirectories", port, { arg: { rootDirectories: params?.rootDirectories } });
+    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.inspector.setPubRootDirectories", port,{ arg: { rootDirectories: params?.rootDirectories } });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -513,7 +513,7 @@ export class FlutterRpcHandlers {
    */
   async handleInspectorAddPubRootDirectories(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callDartVm("ext.flutter.inspector.addPubRootDirectories", port, { arg: { rootDirectories: params?.rootDirectories } });
+    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.inspector.addPubRootDirectories", port,{ arg: { rootDirectories: params?.rootDirectories } });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -522,7 +522,7 @@ export class FlutterRpcHandlers {
    */
   async handleInspectorRemovePubRootDirectories(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callDartVm("ext.flutter.inspector.removePubRootDirectories", port, { arg: { rootDirectories: params?.rootDirectories } });
+    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.inspector.removePubRootDirectories", port,{ arg: { rootDirectories: params?.rootDirectories } });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -531,7 +531,7 @@ export class FlutterRpcHandlers {
    */
   async handleInspectorGetPubRootDirectories(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callDartVm("ext.flutter.inspector.getPubRootDirectories", port, {});
+    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.inspector.getPubRootDirectories", port,{});
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -540,7 +540,7 @@ export class FlutterRpcHandlers {
    */
   async handleInspectorGetChildren(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callDartVm("ext.flutter.inspector.getChildren", port, { arg: { objectId: params?.objectId } });
+    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.inspector.getChildren", port,{ arg: { objectId: params?.objectId } });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -549,7 +549,7 @@ export class FlutterRpcHandlers {
    */
   async handleInspectorGetChildrenDetailsSubtree(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callDartVm("ext.flutter.inspector.getChildrenDetailsSubtree", port, { arg: { objectId: params?.objectId } });
+    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.inspector.getChildrenDetailsSubtree", port,{ arg: { objectId: params?.objectId } });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -558,7 +558,7 @@ export class FlutterRpcHandlers {
    */
   async handleInspectorGetRootWidget(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callDartVm("ext.flutter.inspector.getRootWidget", port, {});
+    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.inspector.getRootWidget", port,{});
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -567,7 +567,7 @@ export class FlutterRpcHandlers {
    */
   async handleInspectorGetRootWidgetSummaryTreeWithPreviews(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callDartVm("ext.flutter.inspector.getRootWidgetSummaryTreeWithPreviews", port, { arg: { includeProperties: params?.includeProperties, subtreeDepth: params?.subtreeDepth } });
+    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.inspector.getRootWidgetSummaryTreeWithPreviews", port,{ arg: { includeProperties: params?.includeProperties, subtreeDepth: params?.subtreeDepth } });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -576,7 +576,7 @@ export class FlutterRpcHandlers {
    */
   async handleInspectorGetRootWidgetTree(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callDartVm("ext.flutter.inspector.getRootWidgetTree", port, {});
+    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.inspector.getRootWidgetTree", port,{});
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -585,7 +585,7 @@ export class FlutterRpcHandlers {
    */
   async handleInspectorSetFlexFit(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callDartVm("ext.flutter.inspector.setFlexFit", port, { arg: { objectId: params?.objectId, flexFit: params?.flexFit } });
+    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.inspector.setFlexFit", port,{ arg: { objectId: params?.objectId, flexFit: params?.flexFit } });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -594,7 +594,7 @@ export class FlutterRpcHandlers {
    */
   async handleInspectorSetFlexFactor(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callDartVm("ext.flutter.inspector.setFlexFactor", port, { arg: { objectId: params?.objectId, flexFactor: params?.flexFactor } });
+    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.inspector.setFlexFactor", port,{ arg: { objectId: params?.objectId, flexFactor: params?.flexFactor } });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   
@@ -603,7 +603,7 @@ export class FlutterRpcHandlers {
    */
   async handleInspectorSetFlexProperties(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callDartVm("ext.flutter.inspector.setFlexProperties", port, { arg: { objectId: params?.objectId, flexFactor: params?.flexFactor, flexFit: params?.flexFit } });
+    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.inspector.setFlexProperties", port,{ arg: { objectId: params?.objectId, flexFactor: params?.flexFactor, flexFit: params?.flexFit } });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   

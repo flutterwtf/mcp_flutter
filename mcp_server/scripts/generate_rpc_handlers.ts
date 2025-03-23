@@ -117,8 +117,8 @@ export class FlutterRpcHandlers {
 
       // Determine which method to use based on whether it needs the Dart proxy
       const invokeMethod = needsDartServiceExtensionProxy
-        ? `this.rpcUtils.callDartVm("${rpcMethod}", port, ${rpcParamsObject.trim()})`
-        : `this.rpcUtils.callFlutterExtension("${rpcMethod}", port,${rpcParamsObject.trim()})`;
+        ? `this.rpcUtils.callFlutterExtension("${rpcMethod}", port,${rpcParamsObject.trim()})`
+        : `this.rpcUtils.callDartVm("${rpcMethod}", port, ${rpcParamsObject.trim()})`;
 
       generatedCode += `
   /**
