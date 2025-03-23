@@ -40,7 +40,7 @@ class VmServiceConnectionStatus extends StatelessWidget {
   const VmServiceConnectionStatus({required this.serviceBridge, super.key});
 
   /// The service bridge to monitor
-  final ServiceExtensionBridge serviceBridge;
+  final DevtoolsService serviceBridge;
 
   @override
   Widget build(final BuildContext context) {
@@ -292,7 +292,7 @@ class _VmServiceBridgeCard extends StatefulWidget {
   const _VmServiceBridgeCard({required this.serviceBridge});
 
   /// The service bridge to display
-  final ServiceExtensionBridge serviceBridge;
+  final DevtoolsService serviceBridge;
 
   @override
   State<_VmServiceBridgeCard> createState() => _VmServiceBridgeCardState();
@@ -421,7 +421,7 @@ class _MethodsList extends StatelessWidget {
   });
 
   // final RpcClient tsClient;
-  final ServiceExtensionBridge vmServiceBridge;
+  final DevtoolsService vmServiceBridge;
 
   @override
   Widget build(final BuildContext context) {

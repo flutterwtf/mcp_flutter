@@ -1,5 +1,6 @@
 import { EventEmitter } from "events";
 import WebSocket from "ws";
+import { ClientType } from "./forwarding-server.js";
 
 /**
  * Client for connecting to the forwarding server.
@@ -19,7 +20,7 @@ export class ForwardingClient extends EventEmitter {
   private reconnectInterval: NodeJS.Timeout | null = null;
   private reconnectDelay = 2000; // 2 seconds
   private clientId: string;
-  private clientType: "inspector" | "flutter";
+  private clientType: ClientType;
 
   /**
    * Creates a new forwarding client.
@@ -27,7 +28,7 @@ export class ForwardingClient extends EventEmitter {
    * @param clientType The type of client ('inspector' or 'flutter')
    * @param clientId Optional client ID (will be generated if not provided)
    */
-  constructor(clientType: "inspector" | "flutter", clientId?: string) {
+  constructor(clientType: ClientType, clientId?: string) {
     super();
     this.clientType = clientType;
     this.clientId = clientId || this.generateUuid();
@@ -341,7 +342,7 @@ export class ForwardingClient extends EventEmitter {
   /**
    * Get the client type
    */
-  getClientType(): "inspector" | "flutter" {
+  getClientType(): ClientType {
     return this.clientType;
   }
 }

@@ -15,9 +15,9 @@ import 'package:vm_service/vm_service.dart';
 /// This simplified version focuses only on VM service initialization
 /// and handling basic service functions.
 /// {@endtemplate}
-class ServiceExtensionBridge with ChangeNotifier {
+class DevtoolsService with ChangeNotifier {
   /// {@macro service_extension_bridge}
-  ServiceExtensionBridge({final RpcClient? rpcClient})
+  DevtoolsService({final RpcClient? rpcClient})
     : rpcClient = rpcClient ?? RpcClient() {
     _registerRpcMethods();
   }

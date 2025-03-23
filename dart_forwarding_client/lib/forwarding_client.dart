@@ -4,6 +4,8 @@ import 'dart:convert';
 import 'package:uuid/uuid.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
+enum ForwardingClientType { inspector, flutter }
+
 /// Browser-compatible client for connecting to the forwarding server.
 class ForwardingClient {
   WebSocketChannel? _ws;
@@ -12,7 +14,7 @@ class ForwardingClient {
   Timer? _reconnectTimer;
   final int _reconnectDelay = 2000; // 2 seconds
   final String clientId;
-  final String clientType;
+  final ForwardingClientType clientType;
   final Map<String, Set<Function>> _eventHandlers = {};
 
   /// Creates a new forwarding client.
@@ -319,7 +321,7 @@ class ForwardingClient {
   }
 
   /// Get the client type
-  String getClientType() {
+  ForwardingClientType getClientType() {
     return clientType;
   }
 }
