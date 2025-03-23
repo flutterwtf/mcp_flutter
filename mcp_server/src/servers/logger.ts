@@ -9,14 +9,15 @@ export class Logger {
   }
 
   private shouldLog(messageLevel: LogLevel): boolean {
-    const levels: Record<LogLevel, number> = {
-      error: 0,
-      warn: 1,
-      info: 2,
-      debug: 3,
-    };
+    return true;
+    // const levels: Record<LogLevel, number> = {
+    //   error: 0,
+    //   warn: 1,
+    //   info: 2,
+    //   debug: 3,
+    // };
 
-    return levels[messageLevel] <= levels[this.level];
+    // return levels[messageLevel] <= levels[this.level];
   }
 
   private formatArgs(args: any[]): string {

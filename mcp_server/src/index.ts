@@ -49,7 +49,7 @@ export class CommandLineArgs {
         "log-level": {
           description: "Logging level",
           choices: ["error", "warn", "info", "debug"] as const,
-          default: process.env.LOG_LEVEL || "error",
+          default: process.env.LOG_LEVEL || "info",
         },
         host: {
           description: "Host to run the server on",

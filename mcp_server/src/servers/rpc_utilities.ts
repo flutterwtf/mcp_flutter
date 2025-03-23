@@ -48,10 +48,37 @@ export class RpcUtilities {
     });
 
     this.forwardingClient.on("message", (message) => {
-      this.logger.debug(
-        "[ForwardingClient] Received message:",
-        JSON.stringify(message, null, 2)
-      );
+      try {
+        const parsedMessage =
+          typeof message === "string" ? JSON.parse(message) : message;
+        const messageId = parsedMessage.id || "unknown";
+        const messageMethod = parsedMessage.method || "unknown";
+        const isResponse =
+          !parsedMessage.method && parsedMessage.hasOwnProperty("result");
+
+        if (isResponse) {
+          this.logger.debug(
+            `[ForwardingClient] Received RESPONSE for ID: ${messageId}:`
+          );
+        } else {
+          this.logger.debug(
+            `[ForwardingClient] Received REQUEST for method: ${messageMethod} with ID: ${messageId}:`
+          );
+        }
+
+        // For inspector methods, log more details
+        if (messageMethod && messageMethod.includes("inspector")) {
+          this.logger.debug(
+            `[ForwardingClient][INSPECTOR] Full message:`,
+            JSON.stringify(parsedMessage, null, 2)
+          );
+        }
+      } catch (e) {
+        this.logger.debug(
+          "[ForwardingClient] Received message (unable to parse):",
+          message
+        );
+      }
     });
   }
 
@@ -102,6 +129,32 @@ export class RpcUtilities {
               timestamp: Date.now(),
               message: "MCP Server is responsive",
             };
+          }
+        );
+
+        // Register a specific handler for screenshot method to debug issues
+        this.forwardingClient.registerMethod(
+          "ext.flutter.inspector.screenshot",
+          async (params) => {
+            this.logger.info(
+              `[ForwardingClient][SCREENSHOT] Received screenshot request with params:`,
+              params
+            );
+            // Just pass this through to Flutter but log it thoroughly
+            try {
+              // We don't actually handle it here, this is just for logging
+              // The real handling happens in the Flutter client
+              this.logger.info(
+                `[ForwardingClient][SCREENSHOT] Successfully logged screenshot request`
+              );
+              return null; // Let the normal flow continue
+            } catch (err) {
+              this.logger.error(
+                `[ForwardingClient][SCREENSHOT] Error handling screenshot:`,
+                err
+              );
+              throw err;
+            }
           }
         );
 
@@ -208,14 +261,15 @@ export class RpcUtilities {
     params: Record<string, unknown> = {}
   ): Promise<unknown> {
     try {
+      const requestId = `req_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
       this.logger.info(
-        `[ForwardingClient] Calling Flutter extension method: ${method} with params:`,
+        `[ForwardingClient][${requestId}] Calling Flutter extension method: ${method} with params:`,
         params
       );
 
       if (!this.forwardingClient.isConnected()) {
         this.logger.warn(
-          `[ForwardingClient] Not connected when attempting to call ${method}, trying to reconnect...`
+          `[ForwardingClient][${requestId}] Not connected when attempting to call ${method}, trying to reconnect...`
         );
         await this.connect(port, "flutter-extension");
       }
@@ -223,26 +277,51 @@ export class RpcUtilities {
       // Check again after reconnection attempt
       if (!this.forwardingClient.isConnected()) {
         this.logger.error(
-          `[ForwardingClient] Still not connected after reconnection attempt, method call ${method} will likely fail`
+          `[ForwardingClient][${requestId}] Still not connected after reconnection attempt, method call ${method} will likely fail`
         );
       } else {
         this.logger.info(
-          `[ForwardingClient] Connected and ready to send ${method}`
+          `[ForwardingClient][${requestId}] Connected and ready to send ${method}`
         );
       }
 
-      const result = await this.sendWebSocketRequest(
-        port,
-        method,
-        params,
-        "flutter-extension"
-      );
+      // Override sendWebSocketRequest to directly use the forwardingClient for better tracking
+      if (method.includes("ext.flutter.inspector")) {
+        this.logger.debug(
+          `[ForwardingClient][${requestId}] Using direct forwardingClient.callMethod for inspector method: ${method}`
+        );
+        try {
+          const result = await this.forwardingClient.callMethod(method, params);
+          this.logger.info(
+            `[ForwardingClient][${requestId}] Method ${method} completed successfully`
+          );
+          this.logger.debug(`[ForwardingClient][${requestId}] Result:`, result);
+          return result;
+        } catch (error) {
+          this.logger.error(
+            `[ForwardingClient][${requestId}] Direct call failed for ${method}:`,
+            error
+          );
+          throw error;
+        }
+      } else {
+        const result = await this.sendWebSocketRequest(
+          port,
+          method,
+          params,
+          "flutter-extension"
+        );
 
-      this.logger.info(`[ForwardingClient] Method ${method} result:`, result);
-      return result;
+        this.logger.info(
+          `[ForwardingClient][${requestId}] Method ${method} result:`,
+          result
+        );
+        return result;
+      }
     } catch (error) {
+      const errorId = `err_${Date.now()}`;
       this.logger.error(
-        `[ForwardingClient] Error invoking Flutter method ${method}:`,
+        `[ForwardingClient][${errorId}] Error invoking Flutter method ${method}:`,
         error
       );
       // Create a more detailed error object with context
