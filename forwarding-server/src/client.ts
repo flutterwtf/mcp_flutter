@@ -125,42 +125,101 @@ export class ForwardingClient extends EventEmitter {
 
         this.ws.onmessage = (event) => {
           try {
+            console.log(
+              `[CLIENT] Raw message received: ${event.data
+                .toString()
+                .substring(0, 200)}...`
+            );
+
             const message = JSON.parse(event.data.toString());
+            console.log(
+              `[CLIENT] Parsed message:`,
+              JSON.stringify(message, null, 2).substring(0, 500)
+            );
 
             // Emit the message as an event
+            console.log(`[CLIENT] Emitting 'message' event`);
             this.emit("message", message);
 
             // Handle method calls
             if (message.method && message.id) {
+              console.log(
+                `[CLIENT] Handling method call: ${message.method}, ID: ${message.id}`
+              );
               this.emit(
                 "method",
                 message.method,
                 message.params,
                 (result: any) => {
+                  console.log(
+                    `[CLIENT] Sending response for method ${message.method}, ID: ${message.id}`
+                  );
+                  this.sendResponse(message.id, result);
+                }
+              );
+              // Also emit a method-specific event
+              console.log(
+                `[CLIENT] Emitting method-specific event: method:${message.method}`
+              );
+              this.emit(
+                `method:${message.method}`,
+                message.params,
+                (result: any) => {
+                  console.log(
+                    `[CLIENT] Sending response for specific method ${message.method}, ID: ${message.id}`
+                  );
                   this.sendResponse(message.id, result);
                 }
               );
             }
             // Handle JSON-RPC responses
             else if (message.id) {
+              console.log(`[CLIENT] Processing response for ID: ${message.id}`);
               const request = this.pendingRequests.get(message.id);
               if (request) {
+                console.log(
+                  `[CLIENT] Found pending request for ID ${message.id}, method: ${request.method}`
+                );
                 if (message.error) {
+                  console.error(
+                    `[CLIENT] Request failed with error:`,
+                    message.error
+                  );
                   request.reject(
                     new Error(message.error.message || "Unknown error")
                   );
                 } else {
+                  console.log(
+                    `[CLIENT] Request succeeded with result:`,
+                    JSON.stringify(message.result).substring(0, 200)
+                  );
                   request.resolve(message.result);
                 }
                 this.pendingRequests.delete(message.id);
+                console.log(
+                  `[CLIENT] Deleted pending request for ID: ${message.id}`
+                );
+              } else {
+                console.log(
+                  `[CLIENT] No pending request found for ID: ${message.id}`
+                );
               }
+            } else {
+              console.log(
+                `[CLIENT] Message doesn't match known patterns:`,
+                message
+              );
             }
           } catch (error) {
-            console.error("Error parsing WebSocket message:", error);
+            console.error("[CLIENT] Error parsing WebSocket message:", error);
+            console.error(
+              "[CLIENT] Raw message that caused error:",
+              event.data.toString()
+            );
           }
         };
       } catch (error) {
-        console.error(`Failed to create WebSocket:`, error);
+        console.error(`[CLIENT] Failed to create WebSocket:`, error);
         reject(error);
       }
     });
@@ -175,7 +234,7 @@ export class ForwardingClient extends EventEmitter {
    */
   private sendResponse(id: string, result: any, error?: any): void {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      console.error("Cannot send response: not connected");
+      console.error("[CLIENT] Cannot send response: not connected");
       return;
     }
 
@@ -193,6 +252,10 @@ export class ForwardingClient extends EventEmitter {
       }
     });
 
+    console.log(
+      `[CLIENT] Sending response for ID ${id}:`,
+      JSON.stringify(response).substring(0, 200)
+    );
     this.ws.send(JSON.stringify(response));
   }
 
@@ -206,9 +269,9 @@ export class ForwardingClient extends EventEmitter {
 
     this.reconnectInterval = setInterval(() => {
       if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-        console.log("Attempting to reconnect to forwarding server...");
+        console.log("[CLIENT] Attempting to reconnect to forwarding server...");
         this.connect(host, port, path).catch((err) => {
-          console.error("Reconnect failed:", err);
+          console.error("[CLIENT] Reconnect failed:", err);
         });
       }
     }, this.reconnectDelay);
@@ -226,12 +289,15 @@ export class ForwardingClient extends EventEmitter {
     params: Record<string, unknown> = {}
   ): Promise<T> {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      throw new Error(
-        `Not connected to forwarding server ${this.ws?.readyState}`
-      );
+      const errorMsg = `Not connected to forwarding server ${this.ws?.readyState}`;
+      console.error(`[CLIENT] ${errorMsg}`);
+      throw new Error(errorMsg);
     }
 
     const id = this.generateId();
+    console.log(
+      `[CLIENT] Generated new request ID: ${id} for method: ${method}`
+    );
 
     const request = {
       jsonrpc: "2.0",
@@ -240,14 +306,23 @@ export class ForwardingClient extends EventEmitter {
       params,
     };
 
+    console.log(
+      `[CLIENT] Sending method call: ${method}, ID: ${id}`,
+      JSON.stringify(params).substring(0, 200)
+    );
+
     return new Promise<T>((resolve, reject) => {
       this.pendingRequests.set(id, {
         resolve: resolve as (value: unknown) => void,
         reject,
         method,
       });
+      console.log(
+        `[CLIENT] Added pending request for ID: ${id}, method: ${method}`
+      );
 
       this.ws!.send(JSON.stringify(request));
+      console.log(`[CLIENT] Sent request to server`);
     });
   }
 
@@ -258,9 +333,15 @@ export class ForwardingClient extends EventEmitter {
    */
   sendMessage(message: any): void {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      throw new Error(`Not connected to forwarding server`);
+      const errorMsg = `Not connected to forwarding server`;
+      console.error(`[CLIENT] ${errorMsg}`);
+      throw new Error(errorMsg);
     }
 
+    console.log(
+      `[CLIENT] Sending raw message:`,
+      JSON.stringify(message).substring(0, 200)
+    );
     this.ws.send(JSON.stringify(message));
   }
 
@@ -274,14 +355,24 @@ export class ForwardingClient extends EventEmitter {
     method: string,
     handler: (params: any) => Promise<any> | any
   ): void {
+    console.log(`[CLIENT] Registering handler for method: ${method}`);
+
     this.on(
       `method:${method}`,
       async (params: any, respond: (result: any) => void) => {
+        console.log(
+          `[CLIENT] Method-specific handler called for ${method} with params:`,
+          JSON.stringify(params).substring(0, 200)
+        );
         try {
           const result = await handler(params);
+          console.log(
+            `[CLIENT] Method ${method} handler succeeded with result:`,
+            JSON.stringify(result).substring(0, 200)
+          );
           respond(result);
         } catch (error: any) {
-          console.error(`Error handling method ${method}:`, error);
+          console.error(`[CLIENT] Error handling method ${method}:`, error);
           respond({ error: { message: error?.message || "Unknown error" } });
         }
       }
@@ -292,17 +383,33 @@ export class ForwardingClient extends EventEmitter {
       "method",
       (methodName: string, params: any, respond: (result: any) => void) => {
         if (methodName === method) {
+          console.log(
+            `[CLIENT] Generic method handler called for ${method} with params:`,
+            JSON.stringify(params).substring(0, 200)
+          );
           try {
             Promise.resolve(handler(params))
-              .then((result) => respond(result))
+              .then((result) => {
+                console.log(
+                  `[CLIENT] Generic handler for ${method} succeeded with result:`,
+                  JSON.stringify(result).substring(0, 200)
+                );
+                respond(result);
+              })
               .catch((error: any) => {
-                console.error(`Error handling method ${method}:`, error);
+                console.error(
+                  `[CLIENT] Error in generic handler for method ${method}:`,
+                  error
+                );
                 respond({
                   error: { message: error?.message || "Unknown error" },
                 });
               });
           } catch (error: any) {
-            console.error(`Error handling method ${method}:`, error);
+            console.error(
+              `[CLIENT] Error in synchronous part of generic handler for method ${method}:`,
+              error
+            );
             respond({ error: { message: error?.message || "Unknown error" } });
           }
         }
