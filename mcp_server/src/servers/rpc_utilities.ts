@@ -118,7 +118,7 @@ export class RpcUtilities {
 
         // Register a test method handler to verify bidirectional communication
         this.forwardingClient.registerMethod(
-          "flutter.inspector.ping",
+          "flutter.test.ping",
           async (params) => {
             this.logger.info(
               `[ForwardingClient] Received ping with params:`,

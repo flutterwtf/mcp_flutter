@@ -22,7 +22,10 @@ class ForwardingClient {
   /// @param clientType The type of client ('inspector' or 'flutter')
   /// @param clientId Optional client ID (will be generated if not provided)
   ForwardingClient(this.clientType, {String? clientId})
-    : clientId = clientId ?? _generateUuid();
+    : clientId = clientId ?? _generateUuid() {
+    // Register ping method handler for connection testing
+    _registerPingMethod();
+  }
 
   /// Generate a UUID for the client ID
   static String _generateUuid() {
@@ -348,6 +351,21 @@ class ForwardingClient {
           'error': {'message': error.toString()},
         });
       }
+    });
+  }
+
+  /// Register the flutter.test.ping method handler for connection testing
+  void _registerPingMethod() {
+    print('Registering flutter.test.ping method handler');
+    registerMethod('flutter.test.ping', (dynamic params) async {
+      print('Received ping with params: $params');
+      return {
+        'success': true,
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+        'message': 'Flutter client is responsive',
+        'clientId': clientId,
+        'clientType': clientType.name,
+      };
     });
   }
 
