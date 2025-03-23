@@ -4,13 +4,9 @@ import fs from "fs";
 import yaml from "js-yaml";
 import { promisify } from "util";
 import { IsolateResponse, VMInfo } from "../types/types.js";
-import {
-  defaultDartVMPort,
-  defaultFlutterExtensionPort,
-} from "./flutter_inspector_server.js";
+import { defaultDartVMPort } from "./flutter_inspector_server.js";
 import { Logger } from "./logger.js";
 import { RpcClient } from "./rpc_client.js";
-import { RpcServer } from "./rpc_server.js";
 
 type ConnectionDestination = "dart-vm" | "flutter-extension";
 export const execAsync = promisify(exec);
@@ -20,50 +16,14 @@ export const execAsync = promisify(exec);
  */
 export class RpcUtilities {
   private dartVmClient: RpcClient;
-  private rpcServer: RpcServer | null = null;
+  private forwardingClient: RpcClient;
 
   constructor(
     private readonly host: string = "localhost",
     private readonly logger: Logger
   ) {
     this.dartVmClient = new RpcClient();
-  }
-
-  /**
-   * Start the RPC Server that can accept connections from Dart clients
-   */
-  async startRpcServer(
-    port: number = defaultFlutterExtensionPort,
-    path: string = "/ext-ws"
-  ): Promise<RpcServer> {
-    if (this.rpcServer) {
-      this.logger.info(
-        `RPC Server already running at ws://${this.host}:${port}${path}`
-      );
-      return this.rpcServer;
-    }
-
-    this.rpcServer = new RpcServer();
-
-    // Add listener for client connections and set up tracking
-    this.rpcServer.on("clientConnected", (clientId: string) => {
-      this.logger.info(`Client connected: ${clientId}`);
-    });
-    const rpcServer = this.rpcServer;
-    rpcServer.on("clientDisconnected", (clientId: string) => {
-      rpcServer.clients.delete(clientId);
-      if (rpcServer.lastClientId === clientId) {
-        rpcServer.lastClientId =
-          rpcServer.clients.size > 0
-            ? Array.from(rpcServer.clients.keys())[0]
-            : null;
-      }
-      this.logger.info(`Client disconnected: ${clientId}`);
-    });
-
-    await this.rpcServer.start(port, path);
-    this.logger.info(`Started RPC Server at ws://${this.host}:${port}${path}`);
-    return this.rpcServer;
+    this.forwardingClient = new RpcClient();
   }
 
   /**
@@ -74,18 +34,18 @@ export class RpcUtilities {
     method: string,
     params: Record<string, unknown> = {}
   ): Promise<unknown> {
-    if (!this.rpcServer) {
+    if (!this.forwardingClient) {
       throw new McpError(
         ErrorCode.InternalError,
-        "RPC Server not started. Call startRpcServer first."
+        "Forwarding Client not started. Call startForwardingClient first."
       );
     }
 
-    return await this.rpcServer.callClientMethod(clientId, method, params);
+    return await this.forwardingClient.callMethod(method, params);
   }
 
   /**
-   * Connect to the Dart VM or ensure RPC server is running for Flutter extension
+   * Connect to the Dart VM or Forwarding Server
    */
   async connect(
     port: number,
@@ -94,10 +54,7 @@ export class RpcUtilities {
     if (connectionDestination === "dart-vm") {
       await this.dartVmClient.connect(this.host, port, "/ws");
     } else {
-      // For Flutter extension, we'll start the server if not already running
-      if (!this.rpcServer) {
-        await this.startRpcServer(port);
-      }
+      await this.dartVmClient.connect(this.host, port, "/ws");
     }
   }
 
@@ -115,16 +72,7 @@ export class RpcUtilities {
     if (connectionDestination === "dart-vm") {
       return this.dartVmClient.callMethod(method, params);
     } else {
-      // For flutter-extension, use the RPC server if there's a connected client
-      const clientId = this.rpcServer?.lastClientId;
-      if (!clientId) {
-        throw new McpError(
-          ErrorCode.InternalError,
-          "No Flutter clients connected to RPC server"
-        );
-      }
-
-      return this.sendToDartClient(clientId, method, params);
+      return this.forwardingClient.callMethod(method, params);
     }
   }
 
@@ -133,11 +81,7 @@ export class RpcUtilities {
    */
   async closeAllConnections(): Promise<void> {
     this.dartVmClient.disconnect();
-
-    if (this.rpcServer) {
-      await this.rpcServer.stop();
-      this.rpcServer = null;
-    }
+    this.forwardingClient.disconnect();
   }
 
   /**
@@ -171,24 +115,13 @@ export class RpcUtilities {
     params: Record<string, unknown> = {}
   ): Promise<unknown> {
     try {
-      if (!this.rpcServer) {
-        await this.startRpcServer(port);
-      }
-
-      // Wait for a client connection if none exists
-      if (!this.rpcServer?.lastClientId) {
-        throw new McpError(
-          ErrorCode.InternalError,
-          "No Flutter clients connected to RPC server. Ensure a client connects before making requests."
-        );
-      }
-
-      // Send request to the last connected client
-      return await this.sendToDartClient(
-        this.rpcServer.lastClientId,
+      const result = await this.sendWebSocketRequest(
+        port,
         method,
-        params
+        params,
+        "flutter-extension"
       );
+      return result;
     } catch (error) {
       this.logger.error(`Error invoking Flutter method ${method}:`, error);
       throw error;

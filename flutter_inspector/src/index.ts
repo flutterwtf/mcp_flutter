@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import * as dotenv from "dotenv";
 import yargs from "yargs";
-import { hideBin } from "yargs/helpers";
 import {
   defaultMCPServerPort,
   FlutterInspectorServer,
@@ -34,7 +33,7 @@ export class CommandLineArgs {
   }
 
   static fromCommandLine(): CommandLineArgs {
-    const argv = yargs(hideBin(process.argv))
+    const argv = yargs(process.argv)
       .options({
         port: {
           alias: "p",

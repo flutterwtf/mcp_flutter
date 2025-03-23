@@ -2,7 +2,6 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:devtools_app/devtools_app.dart';
 import 'package:devtools_app_shared/service.dart';
 import 'package:devtools_app_shared/utils.dart';
 import 'package:devtools_shared/service.dart' as devtools_shared;
@@ -18,7 +17,8 @@ import 'package:vm_service/vm_service.dart';
 /// {@endtemplate}
 class ServiceExtensionBridge with ChangeNotifier {
   /// {@macro service_extension_bridge}
-  ServiceExtensionBridge({required this.rpcClient}) {
+  ServiceExtensionBridge({final RpcClient? rpcClient})
+    : rpcClient = rpcClient ?? RpcClient() {
     _registerRpcMethods();
   }
 
@@ -80,15 +80,12 @@ class ServiceExtensionBridge with ChangeNotifier {
         // final pngBlob = result.json!['screenshot'] as String;
         print('Screenshot PNG blob: ${result.json}');
 
-        final serviceConnectionManager =
-            globals[ServiceConnectionManager]! as ServiceConnectionManager;
-
-        final rootWidget = (serviceConnectionManager.inspectorService!
-                    .createObjectGroup('[root]')
-                as ObjectGroup)
-            .getRoot(FlutterTreeType.widget);
-        print('Root widget: $rootWidget');
-
+        const serviceExtensionPrefix = 'ext.flutter.inspector';
+        final callMethodName =
+            '$serviceExtensionPrefix.${WidgetInspectorServiceExtensions.getRootWidgetTree.name}';
+        final rootWidgetTree = await serviceManager
+            .callServiceExtensionOnMainIsolate(callMethodName);
+        print('Root widget tree: $rootWidgetTree');
         // final bytes = base64Decode(pngBlob);
         // print('Screenshot PNG blob size: ${bytes.length} bytes');
       } catch (e) {

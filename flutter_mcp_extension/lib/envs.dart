@@ -11,4 +11,15 @@ class Envs {
     port: int.fromEnvironment('FLUTTER_RPC_PORT', defaultValue: 8181),
     path: String.fromEnvironment('FLUTTER_RPC_PATH', defaultValue: 'ws'),
   );
+  static const forwardingServer = (
+    host: String.fromEnvironment(
+      'FORWARDING_SERVER_HOST',
+      defaultValue: 'localhost',
+    ),
+    port: int.fromEnvironment('FORWARDING_SERVER_PORT', defaultValue: 8143),
+    path: String.fromEnvironment(
+      'FORWARDING_SERVER_PATH',
+      defaultValue: 'forward',
+    ),
+  );
 }

@@ -1,5 +1,4 @@
 import 'package:flutter_mcp_extension/common_imports.dart';
-import 'package:flutter_mcp_extension/services/service_extension_bridge.dart';
 
 /// {@template rpc_client_info}
 /// Holds connection information for an RPC client
@@ -63,36 +62,33 @@ class RpcClientInfo with ChangeNotifier {
 class RpcClientsOrchestrator with ChangeNotifier {
   /// {@macro rpc_clients_orchestrator}
   RpcClientsOrchestrator() {
-    // Initialize the TS client from environment variables
-    // _tsClient = RpcClientInfo(
-    //   name: 'TypeScript',
-    //   host: Envs.tsRpc.host,
-    //   port: Envs.tsRpc.port,
-    //   path: Envs.tsRpc.path,
-    // );
+    // Initialize the TypeScript client
+    _serviceBridge = ServiceExtensionBridge();
 
-    // Create the service extension bridge using the TS client
-    _serviceBridge = ServiceExtensionBridge(rpcClient: _tsClient.client);
+    // Initialize the forwarding service
+    _forwardingService = ForwardingService();
 
-    // Listen to changes in the clients
-    // _tsClient.addListener(notifyListeners);
+    // Listen to changes in services
     _serviceBridge.addListener(notifyListeners);
+    _forwardingService.addListener(notifyListeners);
   }
 
   late final ServiceExtensionBridge _serviceBridge;
-  late final RpcClientInfo _tsClient;
+  late final ForwardingService _forwardingService;
 
   /// Service extension bridge for Flutter VM interaction
   ServiceExtensionBridge get serviceBridge => _serviceBridge;
 
-  /// TypeScript RPC client information
-  // RpcClientInfo get tsClient => _tsClient;
+  /// Forwarding service for communication with flutter_inspector
+  ForwardingService get forwardingService => _forwardingService;
 
   /// Initialize and connect all clients
   Future<void> initializeAll() async {
-    // Connect TS client
-    // await _tsClient.connect();
+    // Connect to VM service
     await _serviceBridge.connectToVmService();
+
+    // Connect to forwarding server
+    await _forwardingService.initialize();
   }
 
   /// Connect to the Flutter VM service
@@ -106,8 +102,8 @@ class RpcClientsOrchestrator with ChangeNotifier {
 
   @override
   void dispose() {
-    // _tsClient.removeListener(notifyListeners);
     _serviceBridge.removeListener(notifyListeners);
+    _forwardingService.removeListener(notifyListeners);
     super.dispose();
   }
 }

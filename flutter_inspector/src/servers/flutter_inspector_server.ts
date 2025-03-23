@@ -14,12 +14,11 @@ import { createCustomRpcHandlerMap } from "./create_custom_rpc_handler_map.js";
 import { createRpcHandlerMap } from "./create_rpc_handler_map.generated.js";
 import { FlutterRpcHandlers } from "./flutter_rpc_handlers.generated.js";
 import { Logger } from "./logger.js";
-import { RpcServer } from "./rpc_server.js";
 import { RpcUtilities } from "./rpc_utilities.js";
 
 export const defaultDartVMPort = 8181;
 export const defaultMCPServerPort = 3535;
-export const defaultFlutterExtensionPort = 8142;
+export const defaultForwardingServerPort = 3536;
 
 // Get the directory name in ESM
 const __filename = fileURLToPath(import.meta.url);
@@ -31,7 +30,6 @@ export class FlutterInspectorServer {
   private logLevel: LogLevel;
   private rpcUtils: RpcUtilities;
   private logger: Logger;
-  private rpcServer: RpcServer | null = null;
 
   constructor(args: CommandLineArgs) {
     this.port = args.port;
@@ -125,36 +123,17 @@ export class FlutterInspectorServer {
     }
   }
 
-  /**
-   * Initialize the RPC server to accept connections from Dart clients
-   */
-  async initializeRpcServer(
-    port: number = defaultFlutterExtensionPort
-  ): Promise<void> {
-    try {
-      this.rpcServer = await this.rpcUtils.startRpcServer(port);
-      this.logger.info(
-        `RPC server for web clients initialized on port ${port}`
-      );
-    } catch (error) {
-      this.logger.error("Failed to initialize RPC server:", error);
-      throw error;
-    }
-  }
-
   async run() {
     // 1. First initialize async resources
     const transport = new StdioServerTransport();
 
     // 2. Start servers in parallel with proper cleanup
-    await Promise.all([
-      this.initializeRpcServer(),
-      this.server.connect(transport),
-    ]);
+    this.rpcUtils.connect(defaultDartVMPort, "dart-vm");
+    this.rpcUtils.connect(defaultForwardingServerPort, "flutter-extension");
 
     // 3. Add coordinated shutdown
     const cleanup = async () => {
-      await this.rpcServer?.stop();
+      await this.rpcUtils.closeAllConnections();
       await transport.close();
     };
 
@@ -163,7 +142,8 @@ export class FlutterInspectorServer {
 
     this.logger.info(`
       MCP Server: Ready on stdio (port ${this.port})
-      RPC Server: Listening on ws://localhost:${defaultFlutterExtensionPort}/ext-ws
+      RPC Server: Listening on ws://localhost:${defaultDartVMPort}/ws
+      Forwarding Client: Connected to ws://localhost:${defaultForwardingServerPort}/ws
     `);
   }
 }
