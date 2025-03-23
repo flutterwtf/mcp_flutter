@@ -16,13 +16,15 @@ class ForwardingRpcListener {
   void init() {
     // TODO: listen only for flutter inspector events
     forwardingClient
-      ..on(
+      ..registerMethod(
         '$flutterInspectorName.getRootWidgetTree',
         (final data) async => devtoolsService.getRootWidgetTree(),
       )
-      ..on(
-        '$flutterInspectorName.screenshot',
-        (final data) async => devtoolsService.takeScreenshot(data),
-      );
+      ..registerMethod('$flutterInspectorName.screenshot', (final data) async {
+        print('Taking screenshot');
+        final screenshot = await devtoolsService.takeScreenshot(data);
+        print('Screenshot: ${screenshot.success} ${screenshot.error}');
+        return screenshot;
+      });
   }
 }

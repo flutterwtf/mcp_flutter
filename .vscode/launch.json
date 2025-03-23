@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Flutter flutter_test_app degug",
+      "name": "test_app debug",
       "request": "launch",
       "type": "dart",
       "cwd": "./flutter_test_app",
@@ -14,7 +14,7 @@
       ]
     },
     {
-      "name": "Flutter MCP extension debug",
+      "name": "devtools_mcp_extension debug",
       "request": "launch",
       "type": "dart",
       "cwd": "devtools_mcp_extension",

@@ -34,6 +34,10 @@ class RPCResponse {
     'data': data,
     'error': error,
   };
+
+  @override
+  String toString() =>
+      'RPCResponse(success: $success, data: $data, error: $error)';
 }
 
 /// {@template service_extension_bridge}
@@ -130,30 +134,22 @@ extension DevtoolsServiceExtension on DevtoolsService {
       if (!_serviceManager.connectedState.value.connected) {
         return RPCResponse.error('Not connected to VM service');
       }
-      print('Take screenshot 2');
+      print('Take screenshot: connected');
       final isolateId = _serviceManager.isolateManager.mainIsolate.value?.id;
-      print('Take screenshot 3');
       if (isolateId == null) {
+        print('Take screenshot: no isolateId');
         return RPCResponse.error('No main isolate available');
       }
-      print('Take screenshot 4');
+      print('Take screenshot: isolateId: $isolateId');
       // Call the VM service to take a screenshot using the private Flutter API
       final result = await _serviceManager.service!.callServiceExtension(
         '_flutter.screenshot',
       );
-      print('Take screenshot 5');
-      try {
-        // Convert screenshot data to PNG blob
-        // final pngBlob = result.json!['screenshot'] as String;
-        print('Screenshot PNG blob: ${result.json}');
-
-        // final bytes = base64Decode(pngBlob);
-        // print('Screenshot PNG blob size: ${bytes.length} bytes');
-      } catch (e, stackTrace) {
-        print('Screenshot Error: $e');
-        return RPCResponse.error('Error taking screenshot: $e', stackTrace);
-      }
+      print('Take screenshot: has result');
       final screenshotData = result.json?['screenshot'] as String?;
+      print(
+        'Take screenshot: is screenshotData exists: ${screenshotData != null}',
+      );
       if (screenshotData != null) {
         return RPCResponse.successString(screenshotData);
       } else {
