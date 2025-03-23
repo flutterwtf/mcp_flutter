@@ -30,14 +30,12 @@ class ForwardingRpcListener {
         print('ForwardingClient error: $error');
       })
       // Register methods that need to return responses
-      ..registerMethod('$flutterInspectorName.getRootWidgetTree', (
+      ..registerMethod('$flutterInspectorName.getRootWidget', (
         final data,
       ) async {
-        print('Handler called: getRootWidgetTree with data: $data');
-        final result = await devtoolsService.getRootWidgetTree();
-        print(
-          'getRootWidgetTree result: ${jsonEncode(result).substring(0, 50)}',
-        );
+        print('Handler called: getRootWidget with data: $data');
+        final result = await devtoolsService.getRootWidget();
+        print('getRootWidget result: ${jsonEncode(result).substring(0, 50)}');
         return result;
       })
       ..registerMethod('$flutterInspectorName.screenshot', (final data) async {

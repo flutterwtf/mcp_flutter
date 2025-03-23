@@ -96,13 +96,13 @@ class DevtoolsService with ChangeNotifier {
         finishedCompleter: finishedCompleter,
         serviceFactory: VmService.defaultFactory,
       );
+      setGlobal(ServiceManager, _serviceManager);
 
       // Open the VM service connection in the service manager
       await _serviceManager.vmServiceOpened(
         vmService,
         onClosed: finishedCompleter.future,
       );
-      setGlobal(ServiceManager, _serviceManager);
 
       notifyListeners();
       return true;
@@ -159,13 +159,21 @@ extension DevtoolsServiceExtension on DevtoolsService {
     }
   }
 
-  Future<RPCResponse> getRootWidgetTree() async {
+  Future<RPCResponse> getRootWidget() async {
     try {
       final callMethodName =
           '$flutterInspectorName.'
           '${WidgetInspectorServiceExtensions.getRootWidgetTree.name}';
       final rootWidgetTree = await serviceManager
-          .callServiceExtensionOnMainIsolate(callMethodName);
+          .callServiceExtensionOnMainIsolate(
+            callMethodName,
+            args: {
+              'groupName': 'root',
+              'isSummaryTree': 'true',
+              'withPreviews': 'true',
+              'fullDetails': 'true',
+            },
+          );
       print('Root widget tree: $rootWidgetTree');
       if (rootWidgetTree.json == null) {
         return RPCResponse.error(
