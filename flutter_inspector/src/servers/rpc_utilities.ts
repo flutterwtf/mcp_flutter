@@ -1,5 +1,6 @@
 import { ErrorCode, McpError } from "@modelcontextprotocol/sdk/types.js";
 import { exec } from "child_process";
+import { ForwardingClient } from "forwarding-server";
 import fs from "fs";
 import yaml from "js-yaml";
 import { promisify } from "util";
@@ -16,14 +17,17 @@ export const execAsync = promisify(exec);
  */
 export class RpcUtilities {
   private dartVmClient: RpcClient;
-  private forwardingClient: RpcClient;
+  private forwardingClient: ForwardingClient;
 
   constructor(
     private readonly host: string = "localhost",
     private readonly logger: Logger
   ) {
     this.dartVmClient = new RpcClient();
-    this.forwardingClient = new RpcClient();
+    this.forwardingClient = new ForwardingClient(
+      "inspector",
+      "flutter-inspector"
+    );
   }
 
   /**
@@ -54,7 +58,7 @@ export class RpcUtilities {
     if (connectionDestination === "dart-vm") {
       await this.dartVmClient.connect(this.host, port, "/ws");
     } else {
-      await this.dartVmClient.connect(this.host, port, "/ws");
+      await this.forwardingClient.connect(this.host, port, "/ws");
     }
   }
 

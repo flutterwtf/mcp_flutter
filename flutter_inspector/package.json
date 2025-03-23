@@ -27,6 +27,7 @@
     "@types/ws": "^8.5.10",
     "axios": "^1.8.3",
     "dotenv": "^16.4.5",
+    "forwarding-server": "../forwarding-server",
     "js-yaml": "^4.1.0",
     "ws": "^8.16.0",
     "yargs": "^17.7.2"
