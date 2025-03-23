@@ -2,14 +2,12 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Flutter test_app degug",
+      "name": "Flutter flutter_test_app degug",
       "request": "launch",
       "type": "dart",
-      "cwd": "test_app",
+      "cwd": "./flutter_test_app",
       "flutterMode": "debug",
       "args": [
-        "--debug",
-        // "-d=macos",
         "--observatory-port=8181",
         "--enable-vm-service",
         "--disable-service-auth-codes"
