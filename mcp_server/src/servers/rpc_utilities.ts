@@ -19,6 +19,7 @@ export const execAsync = promisify(exec);
 export class RpcUtilities {
   private dartVmClient: RpcClient;
   private forwardingClient: ForwardingClient;
+  private cachedFlutterIsolate: string | null = null;
 
   constructor(
     private readonly host: string = "localhost",
@@ -80,24 +81,6 @@ export class RpcUtilities {
         );
       }
     });
-  }
-
-  /**
-   * Send a message to a specific connected Dart client
-   */
-  async sendToDartClient(
-    clientId: string,
-    method: string,
-    params: Record<string, unknown> = {}
-  ): Promise<unknown> {
-    if (!this.forwardingClient) {
-      throw new McpError(
-        ErrorCode.InternalError,
-        "Forwarding Client not started. Call startForwardingClient first."
-      );
-    }
-
-    return await this.forwardingClient.callMethod(method, params);
   }
 
   /**
@@ -239,10 +222,11 @@ export class RpcUtilities {
     params: Record<string, unknown> = {}
   ): Promise<unknown> {
     try {
+      const flutterIsolateId = await this.getFlutterIsolateId(port);
       const result = await this.sendWebSocketRequest(
         port,
         method,
-        params,
+        { ...params, isolateId: flutterIsolateId },
         "dart-vm"
       );
       return result;
@@ -336,11 +320,14 @@ export class RpcUtilities {
       throw contextError;
     }
   }
-
   /**
    * Get the Flutter isolate ID from the VM
    */
-  async getFlutterIsolate(port: number): Promise<string> {
+  async getFlutterIsolateId(port: number): Promise<string> {
+    if (this.cachedFlutterIsolate) {
+      return this.cachedFlutterIsolate;
+    }
+
     const vmInfo = await this.getVmInfo(port);
     const isolates = vmInfo.isolates;
 
@@ -351,7 +338,8 @@ export class RpcUtilities {
       // Check if this isolate has Flutter extensions
       const extensionRPCs = isolate.extensionRPCs || [];
       if (extensionRPCs.some((ext: string) => ext.startsWith("ext.flutter"))) {
-        return isolateRef.id;
+        this.cachedFlutterIsolate = isolateRef.id;
+        return this.cachedFlutterIsolate;
       }
     }
 
@@ -362,12 +350,12 @@ export class RpcUtilities {
   }
 
   async getVmInfo(port: number): Promise<VMInfo> {
-    const vmInfo = await this.callDartVm("getVM", port);
+    const vmInfo = await this.sendWebSocketRequest(port, "getVM");
     return vmInfo as VMInfo;
   }
 
   async getIsolate(port: number, isolateId: string): Promise<IsolateResponse> {
-    const isolate = await this.callDartVm("getIsolate", port, {
+    const isolate = await this.sendWebSocketRequest(port, "getIsolate", {
       isolateId,
     });
     return isolate as IsolateResponse;

@@ -169,7 +169,7 @@ extension DevtoolsServiceExtension on DevtoolsService {
             callMethodName,
             args: {
               'groupName': 'root',
-              'isSummaryTree': 'false',
+              'isSummaryTree': 'true',
               'withPreviews': 'false',
               'fullDetails': 'false',
             },
