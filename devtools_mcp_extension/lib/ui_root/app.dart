@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_catches_without_on_clauses
+
 import 'dart:async';
 
 import 'package:devtools_mcp_extension/common_imports.dart';
@@ -68,8 +70,8 @@ class _InspectorAppState extends State<InspectorApp> {
     try {
       await orchestrator.initializeAll();
       return orchestrator;
-    } catch (e) {
-      print('Error starting RPC servers: $e');
+    } catch (e, stackTrace) {
+      print('Error starting RPC servers: $e, $stackTrace');
       // Still return the orchestrator even if there were errors,
       // so we can display connection status in the UI
       return orchestrator;

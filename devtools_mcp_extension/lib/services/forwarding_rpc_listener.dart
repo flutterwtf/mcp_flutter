@@ -1,4 +1,4 @@
-// ignore_for_file: unnecessary_async
+// ignore_for_file: unnecessary_async, avoid_catches_without_on_clauses
 
 import 'dart:convert';
 
@@ -47,11 +47,13 @@ class ForwardingRpcListener {
           if (screenshot.data != null && screenshot.data is String) {
             final String dataStr = screenshot.data as String;
             print(
-              'Screenshot result - error: ${screenshot.error} success: ${screenshot.success} data length: ${dataStr.length}',
+              'Screenshot result - error: ${screenshot.error} '
+              'success: ${screenshot.success} data length: ${dataStr.length}',
             );
           } else {
             print(
-              'Screenshot result - error: ${screenshot.error} success: ${screenshot.success} data: null',
+              'Screenshot result - error: ${screenshot.error} '
+              'success: ${screenshot.success} data: null',
             );
           }
 

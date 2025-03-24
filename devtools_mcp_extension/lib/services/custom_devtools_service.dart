@@ -2,8 +2,8 @@ import 'package:devtools_mcp_extension/common_imports.dart';
 import 'package:flutter/foundation.dart';
 
 class CustomDevtoolsService {
-  CustomDevtoolsService(this._devtoolsService);
-  final DevtoolsService _devtoolsService;
+  CustomDevtoolsService(this.devtoolsService);
+  final DevtoolsService devtoolsService;
 
   Future<void> customMethod(final Map<String, dynamic> params) async {
     final rootElement = WidgetsBinding.instance.rootElement;
