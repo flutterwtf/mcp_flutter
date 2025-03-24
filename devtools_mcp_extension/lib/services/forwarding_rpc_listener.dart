@@ -3,6 +3,7 @@
 import 'dart:convert';
 
 import 'package:devtools_mcp_extension/common_imports.dart';
+import 'package:devtools_mcp_extension/services/image_compressor.dart';
 import 'package:mcp_dart_forwarding_client/mcp_dart_forwarding_client.dart';
 
 const flutterInspectorName = 'ext.flutter.inspector';
@@ -42,13 +43,16 @@ class ForwardingRpcListener {
         print('Handler called: screenshot with data: $data');
         try {
           final screenshot = await devtoolsService.takeScreenshot(data);
-
+          final base64Image = screenshot.data;
+          var compressedScreenshot = '';
           // Print response info without the full data
-          if (screenshot.data != null && screenshot.data is String) {
-            final String dataStr = screenshot.data as String;
+          if (base64Image != null) {
+            compressedScreenshot = await ImageCompressor.compressBase64Image(
+              base64Image: base64Image,
+            );
             print(
               'Screenshot result - error: ${screenshot.error} '
-              'success: ${screenshot.success} data length: ${dataStr.length}',
+              'success: ${screenshot.success} data length: ${compressedScreenshot.length}',
             );
           } else {
             print(
@@ -64,7 +68,7 @@ class ForwardingRpcListener {
           }
 
           print('Returning screenshot response');
-          return screenshot;
+          return compressedScreenshot;
         } catch (e, st) {
           print('Error taking screenshot: $e');
           print('Stack trace: $st');
