@@ -5,10 +5,15 @@ import 'package:devtools_mcp_extension/common_imports.dart';
 /// {@template inspector_app}
 /// Root application widget for the Flutter Inspector
 /// {@endtemplate}
-class InspectorApp extends StatelessWidget {
+class InspectorApp extends StatefulWidget {
   /// {@macro inspector_app}
   const InspectorApp({super.key});
 
+  @override
+  State<InspectorApp> createState() => _InspectorAppState();
+}
+
+class _InspectorAppState extends State<InspectorApp> {
   @override
   Widget build(final BuildContext context) => MaterialApp(
     title: 'Flutter Inspector',

@@ -1,5 +1,6 @@
 import 'package:dart_forwarding_client/dart_forwarding_client.dart';
 import 'package:devtools_mcp_extension/common_imports.dart';
+import 'package:devtools_mcp_extension/services/custom_devtools_service.dart';
 
 /// {@template rpc_connection_status}
 /// Displays real-time RPC connection status with animated indicators
@@ -140,26 +141,18 @@ class ServerDashboard extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.all(8),
         child: Column(
+          spacing: 16,
           children: [
-            // Service cards in a row
-            Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Forwarding client card
-                  Expanded(
-                    child: _ForwardingClientCard(
-                      forwardingClient: orchestrator.forwardingService,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  // VM Service bridge card
-                  Expanded(
-                    child: _VmServiceBridgeCard(
-                      serviceBridge: orchestrator.serviceBridge,
-                    ),
-                  ),
-                ],
+            // Forwarding client card
+            Flexible(
+              child: _ForwardingClientCard(
+                forwardingClient: orchestrator.forwardingService,
+              ),
+            ),
+            // VM Service bridge card
+            Flexible(
+              child: _VmServiceBridgeCard(
+                serviceBridge: orchestrator.serviceBridge,
               ),
             ),
           ],
@@ -236,6 +229,7 @@ class _ForwardingClientCardState extends State<_ForwardingClientCard> {
       padding: const EdgeInsets.all(8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
@@ -391,6 +385,7 @@ class _VmServiceBridgeCardState extends State<_VmServiceBridgeCard> {
           child: Padding(
             padding: const EdgeInsets.all(8),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
@@ -480,6 +475,14 @@ class _VmServiceBridgeCardState extends State<_VmServiceBridgeCard> {
                           }
                         },
                       ),
+                    FilledButton.tonal(
+                      onPressed: () async {
+                        await CustomDevtoolsService(
+                          widget.serviceBridge,
+                        ).customMethod({});
+                      },
+                      child: const Text('Custom Method'),
+                    ),
                   ],
                 ),
               ],
