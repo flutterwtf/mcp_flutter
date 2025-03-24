@@ -4,6 +4,11 @@
 
 🔍 A powerful Model Context Protocol (MCP) server that connects your Flutter apps with AI coding assistants like Cursor, Claude, and Cline.
 
+
+<a href="https://glama.ai/mcp/servers/qnu3f0fa20">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/qnu3f0fa20/badge" alt="Flutter Inspector Server MCP server" />
+</a>
+
 This project is a work in progress and not all methods (mostly Flutter Inspector related) are implemented yet.
 
 However, two methods are tested with Flutter:
