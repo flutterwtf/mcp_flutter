@@ -4,6 +4,19 @@
 
 🔍 A powerful Model Context Protocol (MCP) server that connects your Flutter apps with AI coding assistants like Cursor, Claude, and Cline.
 
+This project is a work in progress and not all methods (mostly Flutter Inspector related) are implemented yet.
+
+However, two methods are tested with Flutter:
+
+- screenshot
+- get_root_widget
+
+Currently Flutter works with MCP server via forwarding server. Please see [Architecture](https://github.com/Arenukvern/mcp_flutter/blob/main/ARCHITECTURE.md) for more details.
+
+Some of other methods are not tested - they may work or not. Please use with caution. It is possible that the most methods will be removed from the MCP server later to focus solely on Flutter applications and Jaspr.
+
+Flutter extension is not completed yet and not integrated into devtools - because of that, it should be open manually as simple web page.
+
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -26,7 +39,7 @@ For developers who want to contribute to the project or run the latest version d
 2. **Install dependencies:**
 
    ```bash
-   npm install
+   make install
    ```
 
    This command installs all necessary dependencies listed in `package.json`.
