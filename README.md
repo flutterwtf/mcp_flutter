@@ -13,9 +13,11 @@ However, two methods are tested with Flutter:
 
 Currently Flutter works with MCP server via forwarding server. Please see [Architecture](https://github.com/Arenukvern/mcp_flutter/blob/main/ARCHITECTURE.md) for more details.
 
-Some of other methods are not tested - they may work or not. Please use with caution. It is possible that the most methods will be removed from the MCP server later to focus solely on Flutter applications and Jaspr.
+Some of other methods are not tested - they may work or not. Please use with caution. It is possible that the most methods will be removed from the MCP server later to focus solely on Flutter applications and maybe Jaspr.
 
-Flutter extension is not completed yet and not integrated into devtools - because of that, it should be open manually as simple web page.
+# !!WARNING!!
+
+ALL DUMPS TOOLS ARE VERY HEAVY OPERATION and can easily overload context window of AI agent. Please use them with extreme caution.
 
 ## 🚀 Quick Start
 
@@ -36,26 +38,24 @@ For developers who want to contribute to the project or run the latest version d
    cd flutter-inspector
    ```
 
-2. **Install dependencies:**
+2. **Install and build dependencies:**
 
    ```bash
    make install
    ```
 
-   This command installs all necessary dependencies listed in `package.json`.
+   This command installs all necessary dependencies listed in `package.json` and then builds MCP server and forwarding server.
 
-3. **Build the project:**
+3. **Start forwarding server:**
 
    ```bash
-   npm run build
+   make forward
    ```
 
-   This command compiles the TypeScript code and creates the `build` directory with the compiled JavaScript files, including `build/index.js`.
-
-4. **To debug use MCP Inspector:**
+4. **Add DevTools Flutter Extension to Flutter App:**
 
    ```bash
-   npx @modelcontextprotocol/inspector build/index.js
+   flutter pub add --dev devtools_mcp_extension
    ```
 
 5. **Start your Flutter app in debug mode**
@@ -80,7 +80,9 @@ For developers who want to contribute to the project or run the latest version d
         "mcpServers": {
           "flutter-inspector": {
             "command": "node",
-            "args": ["/path/to/your/cloned/flutter-inspector/build/index.js"],
+            "args": [
+              "/path/to/your/cloned/flutter-inspector/mcp_server/build/index.js"
+            ],
             "env": {
               "PORT": "3334",
               "LOG_LEVEL": "info"
@@ -103,7 +105,9 @@ For developers who want to contribute to the project or run the latest version d
         "mcpServers": {
           "flutter-inspector": {
             "command": "node",
-            "args": ["/path/to/your/cloned/flutter-inspector/build/index.js"],
+            "args": [
+              "/path/to/your/cloned/flutter-inspector/mcp_server/build/index.js"
+            ],
             "env": {},
             "disabled": false,
             "autoApprove": []
@@ -123,7 +127,9 @@ For developers who want to contribute to the project or run the latest version d
         "mcpServers": {
           "flutter-inspector": {
             "command": "node",
-            "args": ["/path/to/your/cloned/flutter-inspector/build/index.js"],
+            "args": [
+              "/path/to/your/cloned/flutter-inspector/mcp_server/build/index.js"
+            ],
             "env": {
               "PORT": "3334",
               "LOG_LEVEL": "info"
@@ -136,12 +142,12 @@ For developers who want to contribute to the project or run the latest version d
    2. Restart Claude
    3. The Flutter inspector tools will be automatically available
 
-## 🎯 What You Can Do
+## 🎯 What You Can Do (Hopefully)
 
 - **Analyze Widget Trees**: Get detailed information about your Flutter app's structure
 - **Inspect Navigation**: See current routes and navigation state
 - **Debug Layout Issues**: Understand widget relationships and properties
-- **AI-Powered Assistance**: Get smarter code suggestions based on your app's context
+<!-- - **AI-Powered Assistance**: Get smarter code suggestions based on your app's context -->
 
 ## 🔧 Configuration Options
 
@@ -227,19 +233,13 @@ Direct RPC methods for debugging Flutter applications:
 Direct RPC methods for inspecting Flutter widget trees and layout:
 
 - `inspector_screenshot`: Takes a screenshot of the Flutter app
-- `inspector_get_layout_explorer_node`: Gets layout information for a specific widget
+<!-- - `inspector_get_layout_explorer_node`: Gets layout information for a specific widget -->
 
 ### DartIO Methods (ext.dart.io.\*)
 
 Direct RPC methods for Dart I/O operations:
 
 - `dart_io_get_version`: Gets Flutter version information
-
-### Stream Methods
-
-Methods for handling event streams:
-
-- `stream_listen`: Subscribes to Flutter event streams (Debug, Isolate, VM, GC, Timeline, Logging, Service, HeapSnapshot)
 
 ### Method Categories
 
@@ -257,11 +257,6 @@ Methods for handling event streams:
    - Protocol inspection (`get_supported_protocols`)
    - VM interaction (`get_vm_info`)
    - RPC discovery (`get_extension_rpcs`)
-
-3. **Stream Methods**
-   Special methods for handling event streams:
-   - Real-time monitoring capabilities
-   - Event-based debugging features
 
 ### Method Naming Convention
 
