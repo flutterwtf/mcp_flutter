@@ -2,10 +2,10 @@ all: build_extension
 
 build_extension:
 	cd web_app && flutter build web --release
-	dart run devtools_extensions build_and_copy --source=web_app --dest=extension/build
+	flutter pub run devtools_extensions build_and_copy --source=web_app --dest=extension/build
 
 validate_extension:
-	dart run devtools_extensions validate --package=.
+	flutter pub run devtools_extensions validate --package=.
 
 clean:
 	rm -rf extension/devtools/build
