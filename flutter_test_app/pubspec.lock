@@ -100,9 +100,10 @@ packages:
   devtools_mcp_extension:
     dependency: "direct dev"
     description:
-      path: "../devtools_mcp_extension"
-      relative: true
-    source: path
+      name: devtools_mcp_extension
+      sha256: "7e8b4b7db9ea2fca6dda4edb671377ace2ad3a4409024548b3f0bf171cc6f238"
+      url: "https://pub.dev"
+    source: hosted
     version: "0.1.0"
   devtools_shared:
     dependency: transitive
@@ -278,10 +279,10 @@ packages:
     dependency: transitive
     description:
       name: mcp_dart_forwarding_client
-      sha256: cb392265328895f12c3151182cb0bc73e240eb2ccaa0211cb64c937877bcf92f
+      sha256: d746d25eaccb8248a72a3d310bbc08f1fd84b1afb84ec26fdb8b327502e0a18c
       url: "https://pub.dev"
     source: hosted
-    version: "0.1.0"
+    version: "0.1.1"
   meta:
     dependency: transitive
     description:
