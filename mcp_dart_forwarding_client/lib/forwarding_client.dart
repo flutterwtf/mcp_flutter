@@ -162,7 +162,7 @@ class ForwardingClient {
               _emit('method', [
                 parsedMessage['method'],
                 parsedMessage['params'],
-                (result) {
+                (final dynamic result) {
                   print(
                     'Respond callback called for method ${parsedMessage['method']} with result: $result',
                   );
@@ -281,7 +281,7 @@ class ForwardingClient {
     ) {
       if (!_isConnected()) {
         print('Attempting to reconnect to forwarding server...');
-        connect(host, port, path: path).catchError((err) {
+        connect(host, port, path: path).catchError((final dynamic err) {
           print('Reconnect failed: $err');
         });
       }

@@ -13,3 +13,6 @@ clean:
 
 run: 
 	flutter run -d chrome --dart-define=use_simulated_environment=true
+
+publish:
+	flutter pub publish

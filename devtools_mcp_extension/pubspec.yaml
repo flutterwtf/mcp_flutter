@@ -1,5 +1,6 @@
 name: devtools_mcp_extension
 description: "Devtools MCP Extension"
+repository: https://github.com/Arenukvern/mcp_flutter
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 
@@ -32,8 +33,7 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.6
-  dart_forwarding_client:
-    path: ../dart_forwarding_client
+  dart_forwarding_client: ^0.1.0
   devtools_app_shared: ^0.3.1
   devtools_extensions: ^0.3.1
   devtools_shared: ^11.2.0
