@@ -34,8 +34,6 @@ export interface WebSocketResponse {
   };
 }
 
-export type LogLevel = "error" | "warn" | "info" | "debug";
-
 export interface IsolateInfo {
   id: string;
   name?: string;

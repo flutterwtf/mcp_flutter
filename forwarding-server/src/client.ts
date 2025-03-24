@@ -1,6 +1,7 @@
 import { EventEmitter } from "events";
 import WebSocket from "ws";
 import { ClientType } from "./forwarding-server.js";
+import { Logger } from "./index.js";
 
 /**
  * Client for connecting to the forwarding server.
@@ -20,7 +21,6 @@ export class ForwardingClient extends EventEmitter {
   private reconnectInterval: NodeJS.Timeout | null = null;
   private reconnectDelay = 2000; // 2 seconds
   private clientId: string;
-  private clientType: ClientType;
 
   /**
    * Creates a new forwarding client.
@@ -28,9 +28,12 @@ export class ForwardingClient extends EventEmitter {
    * @param clientType The type of client ('inspector' or 'flutter')
    * @param clientId Optional client ID (will be generated if not provided)
    */
-  constructor(clientType: ClientType, clientId?: string) {
+  constructor(
+    public clientType: ClientType,
+    public logger: Logger,
+    clientId?: string
+  ) {
     super();
-    this.clientType = clientType;
     this.clientId = clientId || this.generateUuid();
   }
 
@@ -73,7 +76,7 @@ export class ForwardingClient extends EventEmitter {
 
     // Only return early if the WebSocket is in OPEN state
     if (readyState === WebSocket.OPEN) {
-      console.log(`Already connected to forwarding server`);
+      this.logger?.debug(`Already connected to forwarding server`);
       return Promise.resolve();
     }
 
@@ -96,10 +99,10 @@ export class ForwardingClient extends EventEmitter {
 
       try {
         this.ws = new WebSocket(wsUrl);
-        console.log(`Connecting to forwarding server at ${wsUrl}`);
+        this.logger?.debug(`Connecting to forwarding server at ${wsUrl}`);
 
         this.ws.onopen = () => {
-          console.log(`Connected to forwarding server at ${wsUrl}`);
+          this.logger?.debug(`Connected to forwarding server at ${wsUrl}`);
           // Start auto-reconnect if connection drops
           this.setupReconnect(host, port, path);
           this.emit("connected");
@@ -107,13 +110,13 @@ export class ForwardingClient extends EventEmitter {
         };
 
         this.ws.onerror = (error) => {
-          console.error(`WebSocket error:`, error);
+          this.logger?.error(`WebSocket error:`, error);
           this.emit("error", error);
           reject(error);
         };
 
         this.ws.onclose = () => {
-          console.log(`Disconnected from forwarding server`);
+          this.logger?.debug(`Disconnected from forwarding server`);
           this.ws = null;
           this.emit("disconnected");
 
@@ -125,25 +128,25 @@ export class ForwardingClient extends EventEmitter {
 
         this.ws.onmessage = (event) => {
           try {
-            console.log(
+            this.logger?.debug(
               `[CLIENT] Raw message received: ${event.data
                 .toString()
                 .substring(0, 200)}...`
             );
 
             const message = JSON.parse(event.data.toString());
-            console.log(
+            this.logger?.debug(
               `[CLIENT] Parsed message:`,
               JSON.stringify(message, null, 2).substring(0, 500)
             );
 
             // Emit the message as an event
-            console.log(`[CLIENT] Emitting 'message' event`);
+            this.logger?.debug(`[CLIENT] Emitting 'message' event`);
             this.emit("message", message);
 
             // Handle method calls
             if (message.method && message.id) {
-              console.log(
+              this.logger?.debug(
                 `[CLIENT] Handling method call: ${message.method}, ID: ${message.id}`
               );
               this.emit(
@@ -151,21 +154,21 @@ export class ForwardingClient extends EventEmitter {
                 message.method,
                 message.params,
                 (result: any) => {
-                  console.log(
+                  this.logger?.debug(
                     `[CLIENT] Sending response for method ${message.method}, ID: ${message.id}`
                   );
                   this.sendResponse(message.id, result);
                 }
               );
               // Also emit a method-specific event
-              console.log(
+              this.logger?.debug(
                 `[CLIENT] Emitting method-specific event: method:${message.method}`
               );
               this.emit(
                 `method:${message.method}`,
                 message.params,
                 (result: any) => {
-                  console.log(
+                  this.logger?.debug(
                     `[CLIENT] Sending response for specific method ${message.method}, ID: ${message.id}`
                   );
                   this.sendResponse(message.id, result);
@@ -174,14 +177,16 @@ export class ForwardingClient extends EventEmitter {
             }
             // Handle JSON-RPC responses
             else if (message.id) {
-              console.log(`[CLIENT] Processing response for ID: ${message.id}`);
+              this.logger?.debug(
+                `[CLIENT] Processing response for ID: ${message.id}`
+              );
               const request = this.pendingRequests.get(message.id);
               if (request) {
-                console.log(
+                this.logger?.debug(
                   `[CLIENT] Found pending request for ID ${message.id}, method: ${request.method}`
                 );
                 if (message.error) {
-                  console.error(
+                  this.logger?.error(
                     `[CLIENT] Request failed with error:`,
                     message.error
                   );
@@ -189,37 +194,40 @@ export class ForwardingClient extends EventEmitter {
                     new Error(message.error.message || "Unknown error")
                   );
                 } else {
-                  console.log(
+                  this.logger?.debug(
                     `[CLIENT] Request succeeded with result:`,
                     JSON.stringify(message.result).substring(0, 200)
                   );
                   request.resolve(message.result);
                 }
                 this.pendingRequests.delete(message.id);
-                console.log(
+                this.logger?.debug(
                   `[CLIENT] Deleted pending request for ID: ${message.id}`
                 );
               } else {
-                console.log(
+                this.logger?.debug(
                   `[CLIENT] No pending request found for ID: ${message.id}`
                 );
               }
             } else {
-              console.log(
+              this.logger?.debug(
                 `[CLIENT] Message doesn't match known patterns:`,
                 message
               );
             }
           } catch (error) {
-            console.error("[CLIENT] Error parsing WebSocket message:", error);
-            console.error(
+            this.logger?.error(
+              "[CLIENT] Error parsing WebSocket message:",
+              error
+            );
+            this.logger?.error(
               "[CLIENT] Raw message that caused error:",
               event.data.toString()
             );
           }
         };
       } catch (error) {
-        console.error(`[CLIENT] Failed to create WebSocket:`, error);
+        this.logger?.error(`[CLIENT] Failed to create WebSocket:`, error);
         reject(error);
       }
     });
@@ -234,7 +242,7 @@ export class ForwardingClient extends EventEmitter {
    */
   private sendResponse(id: string, result: any, error?: any): void {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      console.error("[CLIENT] Cannot send response: not connected");
+      this.logger?.error("[CLIENT] Cannot send response: not connected");
       return;
     }
 
@@ -252,7 +260,7 @@ export class ForwardingClient extends EventEmitter {
       }
     });
 
-    console.log(
+    this.logger?.debug(
       `[CLIENT] Sending response for ID ${id}:`,
       JSON.stringify(response).substring(0, 200)
     );
@@ -269,9 +277,11 @@ export class ForwardingClient extends EventEmitter {
 
     this.reconnectInterval = setInterval(() => {
       if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-        console.log("[CLIENT] Attempting to reconnect to forwarding server...");
+        this.logger?.debug(
+          "[CLIENT] Attempting to reconnect to forwarding server..."
+        );
         this.connect(host, port, path).catch((err) => {
-          console.error("[CLIENT] Reconnect failed:", err);
+          this.logger?.error("[CLIENT] Reconnect failed:", err);
         });
       }
     }, this.reconnectDelay);
@@ -290,12 +300,12 @@ export class ForwardingClient extends EventEmitter {
   ): Promise<T> {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
       const errorMsg = `Not connected to forwarding server ${this.ws?.readyState}`;
-      console.error(`[CLIENT] ${errorMsg}`);
+      this.logger?.error(`[CLIENT] ${errorMsg}`);
       throw new Error(errorMsg);
     }
 
     const id = this.generateId();
-    console.log(
+    this.logger?.debug(
       `[CLIENT] Generated new request ID: ${id} for method: ${method}`
     );
 
@@ -306,7 +316,7 @@ export class ForwardingClient extends EventEmitter {
       params,
     };
 
-    console.log(
+    this.logger?.debug(
       `[CLIENT] Sending method call: ${method}, ID: ${id}`,
       JSON.stringify(params).substring(0, 200)
     );
@@ -317,12 +327,12 @@ export class ForwardingClient extends EventEmitter {
         reject,
         method,
       });
-      console.log(
+      this.logger?.debug(
         `[CLIENT] Added pending request for ID: ${id}, method: ${method}`
       );
 
       this.ws!.send(JSON.stringify(request));
-      console.log(`[CLIENT] Sent request to server`);
+      this.logger?.debug(`[CLIENT] Sent request to server`);
     });
   }
 
@@ -334,11 +344,11 @@ export class ForwardingClient extends EventEmitter {
   sendMessage(message: any): void {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
       const errorMsg = `Not connected to forwarding server`;
-      console.error(`[CLIENT] ${errorMsg}`);
+      this.logger?.error(`[CLIENT] ${errorMsg}`);
       throw new Error(errorMsg);
     }
 
-    console.log(
+    this.logger?.debug(
       `[CLIENT] Sending raw message:`,
       JSON.stringify(message).substring(0, 200)
     );
@@ -355,24 +365,27 @@ export class ForwardingClient extends EventEmitter {
     method: string,
     handler: (params: any) => Promise<any> | any
   ): void {
-    console.log(`[CLIENT] Registering handler for method: ${method}`);
+    this.logger?.debug(`[CLIENT] Registering handler for method: ${method}`);
 
     this.on(
       `method:${method}`,
       async (params: any, respond: (result: any) => void) => {
-        console.log(
+        this.logger?.debug(
           `[CLIENT] Method-specific handler called for ${method} with params:`,
           JSON.stringify(params).substring(0, 200)
         );
         try {
           const result = await handler(params);
-          console.log(
+          this.logger?.debug(
             `[CLIENT] Method ${method} handler succeeded with result:`,
             JSON.stringify(result).substring(0, 200)
           );
           respond(result);
         } catch (error: any) {
-          console.error(`[CLIENT] Error handling method ${method}:`, error);
+          this.logger?.error(
+            `[CLIENT] Error handling method ${method}:`,
+            error
+          );
           respond({ error: { message: error?.message || "Unknown error" } });
         }
       }
@@ -383,21 +396,21 @@ export class ForwardingClient extends EventEmitter {
       "method",
       (methodName: string, params: any, respond: (result: any) => void) => {
         if (methodName === method) {
-          console.log(
+          this.logger?.debug(
             `[CLIENT] Generic method handler called for ${method} with params:`,
             JSON.stringify(params).substring(0, 200)
           );
           try {
             Promise.resolve(handler(params))
               .then((result) => {
-                console.log(
+                this.logger?.debug(
                   `[CLIENT] Generic handler for ${method} succeeded with result:`,
                   JSON.stringify(result).substring(0, 200)
                 );
                 respond(result);
               })
               .catch((error: any) => {
-                console.error(
+                this.logger?.error(
                   `[CLIENT] Error in generic handler for method ${method}:`,
                   error
                 );
@@ -406,7 +419,7 @@ export class ForwardingClient extends EventEmitter {
                 });
               });
           } catch (error: any) {
-            console.error(
+            this.logger?.error(
               `[CLIENT] Error in synchronous part of generic handler for method ${method}:`,
               error
             );

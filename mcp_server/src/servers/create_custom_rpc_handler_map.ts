@@ -1,5 +1,5 @@
+import { Logger } from "forwarding-server";
 import { FlutterPort, IsolateInfo } from "../types/types.js";
-import { Logger } from "./logger.js";
 import { execAsync, RpcUtilities } from "./rpc_utilities.js";
 
 // Define a type for the handler function

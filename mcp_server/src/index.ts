@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 import * as dotenv from "dotenv";
+import { LogLevel } from "forwarding-server";
 import yargs from "yargs";
 import {
   defaultMCPServerPort,
   FlutterInspectorServer,
 } from "./servers/flutter_inspector_server.js";
-import { LogLevel } from "./types/types.js";
 
 // Load environment variables
 dotenv.config();

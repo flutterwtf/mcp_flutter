@@ -1,6 +1,8 @@
+import { Logger } from "forwarding-server";
 import WebSocket from "ws";
 
 export class RpcClient {
+  constructor(public logger: Logger) {}
   private ws: WebSocket | null = null;
   private pendingRequests = new Map<
     string,
@@ -25,25 +27,27 @@ export class RpcClient {
     path: string,
     timeoutMs = 100000
   ): Promise<void> {
-    console.log(`Connecting to RPC server at ${host}:${port}${path}`);
+    this.logger?.debug(`Connecting to RPC server at ${host}:${port}${path}`);
     // If already connecting, return the existing promise
     if (this.connectionInProgress) {
-      console.log(`Already connecting to RPC server. Ignoring new request.`);
+      this.logger?.debug(
+        `Already connecting to RPC server. Ignoring new request.`
+      );
       return this.connectionInProgress;
     }
 
     const readyState = this.ws?.readyState;
-    console.log(`readyState: ${readyState}`);
+    this.logger?.debug(`readyState: ${readyState}`);
 
     // Only return early if the WebSocket is in OPEN state
     if (readyState === WebSocket.OPEN) {
-      console.log(`Already connected to RPC server`);
+      this.logger?.debug(`Already connected to RPC server`);
       return Promise.resolve();
     }
 
     // If WebSocket exists but is not open, close and recreate it
     if (this.ws) {
-      console.log(`Closing existing WebSocket connection`);
+      this.logger?.debug(`Closing existing WebSocket connection`);
       this.ws.close();
       this.ws = null;
     }
@@ -52,7 +56,7 @@ export class RpcClient {
     this.connectionInProgress = new Promise<void>((resolve, reject) => {
       const wsUrl = `ws://${host}:${port}${path}`;
       this.ws = new WebSocket(wsUrl);
-      console.log(`Connecting to RPC server at ${wsUrl}`);
+      this.logger?.debug(`Connecting to RPC server at ${wsUrl}`);
 
       // Create a timeout to prevent hanging
       const timeoutId = setTimeout(() => {
@@ -67,13 +71,13 @@ export class RpcClient {
       }, timeoutMs);
 
       this.ws.onopen = () => {
-        console.log(`Connected to RPC server at ${wsUrl}`);
+        this.logger?.debug(`Connected to RPC server at ${wsUrl}`);
         clearTimeout(timeoutId);
         resolve();
       };
 
       this.ws.onerror = (error: any) => {
-        console.error(`WebSocket error:`, error);
+        this.logger?.error(`WebSocket error:`, error);
         clearTimeout(timeoutId);
 
         if (this.ws) {
@@ -85,7 +89,7 @@ export class RpcClient {
       };
 
       this.ws.onclose = () => {
-        console.log(`Disconnected from RPC server`);
+        this.logger?.debug(`Disconnected from RPC server`);
         clearTimeout(timeoutId);
         this.ws = null;
       };
@@ -106,7 +110,7 @@ export class RpcClient {
             }
           }
         } catch (error) {
-          console.error("Error parsing WebSocket message:", error);
+          this.logger?.error("Error parsing WebSocket message:", error);
         }
       };
     }).finally(() => {

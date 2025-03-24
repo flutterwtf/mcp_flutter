@@ -1,5 +1,6 @@
 import util from "util";
-import { LogLevel } from "../types/types.js";
+
+export type LogLevel = "error" | "warn" | "info" | "debug";
 
 export class Logger {
   private level: LogLevel;

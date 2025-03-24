@@ -1,13 +1,11 @@
 import { ErrorCode, McpError } from "@modelcontextprotocol/sdk/types.js";
 import { exec } from "child_process";
-import { ForwardingClient } from "forwarding-server";
-import { ClientType } from "forwarding-server/dist/forwarding-server.js";
+import { ClientType, ForwardingClient, Logger } from "forwarding-server";
 import fs from "fs";
 import yaml from "js-yaml";
 import { promisify } from "util";
 import { IsolateResponse, VMInfo } from "../types/types.js";
 import { defaultDartVMPort } from "./flutter_inspector_server.js";
-import { Logger } from "./logger.js";
 import { RpcClient } from "./rpc_client.js";
 
 type ConnectionDestination = "dart-vm" | "flutter-extension";
@@ -25,9 +23,10 @@ export class RpcUtilities {
     private readonly host: string = "localhost",
     private readonly logger: Logger
   ) {
-    this.dartVmClient = new RpcClient();
+    this.dartVmClient = new RpcClient(logger);
     this.forwardingClient = new ForwardingClient(
       ClientType.INSPECTOR,
+      logger,
       "flutter-inspector"
     );
 
@@ -380,7 +379,7 @@ export class RpcUtilities {
   async wrapResponse(promise: Promise<unknown>) {
     try {
       const result = await promise;
-      console.log(`Wrap response: ${JSON.stringify(result, null, 2)}`);
+      this.logger.debug(`Wrap response: ${JSON.stringify(result, null, 2)}`);
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
       };

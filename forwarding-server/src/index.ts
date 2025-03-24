@@ -56,7 +56,7 @@ export async function startServer() {
 export { BrowserForwardingClient } from "./browser-client.js";
 export { ForwardingClient } from "./client.js";
 export { ClientType, ForwardingServer } from "./forwarding-server.js";
-
+export { Logger, LogLevel } from "./logger.js";
 // Only start the server if this module is executed directly (not imported)
 // This check works in both ES modules and when compiled by TypeScript
 const isMainModule =

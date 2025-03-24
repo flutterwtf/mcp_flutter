@@ -6,14 +6,13 @@ import {
   ListToolsRequestSchema,
   McpError,
 } from "@modelcontextprotocol/sdk/types.js";
+import { Logger, LogLevel } from "forwarding-server";
 import path from "path";
 import { fileURLToPath } from "url";
 import { CommandLineArgs } from "../index.js";
-import { LogLevel } from "../types/types.js";
 import { createCustomRpcHandlerMap } from "./create_custom_rpc_handler_map.js";
 import { createRpcHandlerMap } from "./create_rpc_handler_map.generated.js";
 import { FlutterRpcHandlers } from "./flutter_rpc_handlers.generated.js";
-import { Logger } from "./logger.js";
 import { RpcUtilities } from "./rpc_utilities.js";
 
 export const defaultDartVMPort = 8181;
