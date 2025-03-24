@@ -17,13 +17,13 @@ Add this dependency to your pubspec.yaml:
 
 ```yaml
 dependencies:
-  dart_forwarding_client: ^0.1.0
+  mcp_dart_forwarding_client: ^0.1.0
 ```
 
 ## Usage
 
 ```dart
-import 'package:dart_forwarding_client/dart_forwarding_client.dart';
+import 'package:mcp_dart_forwarding_client/mcp_dart_forwarding_client.dart';
 
 void main() async {
   // Create a client

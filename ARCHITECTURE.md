@@ -49,7 +49,7 @@ located in `forwarding-server/src`
 
 ## Dart Forwarding Client Architecture
 
-located in `dart_forwarding_client`
+located in `mcp_dart_forwarding_client`
 
 ### Forwarding Client (`forwarding_client.dart`)
 

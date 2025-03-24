@@ -2,8 +2,8 @@
 
 import 'dart:convert';
 
-import 'package:dart_forwarding_client/dart_forwarding_client.dart';
 import 'package:devtools_mcp_extension/common_imports.dart';
+import 'package:mcp_dart_forwarding_client/mcp_dart_forwarding_client.dart';
 
 const flutterInspectorName = 'ext.flutter.inspector';
 

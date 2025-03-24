@@ -1,6 +1,8 @@
-import 'package:dart_forwarding_client/dart_forwarding_client.dart';
+// ignore_for_file: avoid_catches_without_on_clauses
+
 import 'package:devtools_mcp_extension/common_imports.dart';
 import 'package:devtools_mcp_extension/services/custom_devtools_service.dart';
+import 'package:mcp_dart_forwarding_client/mcp_dart_forwarding_client.dart';
 
 /// {@template rpc_connection_status}
 /// Displays real-time RPC connection status with animated indicators
@@ -463,11 +465,13 @@ class _VmServiceBridgeCardState extends State<_VmServiceBridgeCard> {
                           try {
                             final uri = Uri.parse(_uriController.text);
                             await widget.serviceBridge.connectToVmService(uri);
-                          } catch (e) {
+                          } catch (e, stackTrace) {
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('Error connecting: $e'),
+                                  content: Text(
+                                    'Error connecting: $e, $stackTrace',
+                                  ),
                                   backgroundColor: Colors.red,
                                 ),
                               );

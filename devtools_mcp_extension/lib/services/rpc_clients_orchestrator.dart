@@ -1,6 +1,6 @@
-import 'package:dart_forwarding_client/dart_forwarding_client.dart';
 import 'package:devtools_mcp_extension/common_imports.dart';
 import 'package:devtools_mcp_extension/services/forwarding_rpc_listener.dart';
+import 'package:mcp_dart_forwarding_client/mcp_dart_forwarding_client.dart';
 
 /// {@template rpc_client_info}
 /// Holds connection information for an RPC client
