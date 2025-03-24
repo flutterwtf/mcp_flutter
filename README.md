@@ -4,6 +4,21 @@
 
 🔍 A powerful Model Context Protocol (MCP) server that connects your Flutter apps with AI coding assistants like Cursor, Claude, and Cline.
 
+This project is a work in progress and not all methods (mostly Flutter Inspector related) are implemented yet.
+
+However, two methods are tested with Flutter:
+
+- screenshot
+- get_root_widget
+
+Currently Flutter works with MCP server via forwarding server. Please see [Architecture](https://github.com/Arenukvern/mcp_flutter/blob/main/ARCHITECTURE.md) for more details.
+
+Some of other methods are not tested - they may work or not. Please use with caution. It is possible that the most methods will be removed from the MCP server later to focus solely on Flutter applications and maybe Jaspr.
+
+# !!WARNING!!
+
+ALL DUMPS TOOLS ARE VERY HEAVY OPERATION and can easily overload context window of AI agent. Please use them with extreme caution.
+
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -23,97 +38,39 @@ For developers who want to contribute to the project or run the latest version d
    cd flutter-inspector
    ```
 
-2. **Install dependencies:**
+2. **Install and build dependencies:**
 
    ```bash
-   npm install
+   make install
    ```
 
-   This command installs all necessary dependencies listed in `package.json`.
+   This command installs all necessary dependencies listed in `package.json` and then builds MCP server and forwarding server.
 
-3. **Build the project:**
+3. **Start forwarding server:**
 
    ```bash
-   npm run build
+   make forward
    ```
 
-   This command compiles the TypeScript code and creates the `build` directory with the compiled JavaScript files, including `build/index.js`.
-
-4. **Run the Flutter Inspector server:**
-   ```bash
-   node build/index.js --stdio
-   ```
-   This command starts the server in stdio mode. You can also use:
-   ```bash
-   npx -y . --stdio # if you prefer to use npx, ensure package.json "main" points to build/index.js
-   ```
-
-After these steps, you can configure your AI coding assistant to use the Flutter Inspector server. Refer to the "🛠️ Add Flutter Inspector to your AI tool" section for configuration details.
-
-### 1-Minute Setup
-
-1. **Start your Flutter app in debug mode**
-
-! Current workaround for security reasons is to run with `--disable-service-auth-codes`. If you know how to fix this, please let me know!
-
-```bash
-flutter run --debug --observatory-port=8181 --enable-vm-service --disable-service-auth-codes
-```
-
-2. **Run Flutter Inspector (Global Install)**
+4. **Add DevTools Flutter Extension to Flutter App:**
 
    ```bash
-   npx flutter-inspector --port=3334
+   flutter pub add --dev devtools_mcp_extension
    ```
 
-3. **🛠️ Add Flutter Inspector to your AI tool**
+5. **Start your Flutter app in debug mode**
+
+   ! Current workaround for security reasons is to run with `--disable-service-auth-codes`. If you know how to fix this, please let me know!
+
+   ```bash
+   flutter run --debug --observatory-port=8181 --enable-vm-service --disable-service-auth-codes
+   ```
+
+6. **🛠️ Add Flutter Inspector to your AI tool**
 
    **Note for Local Development (GitHub Install):**
 
    If you installed the Flutter Inspector from GitHub and built it locally, you need to adjust the paths in the AI tool configurations to point to your local `build/index.js` file. Refer to the "Installation from GitHub" section for instructions on cloning and building the project.
-
-   #### Cursor Setup
-
-   1. Open Cursor's settings
-   2. Go to the Features tab
-   3. Under "Model Context Protocol", add the server:
-      ```json
-      {
-        "mcpServers": {
-          "flutter-inspector": {
-            "command": "node",
-            "args": ["/path/to/your/cloned/flutter-inspector/build/index.js"],
-            "env": {},
-            "disabled": false,
-            "autoApprove": []
-          }
-        }
-      }
-      ```
-   4. Restart Cursor
-   5. Open Composer in agent mode
-   6. You're ready! Try commands like "analyze my Flutter app's widget tree"
-
-   #### Claude Setup
-
-   1. Add to your Claude configuration file:
-      ```json
-      {
-        "mcpServers": {
-          "flutter-inspector": {
-            "command": "node",
-            "args": ["/path/to/your/cloned/flutter-inspector/build/index.js"],
-            "env": {
-              "PORT": "3334",
-              "LOG_LEVEL": "info"
-            },
-            "disabled": false
-          }
-        }
-      }
-      ```
-   2. Restart Claude
-   3. The Flutter inspector tools will be automatically available
 
    #### Cline Setup
 
@@ -123,7 +80,9 @@ flutter run --debug --observatory-port=8181 --enable-vm-service --disable-servic
         "mcpServers": {
           "flutter-inspector": {
             "command": "node",
-            "args": ["/path/to/your/cloned/flutter-inspector/build/index.js"],
+            "args": [
+              "/path/to/your/cloned/flutter-inspector/mcp_server/build/index.js"
+            ],
             "env": {
               "PORT": "3334",
               "LOG_LEVEL": "info"
@@ -136,12 +95,59 @@ flutter run --debug --observatory-port=8181 --enable-vm-service --disable-servic
    2. Restart Cline
    3. The Flutter inspector will be automatically available in your conversations
 
-## 🎯 What You Can Do
+   #### Cursor Setup
+
+   1. Open Cursor's settings
+   2. Go to the Features tab
+   3. Under "Model Context Protocol", add the server:
+      ```json
+      {
+        "mcpServers": {
+          "flutter-inspector": {
+            "command": "node",
+            "args": [
+              "/path/to/your/cloned/flutter-inspector/mcp_server/build/index.js"
+            ],
+            "env": {},
+            "disabled": false,
+            "autoApprove": []
+          }
+        }
+      }
+      ```
+   4. Restart Cursor
+   5. Open Agent Panel (cmd + L on macOS)
+   6. You're ready! Try commands like "analyze my Flutter app's widget tree"
+
+   #### Claude Setup
+
+   1. Add to your Claude configuration file:
+      ```json
+      {
+        "mcpServers": {
+          "flutter-inspector": {
+            "command": "node",
+            "args": [
+              "/path/to/your/cloned/flutter-inspector/mcp_server/build/index.js"
+            ],
+            "env": {
+              "PORT": "3334",
+              "LOG_LEVEL": "info"
+            },
+            "disabled": false
+          }
+        }
+      }
+      ```
+   2. Restart Claude
+   3. The Flutter inspector tools will be automatically available
+
+## 🎯 What You Can Do (Hopefully)
 
 - **Analyze Widget Trees**: Get detailed information about your Flutter app's structure
 - **Inspect Navigation**: See current routes and navigation state
 - **Debug Layout Issues**: Understand widget relationships and properties
-- **AI-Powered Assistance**: Get smarter code suggestions based on your app's context
+<!-- - **AI-Powered Assistance**: Get smarter code suggestions based on your app's context -->
 
 ## 🔧 Configuration Options
 
@@ -227,19 +233,13 @@ Direct RPC methods for debugging Flutter applications:
 Direct RPC methods for inspecting Flutter widget trees and layout:
 
 - `inspector_screenshot`: Takes a screenshot of the Flutter app
-- `inspector_get_layout_explorer_node`: Gets layout information for a specific widget
+<!-- - `inspector_get_layout_explorer_node`: Gets layout information for a specific widget -->
 
 ### DartIO Methods (ext.dart.io.\*)
 
 Direct RPC methods for Dart I/O operations:
 
 - `dart_io_get_version`: Gets Flutter version information
-
-### Stream Methods
-
-Methods for handling event streams:
-
-- `stream_listen`: Subscribes to Flutter event streams (Debug, Isolate, VM, GC, Timeline, Logging, Service, HeapSnapshot)
 
 ### Method Categories
 
@@ -257,11 +257,6 @@ Methods for handling event streams:
    - Protocol inspection (`get_supported_protocols`)
    - VM interaction (`get_vm_info`)
    - RPC discovery (`get_extension_rpcs`)
-
-3. **Stream Methods**
-   Special methods for handling event streams:
-   - Real-time monitoring capabilities
-   - Event-based debugging features
 
 ### Method Naming Convention
 
