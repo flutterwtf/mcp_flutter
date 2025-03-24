@@ -1,6 +1,6 @@
 name: mcp_dart_forwarding_client
 description: A Dart client for connecting to the forwarding server
-version: 0.1.0
+version: 0.1.1
 homepage: https://github.com/Arenukvern/mcp_flutter
 
 environment:
