@@ -311,6 +311,9 @@ tools:
     inputSchema:
       type: object
       properties:
+        groupName:
+          type: string
+          description: "Name of the group to get selected widget for. If not use debug_inspect_object_{id}"
         port:
           type: number
           description: "Optional: Custom port number if not using default Flutter debug port 8181"

@@ -218,7 +218,8 @@ handlers:
     needsDartServiceExtensionProxy: true
     needsDebugVerification: true
     responseWrapper: true
-    parameters: {}
+    parameters:
+      groupName: "arg.groupName"
 
   - name: inspector_get_selected_summary_widget
     description: Gets summary information about the currently selected widget.

@@ -351,7 +351,7 @@ export class FlutterRpcHandlers {
    */
   async handleInspectorGetSelectedWidget(port: number, params?: any): Promise<unknown> {
     await this.rpcUtils.verifyFlutterDebugMode(port);
-    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.inspector.getSelectedWidget", port,{});
+    const result = await this.rpcUtils.callFlutterExtension("ext.flutter.inspector.getSelectedWidget", port,{ arg: { groupName: params?.groupName } });
     return this.rpcUtils.wrapResponse(Promise.resolve(result));
   }
   

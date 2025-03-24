@@ -70,6 +70,17 @@ class ForwardingRpcListener {
         }
       });
 
+    for (final extension in freelyForwardingExtensions) {
+      forwardingClient.registerMethod(extension, (final data) async {
+        print('Handler called: $extension with data: $data');
+        final result = await devtoolsService.callServiceExtension(
+          extension,
+          data,
+        );
+        return result;
+      });
+    }
+
     print('Registered all method handlers');
   }
 }

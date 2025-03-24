@@ -1,5 +1,8 @@
 // Import necessary packages
+// ignore_for_file: avoid_catches_without_on_clauses
+
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:devtools_app_shared/service.dart';
 import 'package:devtools_app_shared/utils.dart';
@@ -8,6 +11,42 @@ import 'package:devtools_mcp_extension/services/forwarding_rpc_listener.dart';
 import 'package:devtools_shared/service.dart' as devtools_shared;
 import 'package:vm_service/vm_service.dart';
 
+const freelyForwardingExtensions = [
+  'ext.flutter.inspector.structuredErrors',
+  'ext.flutter.inspector.show',
+  'ext.flutter.inspector.trackRebuildDirtyWidgets',
+  'ext.flutter.inspector.widgetLocationIdMap',
+  'ext.flutter.inspector.trackRepaintWidgets',
+  'ext.flutter.inspector.disposeAllGroups',
+  'ext.flutter.inspector.disposeGroup',
+  'ext.flutter.inspector.isWidgetTreeReady',
+  'ext.flutter.inspector.disposeId',
+  'ext.flutter.inspector.setPubRootDirectories',
+  'ext.flutter.inspector.addPubRootDirectories',
+  'ext.flutter.inspector.removePubRootDirectories',
+  'ext.flutter.inspector.getPubRootDirectories',
+  'ext.flutter.inspector.setSelectionById',
+  'ext.flutter.inspector.getParentChain',
+  'ext.flutter.inspector.getProperties',
+  'ext.flutter.inspector.getChildren',
+  'ext.flutter.inspector.getChildrenSummaryTree',
+  'ext.flutter.inspector.getChildrenDetailsSubtree',
+  // 'ext.flutter.inspector.getRootWidget', // replaced with custom method
+  'ext.flutter.inspector.getRootWidgetSummaryTree',
+  'ext.flutter.inspector.getRootWidgetSummaryTreeWithPreviews',
+  'ext.flutter.inspector.getRootWidgetTree',
+  'ext.flutter.inspector.getDetailsSubtree',
+  'ext.flutter.inspector.getSelectedWidget',
+  'ext.flutter.inspector.getSelectedSummaryWidget',
+  'ext.flutter.inspector.isWidgetCreationTracked',
+  // 'ext.flutter.inspector.screenshot', // replaced with _flutter.screenshot
+  'ext.flutter.inspector.getLayoutExplorerNode',
+  'ext.flutter.inspector.setFlexFit',
+  'ext.flutter.inspector.setFlexFactor',
+  'ext.flutter.inspector.setFlexProperties',
+];
+
+/// analogue of [ServiceExtensionResponse]
 class RPCResponse {
   RPCResponse._({
     required this.data,
@@ -120,6 +159,24 @@ class DevtoolsService with ChangeNotifier {
     await _serviceManager.vmServiceClosed();
     _vmServiceUri = null;
     notifyListeners();
+  }
+
+  Future<RPCResponse> callServiceExtension(
+    final String extension,
+    final Map<String, dynamic> params,
+  ) async {
+    try {
+      final result = await serviceManager.callServiceExtensionOnMainIsolate(
+        extension,
+        args: params,
+      );
+      return RPCResponse.successMap(result.toJson());
+    } catch (e, stackTrace) {
+      return RPCResponse.error(
+        'Error calling service extension: $e',
+        stackTrace,
+      );
+    }
   }
 }
 

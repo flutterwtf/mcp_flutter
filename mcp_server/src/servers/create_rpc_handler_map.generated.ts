@@ -203,8 +203,8 @@ export function createRpcHandlerMap(
     },
     "inspector_get_selected_widget": (request: any) => {
       const port = handlePortParam(request);
-      
-      return rpcHandlers.handleInspectorGetSelectedWidget(port);
+      const params = request.params.arguments;
+      return rpcHandlers.handleInspectorGetSelectedWidget(port, params);
     },
     "inspector_get_selected_summary_widget": (request: any) => {
       const port = handlePortParam(request);
