@@ -27,7 +27,6 @@ export class RpcUtilities {
     this.forwardingClient = new ForwardingClient(
       ClientType.INSPECTOR,
       logger,
-      "flutter-inspector"
     );
 
     // Set up event listeners for debugging forwarding client
