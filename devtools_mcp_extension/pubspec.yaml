@@ -3,7 +3,6 @@ description: "Devtools MCP Extension"
 repository: https://github.com/Arenukvern/mcp_flutter
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
-
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
 # followed by an optional build number separated by a +.
@@ -16,7 +15,7 @@ repository: https://github.com/Arenukvern/mcp_flutter
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+1
+version: 0.1.0+1
 
 environment:
   sdk: ">=3.7.0 <4.0.0"
@@ -33,7 +32,6 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.6
-  dart_forwarding_client: ^0.1.0
   devtools_app_shared: ^0.3.1
   devtools_extensions: ^0.3.1
   devtools_shared: ^11.2.0
@@ -45,6 +43,7 @@ dependencies:
   intl: ^0.20.2
   json_annotation: ^4.8.1
   logging: ^1.3.0
+  mcp_dart_forwarding_client: ^0.1.0
   provider: ^6.1.2
   universal_io: ^2.2.2
   vm_service: "^15.0.0"
