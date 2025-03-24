@@ -169,9 +169,9 @@ extension DevtoolsServiceExtension on DevtoolsService {
             callMethodName,
             args: {
               'groupName': 'root',
-              'isSummaryTree': 'true',
-              'withPreviews': 'true',
-              'fullDetails': 'true',
+              'isSummaryTree': 'false',
+              'withPreviews': 'false',
+              'fullDetails': 'false',
             },
           );
       print('Root widget tree: $rootWidgetTree');

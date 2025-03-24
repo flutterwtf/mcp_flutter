@@ -142,7 +142,7 @@ export class ForwardingServer extends EventEmitter {
         // Clean up processed IDs after a delay
         setTimeout(() => {
           this.processedMessageIds.delete(messageKey);
-        }, 60000); // 1 minute timeout
+        }, 60000 * 6); // 6 minutes timeout
       }
 
       console.log(
