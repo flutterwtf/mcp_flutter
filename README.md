@@ -5,7 +5,6 @@
 
 🔍 A powerful Model Context Protocol (MCP) server that connects your Flutter apps with AI coding assistants like Cursor, Claude, and Cline.
 
-
 <a href="https://glama.ai/mcp/servers/qnu3f0fa20">
   <img width="380" height="200" src="https://glama.ai/mcp/servers/qnu3f0fa20/badge" alt="Flutter Inspector Server MCP server" />
 </a>
@@ -482,6 +481,21 @@ For each new method:
 3. Implement following the standard patterns
 4. Add appropriate error handling
 5. Follow the existing code style
+
+## Smithery Integration
+
+The Flutter Inspector is registered with Smithery's registry, making it discoverable and usable by other AI tools through a standardized interface.
+
+### Integration Architecture
+
+```
+┌─────────────────┐     ┌──────────────┐     ┌──────────────┐     ┌─────────────────┐     ┌─────────────┐
+│                 │     │              │     │              │     │                 │     │             │
+│  Flutter App    │<--->│  DevTools    │<--->│  Forwarding  │<--->│   MCP Server   │<--->│  Smithery   │
+│  (Debug Mode)   │     │  Extension   │     │  Server      │     │   (Registered) │     │  Registry   │
+│                 │     │              │     │              │     │                 │     │             │
+└─────────────────┘     └──────────────┘     └──────────────┘     └─────────────────┘     └─────────────┘
+```
 
 ## 🤝 Contributing
 

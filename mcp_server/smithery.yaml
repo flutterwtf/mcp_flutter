@@ -5,9 +5,22 @@ startCommand:
   configSchema:
     # JSON Schema defining the configuration options for the MCP.
     type: object
-    properties: {}
+    properties:
+      log-level:
+        type: string
+        enum:
+          - error
+          - warn
+          - info
+          - debug
+      host:
+        type: string
+        default: "localhost"
+      port:
+        type: number
+        default: 3535
   commandFunction:
     # A JS function that produces the CLI command based on the given config to start the MCP on stdio.
     |-
     (config) => ({ command: 'node', args: ['build/index.js', '--stdio'], env: {} })
-  exampleConfig: {}
+  exampleConfig: { "logLevel": "error", "port": 3535, "host": "localhost" }

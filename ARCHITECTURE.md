@@ -153,6 +153,7 @@ Used for: Flutter-specific operations (widget inspection, layout analysis, etc.)
    - Port validation and verification
 
 3. **Data Safety**:
+
    - No sensitive data exposure
    - Sanitized error messages
    - Controlled access scope
