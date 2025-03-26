@@ -1,6 +1,7 @@
 # Flutter Inspector MCP Server for AI-Powered Development
 
 [GitHub Repository](https://github.com/Arenukvern/mcp_flutter)
+[![smithery badge](https://smithery.ai/badge/@Arenukvern/mcp_flutter)](https://smithery.ai/server/@Arenukvern/mcp_flutter)
 
 🔍 A powerful Model Context Protocol (MCP) server that connects your Flutter apps with AI coding assistants like Cursor, Claude, and Cline.
 
@@ -31,6 +32,14 @@ ALL DUMPS TOOLS ARE VERY HEAVY OPERATION and can easily overload context window 
 - Node.js (v14 or later)
 - A Flutter app running in debug mode
 - One of: Cursor, Claude, or Cline AI assistant
+
+### Installing via Smithery
+
+To install Flutter Inspector for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@Arenukvern/mcp_flutter):
+
+```bash
+npx -y @smithery/cli install @Arenukvern/mcp_flutter --client claude
+```
 
 ### Installation from GitHub
 
