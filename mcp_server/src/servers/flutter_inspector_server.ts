@@ -11,8 +11,11 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { CommandLineConfig } from "../index.js";
 import { createCustomRpcHandlerMap } from "./create_custom_rpc_handler_map.js";
-import { createRpcHandlerMap } from "./create_rpc_handler_map.generated.js";
-import { FlutterRpcHandlers } from "./flutter_rpc_handlers.generated.js";
+import { createRpcHandlerMap } from "./create_rpc_handler_map.js";
+import {
+  FlutterRpcHandlers,
+  RpcToolName,
+} from "./flutter_rpc_handlers.generated.js";
 import { RpcUtilities } from "./rpc_utilities.js";
 
 // Get the directory name in ESM
@@ -82,29 +85,32 @@ export class FlutterInspectorServer {
         tools: [...serverToolsFlutter.tools, ...serverToolsCustom.tools],
       }));
 
-      const rpcHandlers = new FlutterRpcHandlers(this.rpcUtils);
+      const rpcHandlers = new FlutterRpcHandlers(
+        this.rpcUtils,
+        (request, connectionDestination) =>
+          this.rpcUtils.handlePortParam(request, connectionDestination)
+      );
 
       // Use the generated function to create the handler map
-      const handlerMap = createRpcHandlerMap(rpcHandlers, (request) =>
-        this.rpcUtils.handlePortParam(request)
-      );
+      const handlerMap = createRpcHandlerMap(rpcHandlers);
 
       // Get custom handlers
       const customHandlerMap = createCustomRpcHandlerMap(
         this.rpcUtils,
         this.logger,
-        (request) => this.rpcUtils.handlePortParam(request)
+        (request, connectionDestination) =>
+          this.rpcUtils.handlePortParam(request, connectionDestination)
       );
 
       this.server.setRequestHandler(
         CallToolRequestSchema,
         async (request: any) => {
           const toolName = request.params.name;
-
+          const generatedHandler:
+            | ((request: any) => Promise<unknown>)
+            | undefined = handlerMap[toolName as RpcToolName];
           // Check generated handlers first
-          if (handlerMap[toolName]) {
-            return handlerMap[toolName](request);
-          }
+          if (generatedHandler) return generatedHandler(request);
 
           // Then check custom handlers
           if (customHandlerMap[toolName]) {

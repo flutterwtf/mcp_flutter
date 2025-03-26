@@ -8,7 +8,7 @@ import { CommandLineConfig } from "../index.js";
 import { IsolateResponse, VMInfo } from "../types/types.js";
 import { RpcClient } from "./rpc_client.js";
 
-type ConnectionDestination = "dart-vm" | "flutter-extension";
+export type ConnectionDestination = "dart-vm" | "flutter-extension";
 export const execAsync = promisify(exec);
 
 /**
@@ -413,8 +413,16 @@ export class RpcUtilities {
   /**
    * Helper to extract port parameter from a request
    */
-  handlePortParam(request: any): number {
+  handlePortParam(
+    request: any,
+    connectionDestination: ConnectionDestination
+  ): number {
     const port = request.params.arguments?.port as number | undefined;
-    return port || this.args.dartVMPort;
+    return (
+      port ||
+      (connectionDestination === "dart-vm"
+        ? this.args.dartVMPort
+        : this.args.forwardingServerPort)
+    );
   }
 }
