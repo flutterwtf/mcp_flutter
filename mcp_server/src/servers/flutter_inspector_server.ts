@@ -9,15 +9,11 @@ import {
 import { Logger, LogLevel } from "forwarding-server";
 import path from "path";
 import { fileURLToPath } from "url";
-import { CommandLineArgs } from "../index.js";
+import { CommandLineConfig } from "../index.js";
 import { createCustomRpcHandlerMap } from "./create_custom_rpc_handler_map.js";
 import { createRpcHandlerMap } from "./create_rpc_handler_map.generated.js";
 import { FlutterRpcHandlers } from "./flutter_rpc_handlers.generated.js";
 import { RpcUtilities } from "./rpc_utilities.js";
-
-export const defaultDartVMPort = 8181;
-export const defaultMCPServerPort = 3535;
-export const defaultForwardingServerPort = 8143;
 
 // Get the directory name in ESM
 const __filename = fileURLToPath(import.meta.url);
@@ -31,11 +27,11 @@ export class FlutterInspectorServer {
   private rpcUtils: RpcUtilities;
   private logger: Logger;
 
-  constructor(args: CommandLineArgs) {
+  constructor(private readonly args: CommandLineConfig) {
     this.port = args.port;
     this.logLevel = args.logLevel;
     this.logger = new Logger(this.logLevel);
-    this.rpcUtils = new RpcUtilities(args.host, this.logger);
+    this.rpcUtils = new RpcUtilities(this.logger, this.args);
 
     this.server = new Server(
       {
@@ -137,9 +133,9 @@ export class FlutterInspectorServer {
       await this.server.connect(transport);
 
       // Now try to connect to the services - these connections are now resilient to failure
-      await this.rpcUtils.connect(defaultDartVMPort, "dart-vm");
+      await this.rpcUtils.connect(this.args.dartVMPort, "dart-vm");
       await this.rpcUtils.connect(
-        defaultForwardingServerPort,
+        this.args.forwardingServerPort,
         "flutter-extension"
       );
 
@@ -154,8 +150,8 @@ export class FlutterInspectorServer {
 
       this.logger.info(`
         MCP Server: Ready on stdio (port ${this.port})
-        RPC Server: Attempting to connect to ws://localhost:${defaultDartVMPort}/ws
-        Forwarding Client: Attempting to connect to ws://localhost:${defaultForwardingServerPort}/forward
+        RPC Server: Attempting to connect to ws://${this.args.dartVMHost}:${this.args.dartVMPort}/ws
+        Forwarding Client: Attempting to connect to ws://${this.args.forwardingServerHost}:${this.args.forwardingServerPort}/forward
       `);
     } catch (error) {
       this.logger.error("Failed to start server:", error);

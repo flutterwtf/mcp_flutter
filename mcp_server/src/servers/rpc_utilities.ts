@@ -4,8 +4,8 @@ import { ClientType, ForwardingClient, Logger } from "forwarding-server";
 import fs from "fs";
 import yaml from "js-yaml";
 import { promisify } from "util";
+import { CommandLineConfig } from "../index.js";
 import { IsolateResponse, VMInfo } from "../types/types.js";
-import { defaultDartVMPort } from "./flutter_inspector_server.js";
 import { RpcClient } from "./rpc_client.js";
 
 type ConnectionDestination = "dart-vm" | "flutter-extension";
@@ -20,14 +20,11 @@ export class RpcUtilities {
   private cachedFlutterIsolate: string | null = null;
 
   constructor(
-    private readonly host: string = "localhost",
-    private readonly logger: Logger
+    private readonly logger: Logger,
+    private readonly args: CommandLineConfig
   ) {
     this.dartVmClient = new RpcClient(logger);
-    this.forwardingClient = new ForwardingClient(
-      ClientType.INSPECTOR,
-      logger,
-    );
+    this.forwardingClient = new ForwardingClient(ClientType.INSPECTOR, logger);
 
     // Set up event listeners for debugging forwarding client
     this.forwardingClient.on("connected", () => {
@@ -83,19 +80,28 @@ export class RpcUtilities {
 
   /**
    * Connect to the Dart VM or Forwarding Server
+   * @param dartVmPort - The port of the Dart VM, if undefined, the default port will be used
    */
   async connect(
-    port: number,
+    dartVmPort: number | undefined,
     connectionDestination: ConnectionDestination
   ): Promise<void> {
     try {
       if (connectionDestination === "dart-vm") {
-        await this.dartVmClient.connect(this.host, port, "/ws");
+        await this.dartVmClient.connect(
+          this.args.dartVMHost,
+          dartVmPort || this.args.dartVMPort,
+          "/ws"
+        );
       } else {
         this.logger.info(
-          `[ForwardingClient] Attempting to connect to ws://${this.host}:${port}/forward as clientType=${ClientType.INSPECTOR}, clientId=flutter-inspector`
+          `[ForwardingClient] Attempting to connect to ws://${this.args.forwardingServerHost}:${this.args.forwardingServerPort}/forward as clientType=${ClientType.INSPECTOR}, clientId=flutter-inspector`
         );
-        await this.forwardingClient.connect(this.host, port, "/forward");
+        await this.forwardingClient.connect(
+          this.args.forwardingServerHost,
+          this.args.forwardingServerPort,
+          "/forward"
+        );
 
         // Register a test method handler to verify bidirectional communication
         this.forwardingClient.registerMethod(
@@ -173,7 +179,7 @@ export class RpcUtilities {
     } catch (error) {
       // Log the error but don't crash the application
       this.logger.error(
-        `Failed to connect to ${connectionDestination} on port ${port}:`,
+        `Failed to connect to ${connectionDestination}:`,
         error
       );
       // Don't rethrow the error to allow the application to continue
@@ -182,15 +188,16 @@ export class RpcUtilities {
 
   /**
    * Send a WebSocket request to the specified port
+   * @param dartVmPort - The port of the Dart VM, if undefined, the default port will be used
    */
   async sendWebSocketRequest(
-    port: number,
+    dartVmPort: number | undefined,
     method: string,
     params: Record<string, unknown> = {},
     connectionDestination: ConnectionDestination = "dart-vm"
   ): Promise<unknown> {
     try {
-      await this.connect(port, connectionDestination);
+      await this.connect(dartVmPort, connectionDestination);
 
       if (connectionDestination === "dart-vm") {
         return this.dartVmClient.callMethod(method, params);
@@ -213,16 +220,17 @@ export class RpcUtilities {
 
   /**
    * Forwards a request to the Dart VM
+   * @param dartVmPort - The port of the Dart VM, if undefined, the default port will be used
    */
   async callDartVm(
     method: string,
-    port: number,
+    dartVmPort: number,
     params: Record<string, unknown> = {}
   ): Promise<unknown> {
     try {
-      const flutterIsolateId = await this.getFlutterIsolateId(port);
+      const flutterIsolateId = await this.getFlutterIsolateId(dartVmPort);
       const result = await this.sendWebSocketRequest(
-        port,
+        dartVmPort,
         method,
         { ...params, isolateId: flutterIsolateId },
         "dart-vm"
@@ -239,10 +247,10 @@ export class RpcUtilities {
    */
   async callFlutterExtension(
     method: string,
-    port: number,
     params: Record<string, unknown> = {}
   ): Promise<unknown> {
     try {
+      const port = undefined;
       const requestId = `req_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
       this.logger.info(
         `[ForwardingClient][${requestId}] Calling Flutter extension method: ${method} with params:`,
@@ -253,7 +261,7 @@ export class RpcUtilities {
         this.logger.warn(
           `[ForwardingClient][${requestId}] Not connected when attempting to call ${method}, trying to reconnect...`
         );
-        await this.connect(port, "flutter-extension");
+        await this.connect(undefined, "flutter-extension");
       }
 
       // Check again after reconnection attempt
@@ -288,7 +296,7 @@ export class RpcUtilities {
         }
       } else {
         const result = await this.sendWebSocketRequest(
-          port,
+          undefined,
           method,
           params,
           "flutter-extension"
@@ -405,11 +413,8 @@ export class RpcUtilities {
   /**
    * Helper to extract port parameter from a request
    */
-  handlePortParam(
-    request: any,
-    defaultPort: number = defaultDartVMPort
-  ): number {
+  handlePortParam(request: any): number {
     const port = request.params.arguments?.port as number | undefined;
-    return port || defaultPort;
+    return port || this.args.dartVMPort;
   }
 }
