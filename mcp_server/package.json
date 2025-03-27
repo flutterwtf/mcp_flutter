@@ -27,8 +27,9 @@
     "@types/ws": "^8.5.10",
     "axios": "^1.8.3",
     "dotenv": "^16.4.5",
-    "forwarding-server": "git+https://github.com/Arenukvern/mcp_flutter.git#workspace=forwarding-server",
+    "forwarding-server": "../forwarding-server",
     "js-yaml": "^4.1.0",
+    "node-calls-python": "^1.11.1",
     "ws": "^8.16.0",
     "yargs": "^17.7.2"
   },
@@ -36,7 +37,7 @@
     "@types/dotenv": "^8.2.0",
     "@types/node": "^20.11.24",
     "@types/yargs": "^17.0.32",
-    "typescript": "^5.3.3",
-    "ts-node": "^10.9.1"
+    "ts-node": "^10.9.1",
+    "typescript": "^5.3.3"
   }
 }

@@ -39,11 +39,11 @@ export class RpcUtilities {
       );
     });
 
-    this.forwardingClient.on("error", (error) => {
+    this.forwardingClient.on("error", (error: any) => {
       this.logger.error("[ForwardingClient] Connection error:", error);
     });
 
-    this.forwardingClient.on("message", (message) => {
+    this.forwardingClient.on("message", (message: string) => {
       try {
         const parsedMessage =
           typeof message === "string" ? JSON.parse(message) : message;
@@ -106,7 +106,7 @@ export class RpcUtilities {
         // Register a test method handler to verify bidirectional communication
         this.forwardingClient.registerMethod(
           "flutter.test.ping",
-          async (params) => {
+          async (params: any) => {
             this.logger.info(
               `[ForwardingClient] Received ping with params:`,
               params
@@ -122,7 +122,7 @@ export class RpcUtilities {
         // Register a specific handler for screenshot method to debug issues
         this.forwardingClient.registerMethod(
           "ext.flutter.inspector.screenshot",
-          async (params) => {
+          async (params: any) => {
             this.logger.info(
               `[ForwardingClient][SCREENSHOT] Received screenshot request with params:`,
               params
