@@ -6,7 +6,7 @@ import {
   ListToolsRequestSchema,
   McpError,
 } from "@modelcontextprotocol/sdk/types.js";
-import { Logger, LogLevel } from "forwarding-server";
+import { Logger, LogLevel } from "flutter_mcp_forwarding_server";
 import path from "path";
 import { fileURLToPath } from "url";
 import { CommandLineConfig } from "../index.js";

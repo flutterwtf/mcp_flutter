@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import * as dotenv from "dotenv";
-import { LogLevel } from "forwarding-server";
+import { LogLevel } from "flutter_mcp_forwarding_server";
 import yargs from "yargs";
 import { FlutterInspectorServer } from "./servers/flutter_inspector_server.js";
 

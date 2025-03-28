@@ -1,6 +1,10 @@
 import { ErrorCode, McpError } from "@modelcontextprotocol/sdk/types.js";
 import { exec } from "child_process";
-import { ClientType, ForwardingClient, Logger } from "forwarding-server";
+import {
+  ClientType,
+  ForwardingClient,
+  Logger,
+} from "flutter_mcp_forwarding_server";
 import fs from "fs";
 import yaml from "js-yaml";
 import { promisify } from "util";
