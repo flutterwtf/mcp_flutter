@@ -1,6 +1,6 @@
 {
   "name": "flutter_mcp_forwarding_server",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "WebSocket forwarding server for Flutter tools communication",
   "type": "module",
   "main": "dist/index.js",
@@ -31,7 +31,8 @@
   "license": "MIT",
   "dependencies": {
     "ws": "^8.18.1",
-    "yargs": "^17.7.2"
+    "yargs": "^17.7.2",
+    "@modelcontextprotocol/sdk": "^1.8.0"
   },
   "devDependencies": {
     "@types/node": "^22.13.14",

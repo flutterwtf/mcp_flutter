@@ -1,4 +1,4 @@
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
   CallToolRequestSchema,
@@ -24,7 +24,7 @@ const __dirname = path.dirname(__filename);
 
 export class FlutterInspectorServer {
   // Declare server with any type to work around type issues
-  private server: any; // Server<Request, Notification, Result>;
+  private server: McpServer;
   private port: number;
   private logLevel: LogLevel;
   private rpcUtils: RpcUtilities;
@@ -36,24 +36,17 @@ export class FlutterInspectorServer {
     this.logger = new Logger(this.logLevel);
     this.rpcUtils = new RpcUtilities(this.logger, this.args);
 
-    this.server = new Server(
-      {
-        name: "flutter-inspector",
-        version: "0.1.0",
-      },
-      {
-        capabilities: {
-          tools: {},
-        },
-      }
-    );
+    this.server = new McpServer({
+      name: "flutter-inspector",
+      version: "0.1.0",
+    });
 
     this.setupToolHandlers();
     this.setupErrorHandling();
   }
 
   private setupErrorHandling() {
-    this.server.onerror = (error: Error) =>
+    this.server.server.onerror = (error: Error) =>
       this.logger.error("[MCP Error]", error);
 
     process.on("SIGINT", async () => {
@@ -81,9 +74,12 @@ export class FlutterInspectorServer {
         serverToolsCustomPath
       );
 
-      this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
-        tools: [...serverToolsFlutter.tools, ...serverToolsCustom.tools],
-      }));
+      this.server.server.setRequestHandler(
+        ListToolsRequestSchema,
+        async () => ({
+          tools: [...serverToolsFlutter.tools, ...serverToolsCustom.tools],
+        })
+      );
 
       const rpcHandlers = new FlutterRpcHandlers(
         this.rpcUtils,
@@ -102,7 +98,7 @@ export class FlutterInspectorServer {
           this.rpcUtils.handlePortParam(request, connectionDestination)
       );
 
-      this.server.setRequestHandler(
+      this.server.server.setRequestHandler(
         CallToolRequestSchema,
         async (request: any) => {
           const toolName = request.params.name;
