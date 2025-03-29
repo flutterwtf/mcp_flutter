@@ -68,15 +68,14 @@ export class RpcUtilities {
 
         // For inspector methods, log more details
         if (messageMethod && messageMethod.includes("inspector")) {
-          this.logger.debug(
-            `[ForwardingClient][INSPECTOR] Full message:`,
-            JSON.stringify(parsedMessage, null, 2)
-          );
+          this.logger.debug(`[ForwardingClient][INSPECTOR] Full message:`, {
+            message: JSON.stringify(parsedMessage, null, 2),
+          });
         }
       } catch (e) {
         this.logger.debug(
           "[ForwardingClient] Received message (unable to parse):",
-          message
+          { message }
         );
       }
     });
@@ -142,7 +141,7 @@ export class RpcUtilities {
             } catch (err) {
               this.logger.error(
                 `[ForwardingClient][SCREENSHOT] Error handling screenshot:`,
-                err
+                { error: err }
               );
               throw err;
             }
@@ -165,12 +164,12 @@ export class RpcUtilities {
               );
               this.logger.info(
                 `[ForwardingClient] Received response to test ping:`,
-                result
+                { response: result }
               );
             } catch (err) {
               this.logger.error(
                 `[ForwardingClient] Error sending test message:`,
-                err
+                { error: err }
               );
             }
           }, 2000);
@@ -182,10 +181,9 @@ export class RpcUtilities {
       }
     } catch (error) {
       // Log the error but don't crash the application
-      this.logger.error(
-        `Failed to connect to ${connectionDestination}:`,
-        error
-      );
+      this.logger.error(`Failed to connect to ${connectionDestination}:`, {
+        error,
+      });
       // Don't rethrow the error to allow the application to continue
     }
   }
@@ -209,7 +207,7 @@ export class RpcUtilities {
         return this.forwardingClient.callMethod(method, params);
       }
     } catch (error) {
-      this.logger.error(`WebSocket request failed (${method}):`, error);
+      this.logger.error(`WebSocket request failed (${method}):`, { error });
       return null; // Return null instead of propagating the error
     }
   }
@@ -241,7 +239,7 @@ export class RpcUtilities {
       );
       return result;
     } catch (error) {
-      this.logger.error(`Error invoking Flutter method ${method}:`, error);
+      this.logger.error(`Error invoking Flutter method ${method}:`, { error });
       throw error;
     }
   }
@@ -289,12 +287,14 @@ export class RpcUtilities {
           this.logger.info(
             `[ForwardingClient][${requestId}] Method ${method} completed successfully`
           );
-          this.logger.debug(`[ForwardingClient][${requestId}] Result:`, result);
+          this.logger.debug(`[ForwardingClient][${requestId}] Result:`, {
+            result,
+          });
           return result;
         } catch (error) {
           this.logger.error(
             `[ForwardingClient][${requestId}] Direct call failed for ${method}:`,
-            error
+            { error }
           );
           throw error;
         }
@@ -308,7 +308,7 @@ export class RpcUtilities {
 
         this.logger.info(
           `[ForwardingClient][${requestId}] Method ${method} result:`,
-          result
+          { result }
         );
         return result;
       }
@@ -316,7 +316,7 @@ export class RpcUtilities {
       const errorId = `err_${Date.now()}`;
       this.logger.error(
         `[ForwardingClient][${errorId}] Error invoking Flutter method ${method}:`,
-        error
+        { error }
       );
       // Create a more detailed error object with context
       const contextError = new Error(

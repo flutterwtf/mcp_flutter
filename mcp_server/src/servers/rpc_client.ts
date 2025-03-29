@@ -110,7 +110,7 @@ export class RpcClient {
             }
           }
         } catch (error) {
-          this.logger?.error("Error parsing WebSocket message:", error);
+          this.logger.error("Error parsing WebSocket message:", { error });
         }
       };
     }).finally(() => {

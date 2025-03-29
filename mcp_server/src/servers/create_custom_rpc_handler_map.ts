@@ -141,7 +141,7 @@ async function _getActivePorts(logger: Logger): Promise<FlutterPort[]> {
 
     return ports;
   } catch (error) {
-    logger.error("Error getting active ports:", error);
+    logger.error("Error getting active ports:", { error });
     return [];
   }
 }

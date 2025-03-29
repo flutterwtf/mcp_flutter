@@ -50,7 +50,7 @@ export class FlutterInspectorServer {
 
   private setupErrorHandling() {
     this.server.server.onerror = (error: Error) =>
-      this.logger.error("[MCP Error]", error);
+      this.logger.error("[MCP Error]", { error });
 
     process.on("SIGINT", async () => {
       await this.rpcUtils.closeAllConnections();
@@ -123,7 +123,7 @@ export class FlutterInspectorServer {
         }
       );
     } catch (error) {
-      this.logger.error("Error setting up tool handlers:", error);
+      this.logger.error("Error setting up tool handlers:", { error });
       throw error;
     }
   }
@@ -159,7 +159,7 @@ export class FlutterInspectorServer {
         Forwarding Client: Attempting to connect to ws://${this.args.forwardingServerHost}:${this.args.forwardingServerPort}/forward
       `);
     } catch (error) {
-      this.logger.error("Failed to start server:", error);
+      this.logger.error("Failed to start server:", { error });
       process.exit(1);
     }
   }
