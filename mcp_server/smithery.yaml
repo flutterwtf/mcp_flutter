@@ -9,68 +9,77 @@ startCommand:
       [
         "logLevel",
         "mcpServerPort",
-        "flutterDebugPort",
-        "flutterInspectorPort",
+        "mcpServerHost",
+        "dartVMPort",
+        "dartVMHost",
         "forwardingServerPort",
-        "host",
+        "forwardingServerHost",
       ]
     properties:
       logLevel:
         type: string
         enum:
-          - error
-          - warning
-          - info
           - debug
+          - info
+          - notice
+          - warning
+          - error
           - critical
+          - alert
+          - emergency
         default: "critical"
         description: "Logging level for the server"
       mcpServerPort:
         type: number
-        default: 7468
+        default: 3535
         description: "MCP Server port"
-      host:
+      mcpServerHost:
         type: string
         default: "localhost"
-        description: "Server host"
-      flutterDebugPort:
-        type: number
-        default: 8100
-        description: "Flutter debug port"
-      flutterInspectorPort:
+        description: "MCP Server host"
+      dartVMPort:
         type: number
         default: 8181
-        description: "Flutter inspector port"
+        description: "Dart VM port for Flutter debugging"
+      dartVMHost:
+        type: string
+        default: "localhost"
+        description: "Dart VM host for Flutter debugging"
       forwardingServerPort:
         type: number
-        default: 8182
+        default: 8143
         description: "Forwarding server port"
-      allowRemoteConnections:
+      forwardingServerHost:
+        type: string
+        default: "localhost"
+        description: "Forwarding server host"
+      stdio:
         type: boolean
-        default: false
-        description: "Allow connections from remote hosts"
+        default: true
+        description: "Run in stdio mode instead of HTTP mode"
   commandFunction: |
     (config) => ({
       command: 'node',
       args: ['build/index.js', '--stdio'],
       env: {
         MCP_SERVER_PORT: config.mcpServerPort.toString(),
+        MCP_SERVER_HOST: config.mcpServerHost,
+        DART_VM_PORT: config.dartVMPort.toString(),
+        DART_VM_HOST: config.dartVMHost,
         FORWARDING_SERVER_PORT: config.forwardingServerPort.toString(),
-        FLUTTER_DEBUG_PORT: config.flutterDebugPort.toString(),
-        FLUTTER_INSPECTOR_PORT: config.flutterInspectorPort.toString(),
+        FORWARDING_SERVER_HOST: config.forwardingServerHost,
         LOG_LEVEL: config.logLevel,
-        HOST: config.host,
-        ALLOW_REMOTE_CONNECTIONS: config.allowRemoteConnections.toString(),
         NODE_ENV: 'production'
       }
     })
   exampleConfig:
     {
-      "logLevel": "error",
-      "mcpServerPort": 7468,
-      "host": "localhost",
-      "flutterDebugPort": 8100,
-      "flutterInspectorPort": 8181,
-      "forwardingServerPort": 8182,
-      "allowRemoteConnections": false,
+      "logLevel": "critical",
+      "mcpServerPort": 3535,
+      "mcpServerHost": "localhost",
+      "dartVMPort": 8181,
+      "dartVMHost": "localhost",
+      "forwardingServerPort": 8143,
+      "forwardingServerHost": "localhost",
+      "stdio": true,
     }
