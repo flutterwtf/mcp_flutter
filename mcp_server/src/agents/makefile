@@ -1,7 +1,5 @@
 init:
-	python3 -m venv .venv
-	source .venv/bin/activate
-	pip install -r requirements.txt
+	. .venv/bin/activate && pip install -r requirements.txt
 
 run:
-	python run_smolagents.py
+	.venv/bin/python run_smolagents.py
