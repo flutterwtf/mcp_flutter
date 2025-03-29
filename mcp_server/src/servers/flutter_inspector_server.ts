@@ -31,10 +31,20 @@ export class FlutterInspectorServer {
 
   constructor(private readonly args: CommandLineConfig) {
     this.port = args.port;
-    this.server = new McpServer({
-      name: "flutter-inspector",
-      version: "0.1.0",
-    });
+    this.server = new McpServer(
+      {
+        name: "flutter-inspector",
+        version: "0.1.0",
+      },
+      {
+        capabilities: {
+          logging: {},
+          tools: {},
+          prompts: {},
+          resources: {},
+        },
+      }
+    );
     this.logger = new Logger(
       "flutter-inspector",
       args.logLevel,
