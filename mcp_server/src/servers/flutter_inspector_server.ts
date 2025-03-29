@@ -33,13 +33,16 @@ export class FlutterInspectorServer {
   constructor(private readonly args: CommandLineConfig) {
     this.port = args.port;
     this.logLevel = args.logLevel;
-    this.logger = new Logger(this.logLevel);
-    this.rpcUtils = new RpcUtilities(this.logger, this.args);
-
     this.server = new McpServer({
       name: "flutter-inspector",
       version: "0.1.0",
     });
+    this.logger = new Logger(
+      "flutter-inspector",
+      this.logLevel,
+      this.server.server
+    );
+    this.rpcUtils = new RpcUtilities(this.logger, this.args);
 
     this.setupToolHandlers();
     this.setupErrorHandling();
