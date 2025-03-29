@@ -6,7 +6,7 @@ import {
   ListToolsRequestSchema,
   McpError,
 } from "@modelcontextprotocol/sdk/types.js";
-import { Logger, LogLevel } from "flutter_mcp_forwarding_server";
+import { Logger } from "flutter_mcp_forwarding_server";
 import path from "path";
 import { fileURLToPath } from "url";
 import { CommandLineConfig } from "../index.js";
@@ -26,20 +26,18 @@ export class FlutterInspectorServer {
   // Declare server with any type to work around type issues
   private server: McpServer;
   private port: number;
-  private logLevel: LogLevel;
   private rpcUtils: RpcUtilities;
   private logger: Logger;
 
   constructor(private readonly args: CommandLineConfig) {
     this.port = args.port;
-    this.logLevel = args.logLevel;
     this.server = new McpServer({
       name: "flutter-inspector",
       version: "0.1.0",
     });
     this.logger = new Logger(
       "flutter-inspector",
-      this.logLevel,
+      args.logLevel,
       this.server.server
     );
     this.rpcUtils = new RpcUtilities(this.logger, this.args);

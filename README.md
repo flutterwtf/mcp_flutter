@@ -98,7 +98,7 @@ For developers who want to contribute to the project or run the latest version d
             ],
             "env": {
               "PORT": "3334",
-              "LOG_LEVEL": "info"
+              "LOG_LEVEL": "critical"
             },
             "disabled": false
           }
@@ -145,7 +145,7 @@ For developers who want to contribute to the project or run the latest version d
             ],
             "env": {
               "PORT": "3334",
-              "LOG_LEVEL": "info"
+              "LOG_LEVEL": "critical"
             },
             "disabled": false
           }
@@ -167,8 +167,23 @@ For developers who want to contribute to the project or run the latest version d
 ### Environment Variables (`.env`)
 
 ```bash
-PORT=3334              # Server port (default: 3334)
-LOG_LEVEL=info        # Logging level (error, warn, info, debug)
+# will be used for direct connections to the dart vm
+DART_VM_PORT=8181
+DART_VM_HOST=localhost
+
+# will be used for this MCP server
+MCP_SERVER_PORT=3535
+MCP_SERVER_HOST=localhost
+
+# will be used for the forwarding server
+FORWARDING_SERVER_PORT=8143
+FORWARDING_SERVER_HOST=localhost
+
+# Logging configuration
+LOG_LEVEL=critical
+
+# Development configuration
+NODE_ENV=development
 ```
 
 ### Command Line Arguments
@@ -176,7 +191,7 @@ LOG_LEVEL=info        # Logging level (error, warn, info, debug)
 ```bash
 --port, -p     # Server port
 --stdio        # Run in stdio mode (default: true)
---log-level    # Set logging level
+--log-level    # Set logging level (debug, info, notice, warning, error, critical, alert, emergency) according to https://spec.modelcontextprotocol.io/specification/2025-03-26/server/utilities/logging/#log-levels
 --help         # Show help
 ```
 

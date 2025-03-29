@@ -88,8 +88,17 @@ export class CommandLineArgs {
         },
         "log-level": {
           description: "Logging level",
-          choices: ["error", "warn", "info", "debug"] as const,
-          default: process.env.LOG_LEVEL || "error",
+          choices: [
+            "debug",
+            "info",
+            "notice",
+            "warning",
+            "error",
+            "critical",
+            "alert",
+            "emergency",
+          ] as const,
+          default: process.env.LOG_LEVEL || "critical",
         },
       })
       .help()

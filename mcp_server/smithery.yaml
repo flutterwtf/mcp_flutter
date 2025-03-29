@@ -19,10 +19,11 @@ startCommand:
         type: string
         enum:
           - error
-          - warn
+          - warning
           - info
           - debug
-        default: "error"
+          - critical
+        default: "critical"
         description: "Logging level for the server"
       mcpServerPort:
         type: number
