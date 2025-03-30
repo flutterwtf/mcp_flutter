@@ -1,9 +1,9 @@
 # Flutter Inspector MCP Server for AI-Powered Development
 
 [GitHub Repository](https://github.com/Arenukvern/mcp_flutter)
+[![smithery badge](https://smithery.ai/badge/@Arenukvern/mcp_flutter)](https://smithery.ai/server/@Arenukvern/mcp_flutter)
 
 🔍 A powerful Model Context Protocol (MCP) server that connects your Flutter apps with AI coding assistants like Cursor, Claude, and Cline.
-
 
 <a href="https://glama.ai/mcp/servers/qnu3f0fa20">
   <img width="380" height="200" src="https://glama.ai/mcp/servers/qnu3f0fa20/badge" alt="Flutter Inspector Server MCP server" />
@@ -31,6 +31,14 @@ ALL DUMPS TOOLS ARE VERY HEAVY OPERATION and can easily overload context window 
 - Node.js (v14 or later)
 - A Flutter app running in debug mode
 - One of: Cursor, Claude, or Cline AI assistant
+
+### Installing via Smithery
+
+To install Flutter Inspector for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@Arenukvern/mcp_flutter):
+
+```bash
+npx -y @smithery/cli install @Arenukvern/mcp_flutter --client claude
+```
 
 ### Installation from GitHub
 
@@ -90,7 +98,7 @@ For developers who want to contribute to the project or run the latest version d
             ],
             "env": {
               "PORT": "3334",
-              "LOG_LEVEL": "info"
+              "LOG_LEVEL": "critical"
             },
             "disabled": false
           }
@@ -137,7 +145,7 @@ For developers who want to contribute to the project or run the latest version d
             ],
             "env": {
               "PORT": "3334",
-              "LOG_LEVEL": "info"
+              "LOG_LEVEL": "critical"
             },
             "disabled": false
           }
@@ -159,8 +167,23 @@ For developers who want to contribute to the project or run the latest version d
 ### Environment Variables (`.env`)
 
 ```bash
-PORT=3334              # Server port (default: 3334)
-LOG_LEVEL=info        # Logging level (error, warn, info, debug)
+# will be used for direct connections to the dart vm
+DART_VM_PORT=8181
+DART_VM_HOST=localhost
+
+# will be used for this MCP server
+MCP_SERVER_PORT=3535
+MCP_SERVER_HOST=localhost
+
+# will be used for the forwarding server
+FORWARDING_SERVER_PORT=8143
+FORWARDING_SERVER_HOST=localhost
+
+# Logging configuration
+LOG_LEVEL=critical
+
+# Development configuration
+NODE_ENV=development
 ```
 
 ### Command Line Arguments
@@ -168,7 +191,7 @@ LOG_LEVEL=info        # Logging level (error, warn, info, debug)
 ```bash
 --port, -p     # Server port
 --stdio        # Run in stdio mode (default: true)
---log-level    # Set logging level
+--log-level    # Set logging level (debug, info, notice, warning, error, critical, alert, emergency) according to https://spec.modelcontextprotocol.io/specification/2025-03-26/server/utilities/logging/#log-levels
 --help         # Show help
 ```
 
@@ -473,6 +496,21 @@ For each new method:
 3. Implement following the standard patterns
 4. Add appropriate error handling
 5. Follow the existing code style
+
+## Smithery Integration
+
+The Flutter Inspector is registered with Smithery's registry, making it discoverable and usable by other AI tools through a standardized interface.
+
+### Integration Architecture
+
+```
+┌─────────────────┐     ┌──────────────┐     ┌──────────────┐     ┌─────────────────┐     ┌─────────────┐
+│                 │     │              │     │              │     │                 │     │             │
+│  Flutter App    │<--->│  DevTools    │<--->│  Forwarding  │<--->│   MCP Server   │<--->│  Smithery   │
+│  (Debug Mode)   │     │  Extension   │     │  Server      │     │   (Registered) │     │  Registry   │
+│                 │     │              │     │              │     │                 │     │             │
+└─────────────────┘     └──────────────┘     └──────────────┘     └─────────────────┘     └─────────────┘
+```
 
 ## 🤝 Contributing
 
