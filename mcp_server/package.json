@@ -17,7 +17,7 @@
     "bi": "npm run prepare && npm run inspector",
     "inspector": "npx @modelcontextprotocol/inspector build/index.js",
     "start": "node build/index.js",
-    "generate-rpc-handlers": "ts-node scripts/generate_rpc_handlers.ts",
+    "generate-rpc-handlers": "node --loader ts-node/esm scripts/generate_rpc_handlers.ts",
     "copy-yaml-files": "mkdir -p build/servers && cp src/servers/server_tools_flutter.yaml build/servers/ && cp src/servers/server_tools_custom.yaml build/servers/"
   },
   "dependencies": {
@@ -29,7 +29,6 @@
     "dotenv": "^16.4.7",
     "flutter_mcp_forwarding_server": "^0.1.2",
     "js-yaml": "^4.1.0",
-    "node-calls-python": "^1.11.1",
     "ws": "^8.18.1",
     "yargs": "^17.7.2"
   },

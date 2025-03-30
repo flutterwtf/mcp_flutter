@@ -5,16 +5,16 @@ startCommand:
   configSchema:
     # JSON Schema defining the configuration options for the MCP.
     type: object
-    required:
-      [
-        "logLevel",
-        "mcpServerPort",
-        "mcpServerHost",
-        "dartVMPort",
-        "dartVMHost",
-        "forwardingServerPort",
-        "forwardingServerHost",
-      ]
+    # required:
+    #   [
+    #     "logLevel",
+    #     "mcpServerPort",
+    #     "mcpServerHost",
+    #     "dartVMPort",
+    #     "dartVMHost",
+    #     "forwardingServerPort",
+    #     "forwardingServerHost",
+    #   ]
     properties:
       logLevel:
         type: string
