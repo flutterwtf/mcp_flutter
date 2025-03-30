@@ -30,6 +30,8 @@ ENV \
   FORWARDING_SERVER_HOST=localhost \
   LOG_LEVEL=critical
 
+EXPOSE 3535
+
 WORKDIR /app
 
 # Run the MCP server in stdio mode
