@@ -7,6 +7,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { Logger } from "flutter_mcp_forwarding_server";
 import path from "path";
+import { fileURLToPath } from "url";
 import { RpcUtilities } from "../servers/rpc_utilities.js";
 import { createCustomRpcHandlerMap } from "./create_custom_rpc_handler_map.js";
 import { createRpcHandlerMap } from "./create_rpc_handler_map.js";
@@ -14,6 +15,10 @@ import {
   FlutterRpcHandlers,
   RpcToolName,
 } from "./flutter_rpc_handlers.generated.js";
+
+// Get the directory name in ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export class ToolsHandlers {
   public setHandlers(

@@ -1,17 +1,11 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { Logger } from "flutter_mcp_forwarding_server";
-import path from "path";
-import { fileURLToPath } from "url";
 import { CommandLineConfig } from "../index.js";
 import { ResourcesHandlers } from "../resources/resource_handlers.js";
 import { FlutterRpcHandlers } from "../tools/index.js";
 import { ToolsHandlers } from "../tools/tools_handlers.js";
 import { RpcUtilities } from "./rpc_utilities.js";
-
-// Get the directory name in ESM
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 export class FlutterInspectorServer {
   // Declare server with any type to work around type issues
