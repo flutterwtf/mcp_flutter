@@ -22,15 +22,8 @@ async function generateRpcHandlers() {
     __dirname,
     "..",
     "src",
-    "servers",
+    "tools",
     "flutter_rpc_handlers.generated.ts"
-  );
-  const handlerMapFilePath = path.resolve(
-    __dirname,
-    "..",
-    "src",
-    "servers",
-    "create_rpc_handler_map.generated.ts"
   );
 
   try {

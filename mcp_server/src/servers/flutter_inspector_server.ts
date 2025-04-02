@@ -1,21 +1,12 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ErrorCode,
-  ListToolsRequestSchema,
-  McpError,
-} from "@modelcontextprotocol/sdk/types.js";
 import { Logger } from "flutter_mcp_forwarding_server";
 import path from "path";
 import { fileURLToPath } from "url";
 import { CommandLineConfig } from "../index.js";
-import { createCustomRpcHandlerMap } from "./create_custom_rpc_handler_map.js";
-import { createRpcHandlerMap } from "./create_rpc_handler_map.js";
-import {
-  FlutterRpcHandlers,
-  RpcToolName,
-} from "./flutter_rpc_handlers.generated.js";
+import { ResourcesHandlers } from "../resources/resource_handlers.js";
+import { FlutterRpcHandlers } from "../tools/index.js";
+import { ToolsHandlers } from "../tools/tools_handlers.js";
 import { RpcUtilities } from "./rpc_utilities.js";
 
 // Get the directory name in ESM
@@ -28,7 +19,8 @@ export class FlutterInspectorServer {
   private port: number;
   private rpcUtils: RpcUtilities;
   private logger: Logger;
-
+  private resources = new ResourcesHandlers();
+  private tools = new ToolsHandlers();
   constructor(private readonly args: CommandLineConfig) {
     this.port = args.port;
     this.server = new McpServer(
@@ -68,68 +60,16 @@ export class FlutterInspectorServer {
   }
 
   private setupToolHandlers() {
-    const serverToolsFlutterPath = path.join(
-      __dirname,
-      "server_tools_flutter.yaml"
-    );
-    const serverToolsCustomPath = path.join(
-      __dirname,
-      "server_tools_custom.yaml"
-    );
     try {
-      // Load tools configuration
-      const serverToolsFlutter = this.rpcUtils.loadYamlConfig(
-        serverToolsFlutterPath
-      );
-      const serverToolsCustom = this.rpcUtils.loadYamlConfig(
-        serverToolsCustomPath
-      );
-
-      this.server.server.setRequestHandler(
-        ListToolsRequestSchema,
-        async () => ({
-          tools: [...serverToolsFlutter.tools, ...serverToolsCustom.tools],
-        })
-      );
+      const server = this.server.server;
+      this.resources.setHandlers(server);
 
       const rpcHandlers = new FlutterRpcHandlers(
         this.rpcUtils,
         (request, connectionDestination) =>
           this.rpcUtils.handlePortParam(request, connectionDestination)
       );
-
-      // Use the generated function to create the handler map
-      const handlerMap = createRpcHandlerMap(rpcHandlers);
-
-      // Get custom handlers
-      const customHandlerMap = createCustomRpcHandlerMap(
-        this.rpcUtils,
-        this.logger,
-        (request, connectionDestination) =>
-          this.rpcUtils.handlePortParam(request, connectionDestination)
-      );
-
-      this.server.server.setRequestHandler(
-        CallToolRequestSchema,
-        async (request: any) => {
-          const toolName = request.params.name;
-          const generatedHandler:
-            | ((request: any) => Promise<unknown>)
-            | undefined = handlerMap[toolName as RpcToolName];
-          // Check generated handlers first
-          if (generatedHandler) return generatedHandler(request);
-
-          // Then check custom handlers
-          if (customHandlerMap[toolName]) {
-            return customHandlerMap[toolName](request);
-          }
-
-          throw new McpError(
-            ErrorCode.MethodNotFound,
-            `Unknown tool: ${request.params.name}`
-          );
-        }
-      );
+      this.tools.setHandlers(server, this.rpcUtils, this.logger, rpcHandlers);
     } catch (error) {
       this.logger.error("Error setting up tool handlers:", { error });
       throw error;

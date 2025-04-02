@@ -1,10 +1,10 @@
 import { Logger } from "flutter_mcp_forwarding_server";
-import { FlutterPort, IsolateInfo } from "../types/types.js";
 import {
   ConnectionDestination,
   execAsync,
   RpcUtilities,
-} from "./rpc_utilities.js";
+} from "../servers/rpc_utilities.js";
+import { FlutterPort, IsolateInfo } from "../types/types.js";
 
 // Define a type for the handler function
 type RpcHandler = (request: any) => Promise<any>;
