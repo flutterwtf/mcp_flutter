@@ -4,13 +4,17 @@ import {
   ReadResourceRequestSchema,
   ResourceContents,
 } from "@modelcontextprotocol/sdk/types.js";
-import { TREE_RESOURCES } from "./widget_tree_resources.js";
+import {
+  TREE_RESOURCES,
+  TREE_RESOURCES_TEMPLATES,
+} from "./widget_tree_resources.js";
 
 export class ResourcesHandlers {
   public setHandlers(server: Server): void {
     // List available resources when clients request them
     server.setRequestHandler(ListResourcesRequestSchema, async () => {
       return {
+        resourceTemplates: [...TREE_RESOURCES_TEMPLATES],
         resources: [...TREE_RESOURCES],
       };
     });

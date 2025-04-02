@@ -1,12 +1,24 @@
-import { ResourceTemplate } from "@modelcontextprotocol/sdk/types.js";
+import { Resource, ResourceTemplate } from "@modelcontextprotocol/sdk/types.js";
 // TODO: maybe convert to yaml file, if it will grow
-export const TREE_RESOURCES: ResourceTemplate[] = [
+export const TREE_RESOURCES: Resource[] = [
   {
-    uriTemplate: "visual://tree/root",
+    uri: "visual://tree/root",
     name: "Widget Tree Root",
     description: "Get the root widget of the Flutter application",
-    mimeType: "application/json",
   },
+  {
+    uri: "visual://view/errors",
+    name: "View Errors",
+    description: "Get current view errors",
+  },
+  {
+    uri: "visual://view/info",
+    name: "View Info",
+    description: "Get current view information",
+  },
+];
+
+export const TREE_RESOURCES_TEMPLATES: ResourceTemplate[] = [
   {
     uriTemplate: "visual://tree/node/{node_id}",
     name: "Widget Node",
@@ -23,18 +35,6 @@ export const TREE_RESOURCES: ResourceTemplate[] = [
     uriTemplate: "visual://tree/children/{node_id}",
     name: "Widget Node Children",
     description: "Get children of a specific widget node",
-    mimeType: "application/json",
-  },
-  {
-    uriTemplate: "visual://view/errors",
-    name: "View Errors",
-    description: "Get current view errors",
-    mimeType: "application/json",
-  },
-  {
-    uriTemplate: "visual://view/info",
-    name: "View Info",
-    description: "Get current view information",
     mimeType: "application/json",
   },
 ];
