@@ -65,7 +65,7 @@ export type RpcToolName = keyof typeof rpcToolConfigs;
 
     // Generate the handler class
     let handlerClassCode = `
-import { ConnectionDestination, RpcUtilities } from "./rpc_utilities.js";
+import { ConnectionDestination, RpcUtilities } from "../servers/rpc_utilities.js";
 
 /**
  * Generated class containing handlers for Flutter RPC tools.
