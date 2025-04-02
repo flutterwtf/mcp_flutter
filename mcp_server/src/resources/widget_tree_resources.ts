@@ -14,21 +14,27 @@ export const TREE_RESOURCES: ResourceTemplate[] = [
     mimeType: "application/json",
   },
   {
+    uriTemplate: "visual://tree/parent/{node_id}",
+    name: "Widget Node Parent",
+    description: "Get parent of a specific widget node",
+    mimeType: "application/json",
+  },
+  {
     uriTemplate: "visual://tree/children/{node_id}",
     name: "Widget Node Children",
     description: "Get children of a specific widget node",
     mimeType: "application/json",
   },
   {
-    uriTemplate: "visual://visual/errors",
-    name: "Visual Errors",
-    description: "Get current visual errors in the widget tree",
+    uriTemplate: "visual://view/errors",
+    name: "View Errors",
+    description: "Get current view errors",
     mimeType: "application/json",
   },
   {
-    uriTemplate: "visual://visual/viewport",
-    name: "Viewport Info",
-    description: "Get current viewport information",
+    uriTemplate: "visual://view/info",
+    name: "View Info",
+    description: "Get current view information",
     mimeType: "application/json",
   },
 ];

@@ -38,7 +38,7 @@ export class FlutterInspectorServer {
     );
     this.rpcUtils = new RpcUtilities(this.logger, this.args);
 
-    this.setupToolHandlers();
+    this.setHandlers();
     this.setupErrorHandling();
   }
 
@@ -53,16 +53,16 @@ export class FlutterInspectorServer {
     });
   }
 
-  private setupToolHandlers() {
+  private setHandlers() {
     try {
       const server = this.server.server;
-      this.resources.setHandlers(server);
 
       const rpcHandlers = new FlutterRpcHandlers(
         this.rpcUtils,
         (request, connectionDestination) =>
           this.rpcUtils.handlePortParam(request, connectionDestination)
       );
+      this.resources.setHandlers(server);
       this.tools.setHandlers(server, this.rpcUtils, this.logger, rpcHandlers);
     } catch (error) {
       this.logger.error("Error setting up tool handlers:", { error });
