@@ -5,3 +5,5 @@ forward:
 	cd $(CURDIR)/forwarding-server && npm run start
 build:
 	cd $(CURDIR)/mcp_server && npm run build
+inspect:
+	cd $(CURDIR)/mcp_server && npm run inspector 

@@ -45,22 +45,26 @@ export class ResourcesHandlers {
     //     // return this.handleChildren(parsedUri.nodeId);
     //   case "errors":
     //     // return this.handleErrors();
-    //   case "viewport":
-    //     // return this.handleViewport();
+    //   case "view":
+    //     // return this.handleview();
     //   default:
     //     throw new McpError(ErrorCode.MethodNotFound, `Unsupported resource URI: ${uri}`);
     // }
   }
 
   private parseUri(uri: string): {
-    type: "root" | "node" | "children" | "errors" | "viewport";
+    type: "root" | "node" | "children" | "errors" | "view" | "info" | "unknown";
     appId?: string;
     nodeId?: string;
   } {
     // Parse visual://{app_id}/tree/root format
     const match = uri.match(/^visual:\/\/([^\/]+)\/(?:tree|visual)\/(.+)$/);
     if (!match) {
-      throw new Error(`Invalid resource URI format: ${uri}`);
+      return { type: "unknown", appId: "unknown" };
+      // throw new McpError(
+      //   ErrorCode.MethodNotFound,
+      //   `Invalid resource URI format: ${uri}`
+      // );
     }
 
     const [_, appId, path] = match;
@@ -73,10 +77,16 @@ export class ResourcesHandlers {
       return { type: "children", appId, nodeId: path.split("/")[1] };
     } else if (path === "errors") {
       return { type: "errors", appId };
-    } else if (path === "viewport") {
-      return { type: "viewport", appId };
+    } else if (path === "view") {
+      return { type: "view", appId };
+    } else if (path === "info") {
+      return { type: "info", appId };
     }
+    return { type: "unknown", appId };
 
-    throw new Error(`Unsupported resource path: ${path}`);
+    // throw new McpError(
+    //   ErrorCode.MethodNotFound,
+    //   `Unsupported resource path: ${path}`
+    // );
   }
 }
