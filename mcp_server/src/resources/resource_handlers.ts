@@ -1,6 +1,7 @@
 import { type Server } from "@modelcontextprotocol/sdk/server/index.js";
 import {
   ListResourcesRequestSchema,
+  ListResourceTemplatesRequestSchema,
   ReadResourceRequestSchema,
   ResourceContents,
 } from "@modelcontextprotocol/sdk/types.js";
@@ -14,9 +15,12 @@ export class ResourcesHandlers {
     // List available resources when clients request them
     server.setRequestHandler(ListResourcesRequestSchema, async () => {
       return {
-        resourceTemplates: [...TREE_RESOURCES_TEMPLATES],
         resources: [...TREE_RESOURCES],
       };
+    });
+    // List available resource templates when clients request them
+    server.setRequestHandler(ListResourceTemplatesRequestSchema, async () => {
+      return { resourceTemplates: [...TREE_RESOURCES_TEMPLATES] };
     });
     // Return resource content when clients request it
     server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
