@@ -49,11 +49,13 @@ export class ResourcesHandlers {
         return {
           contents: result.content.map((content) => ({
             uri: uri,
-            text: JSON.stringify(
-              JSON.parse(content.text)?.data?.result,
-              null,
-              2
-            ),
+            // text: JSON.stringify(
+            //   JSON.parse(content.text)?.data?.result,
+            //   null,
+            //   2
+            // ),
+            json: JSON.parse(content.text)?.data?.result,
+            mimeType: "application/json",
           })),
         };
     }
