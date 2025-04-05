@@ -65,7 +65,7 @@ export type RpcToolName = keyof typeof rpcToolConfigs;
 
     // Generate the handler class
     let handlerClassCode = `
-import { ConnectionDestination, RpcUtilities } from "../servers/rpc_utilities.js";
+import { ConnectionDestination, RpcToolResponseType, RpcUtilities } from "../servers/rpc_utilities.js";
 
 /**
  * Generated class containing handlers for Flutter RPC tools.
@@ -79,7 +79,7 @@ export class FlutterRpcHandlers {
     private handlePortParam: (request: any, connectionDestination: ConnectionDestination) => number
   ) {}
 
-  async handleToolRequest(toolName: RpcToolName, request: any): Promise<unknown> {
+  async handleToolRequest(toolName: RpcToolName, request: any): Promise<RpcToolResponseType> {
     const config = rpcToolConfigs[toolName];
     if (!config) throw new Error(\`Invalid tool request: \${toolName}\`);
     

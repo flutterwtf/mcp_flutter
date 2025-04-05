@@ -5,6 +5,7 @@ export const TREE_RESOURCES: Resource[] = [
     uri: "visual://localhost/tree/root",
     name: "Widget Tree Root",
     description: "Get the root widget of the Flutter application",
+    mimeType: "application/json",
   },
   {
     uri: "visual://localhost/view/errors",

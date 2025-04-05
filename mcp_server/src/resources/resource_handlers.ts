@@ -42,10 +42,20 @@ export class ResourcesHandlers {
 
     switch (parsedUri.type) {
       case "root":
-        return rpcToolHandlers.handleToolRequest(
+        const result = await rpcToolHandlers.handleToolRequest(
           "inspector_get_root_widget",
           {}
         );
+        return {
+          contents: result.content.map((content) => ({
+            uri: uri,
+            text: JSON.stringify(
+              JSON.parse(content.text)?.data?.result,
+              null,
+              2
+            ),
+          })),
+        };
     }
     //     // return this.handleRootNode();
     //   case "node":

@@ -15,6 +15,11 @@ import { RpcClient } from "./rpc_client.js";
 export type ConnectionDestination = "dart-vm" | "flutter-extension";
 export const execAsync = promisify(exec);
 
+export type RpcToolResponseType = {
+  content: { type: string; text: string }[];
+  isError?: boolean;
+};
+
 /**
  * Utilities for handling RPC communication with Flutter applications
  */
@@ -387,7 +392,7 @@ export class RpcUtilities {
   /**
    * Wrap a promise response for MCP
    */
-  async wrapResponse(promise: Promise<unknown>) {
+  async wrapResponse(promise: Promise<unknown>): Promise<RpcToolResponseType> {
     try {
       const result = await promise;
       this.logger.debug(`Wrap response: ${JSON.stringify(result, null, 2)}`);
