@@ -353,7 +353,7 @@ export class FlutterRpcHandlers {
     if (!config) throw new Error(`Invalid tool request: ${toolName}`);
     
     const port = this.handlePortParam(request, config.needsDartProxy ? "dart-vm" : "flutter-extension");
-    const params = request.params?.arguments;
+    const params = request?.params?.arguments;
 
     if (config.needsDebugVerification) {
       await this.rpcUtils.verifyFlutterDebugMode(port);

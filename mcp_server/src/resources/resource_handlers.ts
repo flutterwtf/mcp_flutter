@@ -5,13 +5,18 @@ import {
   ReadResourceRequestSchema,
   ResourceContents,
 } from "@modelcontextprotocol/sdk/types.js";
+import { RpcUtilities } from "../servers/rpc_utilities.js";
+import { FlutterRpcHandlers } from "../tools/flutter_rpc_handlers.generated.js";
 import {
   TREE_RESOURCES,
   TREE_RESOURCES_TEMPLATES,
 } from "./widget_tree_resources.js";
-
 export class ResourcesHandlers {
-  public setHandlers(server: Server): void {
+  public setHandlers(
+    server: Server,
+    rpcUtils: RpcUtilities,
+    rpcToolHandlers: FlutterRpcHandlers
+  ): void {
     // List available resources when clients request them
     server.setRequestHandler(ListResourcesRequestSchema, async () => {
       return {
@@ -24,24 +29,24 @@ export class ResourcesHandlers {
     });
     // Return resource content when clients request it
     server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
-      return this.handleRead(request.params.uri);
+      return this.handleRead(request.params.uri, rpcUtils, rpcToolHandlers);
     });
   }
 
-  async handleRead(uri: string): Promise<ResourceContents> {
+  async handleRead(
+    uri: string,
+    rpcUtils: RpcUtilities,
+    rpcToolHandlers: FlutterRpcHandlers
+  ): Promise<ResourceContents> {
     const parsedUri = this.parseUri(uri);
-    return {
-      contents: [
-        {
-          uri: uri,
-          text:
-            "Hello, World! This is my first MCP resource. Parsed URI: " +
-            JSON.stringify(parsedUri),
-        },
-      ],
-    };
-    // switch (parsedUri.type) {
-    //   case "root":
+
+    switch (parsedUri.type) {
+      case "root":
+        return rpcToolHandlers.handleToolRequest(
+          "inspector_get_root_widget",
+          {}
+        );
+    }
     //     // return this.handleRootNode();
     //   case "node":
     //     // return this.handleNode(parsedUri.nodeId);
@@ -54,6 +59,16 @@ export class ResourcesHandlers {
     //   default:
     //     throw new McpError(ErrorCode.MethodNotFound, `Unsupported resource URI: ${uri}`);
     // }
+    return {
+      contents: [
+        {
+          uri: uri,
+          text:
+            "Hello, World! This is my first MCP resource. Parsed URI: " +
+            JSON.stringify(parsedUri),
+        },
+      ],
+    };
   }
 
   private parseUri(uri: string): {

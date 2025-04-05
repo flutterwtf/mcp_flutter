@@ -421,7 +421,7 @@ export class RpcUtilities {
     request: any,
     connectionDestination: ConnectionDestination
   ): number {
-    const port = request.params.arguments?.port as number | undefined;
+    const port = request?.params?.arguments?.port as number | undefined;
     return (
       port ||
       (connectionDestination === "dart-vm"
