@@ -8,6 +8,7 @@ import 'package:devtools_app_shared/service.dart';
 import 'package:devtools_app_shared/utils.dart';
 import 'package:devtools_mcp_extension/common_imports.dart';
 import 'package:devtools_mcp_extension/services/forwarding_rpc_listener.dart';
+import 'package:devtools_mcp_extension/services/object_group_manager.dart';
 import 'package:devtools_shared/service.dart' as devtools_shared;
 import 'package:vm_service/vm_service.dart';
 
@@ -92,6 +93,8 @@ class DevtoolsService with ChangeNotifier {
   /// The service manager instance
   final _serviceManager = ServiceManager();
 
+  ObjectGroupManager? _treeGroupManager;
+
   /// Stores the VM service URI when connected
   Uri? _vmServiceUri;
 
@@ -143,6 +146,20 @@ class DevtoolsService with ChangeNotifier {
         onClosed: finishedCompleter.future,
       );
 
+      // Initialize the ObjectGroupManager
+      try {
+        _treeGroupManager = ObjectGroupManager(
+          debugName: 'treeGroupManager',
+          vmService: vmService,
+          isolateId: _serviceManager.isolateManager.mainIsolate.value!.id!,
+        );
+      } catch (e, stackTrace) {
+        print('Error initializing ObjectGroupManager: $e');
+        print('Stack trace: $stackTrace');
+        // Handle the error appropriately, e.g., by setting _treeGroupManager to null
+        _treeGroupManager = null;
+      }
+
       notifyListeners();
       return true;
     } catch (e, stackTrace) {
@@ -150,12 +167,19 @@ class DevtoolsService with ChangeNotifier {
       _vmServiceUri = null;
       print('Error connecting to VM service: $e');
       print('Stack trace: $stackTrace');
+      await _disposeManagers();
       return false;
     }
   }
 
+  Future<void> _disposeManagers() async {
+    await _treeGroupManager?.dispose();
+    _treeGroupManager = null;
+  }
+
   /// Disconnect from the VM service
   Future<void> disconnectFromVmService() async {
+    await _disposeManagers();
     await _serviceManager.vmServiceClosed();
     _vmServiceUri = null;
     notifyListeners();
@@ -217,6 +241,13 @@ extension DevtoolsServiceExtension on DevtoolsService {
   }
 
   Future<RPCResponse> getRootWidget() async {
+    final treeManager = _treeGroupManager;
+    if (treeManager == null) {
+      return RPCResponse.error('Service is not connected.');
+    }
+
+    final group = treeManager.next;
+
     try {
       final callMethodName =
           '$flutterInspectorName.'
@@ -225,7 +256,7 @@ extension DevtoolsServiceExtension on DevtoolsService {
           .callServiceExtensionOnMainIsolate(
             callMethodName,
             args: {
-              'groupName': 'root',
+              'objectGroup': group.groupName,
               'isSummaryTree': 'true',
               'withPreviews': 'false',
               'fullDetails': 'false',
@@ -233,15 +264,25 @@ extension DevtoolsServiceExtension on DevtoolsService {
           );
       print('Root widget tree: $rootWidgetTree');
       if (rootWidgetTree.json == null) {
+        await treeManager.cancelNext();
         return RPCResponse.error(
           'Root widget tree not available, '
           'rootWidgetTree: ${rootWidgetTree.toJson()}',
         );
       }
+
+      if (group.disposed) {
+        // Handle cancellation
+        print('Object group disposed, handling cancellation');
+        return RPCResponse.error('Object group disposed');
+      }
+
+      await treeManager.promoteNext();
       return RPCResponse.successMap(rootWidgetTree.json!);
     } catch (e, stackTrace) {
       print('Error getting root widget tree: $e');
       print('Stack trace: $stackTrace');
+      await _treeGroupManager?.cancelNext();
       return RPCResponse.error(
         'Error getting root widget tree: $e',
         stackTrace,
