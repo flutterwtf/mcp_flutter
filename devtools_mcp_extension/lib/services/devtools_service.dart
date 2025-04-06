@@ -112,6 +112,7 @@ class DevtoolsService with ChangeNotifier {
 
   /// Connect to a VM service
   Future<bool> connectToVmService([final Uri? uri]) async {
+    print('Connect to VM service');
     // Store the URI for later use
     _vmServiceUri =
         uri ??
@@ -147,18 +148,11 @@ class DevtoolsService with ChangeNotifier {
       );
 
       // Initialize the ObjectGroupManager
-      try {
-        _treeGroupManager = ObjectGroupManager(
-          debugName: 'treeGroupManager',
-          vmService: vmService,
-          isolateId: _serviceManager.isolateManager.mainIsolate.value!.id!,
-        );
-      } catch (e, stackTrace) {
-        print('Error initializing ObjectGroupManager: $e');
-        print('Stack trace: $stackTrace');
-        // Handle the error appropriately, e.g., by setting _treeGroupManager to null
-        _treeGroupManager = null;
-      }
+      _treeGroupManager = ObjectGroupManager(
+        debugName: 'treeGroupManager',
+        vmService: vmService,
+        isolate: _serviceManager.isolateManager.mainIsolate,
+      );
 
       notifyListeners();
       return true;

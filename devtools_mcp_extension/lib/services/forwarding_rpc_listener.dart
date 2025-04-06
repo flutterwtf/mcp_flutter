@@ -3,6 +3,7 @@
 import 'dart:convert';
 
 import 'package:devtools_mcp_extension/common_imports.dart';
+import 'package:devtools_mcp_extension/services/custom_devtools_service.dart';
 import 'package:devtools_mcp_extension/services/image_compressor.dart';
 import 'package:mcp_dart_forwarding_client/mcp_dart_forwarding_client.dart';
 
@@ -12,10 +13,12 @@ class ForwardingRpcListener {
   ForwardingRpcListener({
     required this.forwardingClient,
     required this.devtoolsService,
+    required this.customDevtoolsService,
   });
 
   final ForwardingClient forwardingClient;
   final DevtoolsService devtoolsService;
+  final CustomDevtoolsService customDevtoolsService;
 
   void init() {
     print('Initializing ForwardingRpcListener');
@@ -37,6 +40,12 @@ class ForwardingRpcListener {
         print('Handler called: getRootWidget with data: $data');
         final result = await devtoolsService.getRootWidget();
         print('getRootWidget result: ${jsonEncode(result).substring(0, 50)}');
+        return result;
+      })
+      ..registerMethod('getVisualErrors', (final data) async {
+        print('Handler called: getVisualErrors with data: $data');
+        final result = await customDevtoolsService.getVisualErrors(data);
+        print('getVisualErrors result: ${jsonEncode(result).substring(0, 50)}');
         return result;
       })
       ..registerMethod('$flutterInspectorName.screenshot', (final data) async {

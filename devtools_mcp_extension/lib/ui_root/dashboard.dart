@@ -483,7 +483,7 @@ class _VmServiceBridgeCardState extends State<_VmServiceBridgeCard> {
                       onPressed: () async {
                         await CustomDevtoolsService(
                           widget.serviceBridge,
-                        ).customMethod({});
+                        ).getVisualErrors({});
                       },
                       child: const Text('Custom Method'),
                     ),

@@ -1,20 +1,20 @@
+// ignore_for_file: avoid_catches_without_on_clauses
+
+import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import 'package:vm_service/vm_service.dart';
 
 class ObjectGroup {
   ObjectGroup({
     required this.debugName,
-    required final VmService vmService,
-    required final String isolateId,
-  }) : _vmService = vmService,
-       _isolateId = isolateId {
-    groupName = const Uuid().v4();
-  }
+    required this.vmService,
+    required this.isolate,
+  }) : groupName = const Uuid().v4();
 
   final String debugName;
-  final VmService _vmService;
-  final String _isolateId;
-  late final String groupName;
+  final VmService vmService;
+  final ValueListenable<IsolateRef?> isolate;
+  final String groupName;
   var _disposed = false;
 
   bool get disposed => _disposed;
@@ -24,14 +24,15 @@ class ObjectGroup {
       return;
     }
     try {
-      await _vmService.callServiceExtension(
+      await vmService.callServiceExtension(
         'ext.flutter.inspector.disposeGroup',
-        isolateId: _isolateId,
+        isolateId: isolate.value?.id,
         args: {'groupName': groupName},
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
       // Log the error, but don't rethrow.
       print('Error disposing object group $groupName: $e');
+      print('Stack trace: $stackTrace');
     } finally {
       _disposed = true;
     }
@@ -40,16 +41,14 @@ class ObjectGroup {
 
 class ObjectGroupManager {
   ObjectGroupManager({
-    required final String debugName,
-    required final VmService vmService,
-    required final String isolateId,
-  }) : _debugName = debugName,
-       _vmService = vmService,
-       _isolateId = isolateId;
+    required this.debugName,
+    required this.vmService,
+    required this.isolate,
+  });
 
-  final String _debugName;
-  final VmService _vmService;
-  final String _isolateId;
+  final String debugName;
+  final VmService vmService;
+  final ValueListenable<IsolateRef?> isolate;
 
   ObjectGroup? _current;
   ObjectGroup? _next;
@@ -59,17 +58,17 @@ class ObjectGroupManager {
       // If _next was previously disposed, create a new one.
       if (_next!.disposed) {
         _next = ObjectGroup(
-          debugName: _debugName,
-          vmService: _vmService,
-          isolateId: _isolateId,
+          debugName: debugName,
+          vmService: vmService,
+          isolate: isolate,
         );
       }
       return _next!;
     }
     _next = ObjectGroup(
-      debugName: _debugName,
-      vmService: _vmService,
-      isolateId: _isolateId,
+      debugName: debugName,
+      vmService: vmService,
+      isolate: isolate,
     );
     return _next!;
   }

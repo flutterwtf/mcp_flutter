@@ -1,4 +1,5 @@
 import 'package:devtools_mcp_extension/common_imports.dart';
+import 'package:devtools_mcp_extension/services/custom_devtools_service.dart';
 import 'package:devtools_mcp_extension/services/forwarding_rpc_listener.dart';
 import 'package:mcp_dart_forwarding_client/mcp_dart_forwarding_client.dart';
 
@@ -66,16 +67,19 @@ class RpcClientsOrchestrator with ChangeNotifier {
   RpcClientsOrchestrator() {
     // Initialize the TypeScript client
     _serviceBridge = DevtoolsService();
+    _customDevtoolsService = CustomDevtoolsService(_serviceBridge);
 
     // Initialize the forwarding service
     _forwardingClient = ForwardingClient(ForwardingClientType.flutter);
     _forwardingRpcListener = ForwardingRpcListener(
       forwardingClient: _forwardingClient,
       devtoolsService: _serviceBridge,
+      customDevtoolsService: _customDevtoolsService,
     );
   }
 
   late final DevtoolsService _serviceBridge;
+  late final CustomDevtoolsService _customDevtoolsService;
   late final ForwardingClient _forwardingClient;
   late final ForwardingRpcListener _forwardingRpcListener;
 

@@ -5,7 +5,15 @@ class CustomDevtoolsService {
   CustomDevtoolsService(this.devtoolsService);
   final DevtoolsService devtoolsService;
 
-  Future<void> customMethod(final Map<String, dynamic> params) async {
+  /// Should return a list of visual errors in the Flutter application.
+  ///
+  /// It should contain nodeId, groupName and description of error
+  ///
+  /// todo: add correct return type
+  Future<void> getVisualErrors(final Map<String, dynamic> params) async {
+    /// todo: how to get remote diagnostics node with errors?
+    /// we need to get remote diagnostics node with errors
+    /// so we could properly inspect it
     final rootElement = WidgetsBinding.instance.rootElement;
 
     if (rootElement == null) {
