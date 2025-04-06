@@ -1,54 +1,86 @@
-# Active Context
+# Active Development Context
 
-**Current Focus:** Planning Object Group Management for DevTools Extension VM Service interactions.
+## Current Focus
 
-**Recent Decisions/Learnings:**
+- Implementation of robust object group management in the Flutter Inspector MCP Server
+- Error detection and analysis in Flutter widget trees
+- Memory management optimization for inspector operations
 
-- Adopted the `ObjectGroup` / `ObjectGroupManager` pattern from Flutter DevTools to manage VM object references and prevent memory leaks in the inspected application.
-- Identified `devtools_mcp_extension/lib/services/devtools_service.dart` as the primary integration point for this pattern.
-- Created a detailed implementation plan: `devtools_mcp_extension/object_group_implementation_plan.md`.
+## Recent Decisions
 
-**Next Steps:** Continue implementation based on the plan file, starting with refactoring other VM call methods in `DevtoolsService`.
+### Object Group Management Pattern
 
-### Active Context: Implementing `getErrors` Function
+1. **Lifecycle Management**
 
-**Current Work Focus:**
+   - Using `ObjectGroupManager` for centralized group lifecycle control
+   - Implementing next/promote pattern for safe group transitions
+   - Proper cleanup through dispose mechanisms
 
-- Implementing the `getErrors` function in `custom_devtools_service.dart`.
-- This function aims to retrieve visual errors (like layout overflows, render issues) from a Flutter application by inspecting the remote diagnostics tree via the VM service.
-- We are currently in the planning and research phase, focusing on understanding how DevTools identifies and reports errors and how to effectively use the VM service and `ObjectGroup` pattern.
+2. **Error Detection System**
+   - Semantic analysis of widget tree nodes
+   - Pattern-based error detection in node descriptions
+   - Categorization of common Flutter UI errors
 
-**Recent Changes & Steps:**
+### Implementation Details
 
-- Developed a refined plan for implementing `getErrors`, focusing on using remote diagnostics nodes and `ObjectGroupManager`.
-- Researched the `devtools_app` codebase, specifically the inspector and diagnostics modules, to understand error detection mechanisms and VM service interactions.
-- Analyzed `RemoteDiagnosticsNode` properties (`level`, `exception`, `description`, `style`) as potential indicators of visual errors.
-- Identified `getRootWidgetTree` VM service extension as the method to fetch the remote root `DiagnosticsNode`.
-- Clarified the definition of "visual errors" and refined follow-up questions to guide further research.
+#### Object Group Lifecycle
 
-**Next Steps:**
+```dart
+// Creation and initialization
+_objectGroupManager = ObjectGroupManager(
+  debugName: 'visual-errors',
+  vmService: service,
+  isolate: mainIsolate,
+);
 
-- Continue research in `devtools_app` to pinpoint the exact code for error detection logic and obtain example JSON structures of error nodes.
-- Refine the error detection strategy based on research findings.
-- Start implementing the `getErrors` function in `custom_devtools_service.dart`, focusing on remote tree retrieval, error identification, and `ObjectGroup` integration.
-- Write unit and integration tests to verify the functionality of `getErrors`.
+// Usage pattern
+final group = _objectGroupManager.next;
+try {
+  // Use group
+  await operation();
+  await _objectGroupManager.promoteNext();
+} catch (e) {
+  await _objectGroupManager.cancelNext();
+  rethrow;
+}
+```
 
-**Active Decisions & Considerations:**
+#### Error Detection Categories
 
-- **Remote Diagnostics:** We are committed to using remote diagnostics nodes via the VM service for accurate error retrieval, avoiding local bindings.
-- **Object Group Management:** We will implement `ObjectGroupManager` to manage VM service calls and prevent memory leaks, following the pattern used in DevTools.
-- **Error Detection Logic:** We are researching the best approach to identify errors within `RemoteDiagnosticsNode` properties, considering `level`, `exception`, `description`, and `style`.
-- **Error Categorization:** We will initially use strings for `errorType` and refine error categories as we progress.
+- Layout Overflow
+- Usage Error
+- Invalid State
+- Operation Failed
+- General Error
 
-**Important Patterns & Preferences:**
+## Next Steps
 
-- **Semantic Intent Paradigm (SIP):** While not explicitly defined for this specific function yet, we are adhering to the principles of SIP by focusing on clear intent and well-defined functionality.
-- **Command-Resource Pattern:** `getErrors` function will likely be part of a command (e.g., `GetVisualErrorsCommand`) that interacts with a resource (e.g., `VisualErrorResource`), although this is not yet fully defined.
-- **Writing Code Protocol:** We are following the writing code protocol by placing implementation near intent (though intent is still implicit), exporting files, and focusing on concise and maintainable code.
+1. Implement additional error detection patterns
+2. Add performance monitoring for object group operations
+3. Enhance error reporting with more detailed diagnostics
+4. Consider implementing batch operations for multiple widget tree analyses
 
-**Learnings & Project Insights:**
+## Open Questions
 
-- Deeper understanding of Flutter DevTools codebase, particularly the inspector module and `RemoteDiagnosticsNode` structure.
-- Appreciation for the `ObjectGroup` pattern in managing VM service interactions and preventing memory leaks.
-- Recognition of the importance of precise error definition and robust error detection logic.
-- Need for further research to pinpoint concrete error detection code and example error node JSONs in DevTools.
+- Should we implement caching for frequently accessed widget tree nodes?
+- How can we optimize memory usage during large tree traversals?
+- What additional error patterns should we consider?
+
+## Dependencies
+
+- VM Service Protocol for Flutter inspector communication
+- Object Group Manager for memory management
+- Remote Diagnostics Node for widget tree analysis
+
+## Current Challenges
+
+1. Optimizing memory usage during tree traversal
+2. Balancing granularity of error detection
+3. Ensuring proper cleanup of resources
+
+## Recent Improvements
+
+1. Implemented proper object group lifecycle management
+2. Enhanced error detection patterns
+3. Added robust error handling
+4. Improved resource cleanup mechanisms
