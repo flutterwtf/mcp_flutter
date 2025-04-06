@@ -40,34 +40,34 @@ final class ListQueueValueNotifier<T> extends ChangeNotifier
 
   T get single => _rawListQueue.single;
 
-  T elementAt(int index) => _rawListQueue.elementAt(index);
+  T elementAt(final int index) => _rawListQueue.elementAt(index);
 
-  void add(T value) {
+  void add(final T value) {
     _rawListQueue.add(value);
     notifyListeners();
   }
 
-  Iterable<T> where(bool Function(T element) test) => _rawListQueue.where(test);
+  Iterable<T> where(final bool Function(T element) test) => _rawListQueue.where(test);
 
   // Collection interface.
 
-  void addAll(Iterable<T> elements) {
+  void addAll(final Iterable<T> elements) {
     _rawListQueue.addAll(elements);
     notifyListeners();
   }
 
-  bool remove(Object? value) {
+  bool remove(final Object? value) {
     final removed = _rawListQueue.remove(value);
     notifyListeners();
     return removed;
   }
 
-  void removeWhere(bool Function(T element) test) {
+  void removeWhere(final bool Function(T element) test) {
     _rawListQueue.removeWhere(test);
     notifyListeners();
   }
 
-  void retainWhere(bool Function(T element) test) {
+  void retainWhere(final bool Function(T element) test) {
     _rawListQueue.retainWhere(test);
     notifyListeners();
   }
@@ -79,12 +79,12 @@ final class ListQueueValueNotifier<T> extends ChangeNotifier
 
   // Queue interface.
 
-  void addLast(T value) {
+  void addLast(final T value) {
     _rawListQueue.addLast(value);
     notifyListeners();
   }
 
-  void addFirst(T value) {
+  void addFirst(final T value) {
     _rawListQueue.addFirst(value);
     notifyListeners();
   }

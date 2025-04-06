@@ -12,15 +12,13 @@ extension type DevToolsQueryParams(Map<String, String?> params) {
 
   static DevToolsQueryParams load() => DevToolsQueryParams(loadQueryParams());
 
-  static DevToolsQueryParams fromUrl(String url) {
+  static DevToolsQueryParams fromUrl(final String url) {
     final modifiedUrl = _simplifyDevToolsUrl(url);
     final uri = Uri.parse(modifiedUrl);
     return DevToolsQueryParams(uri.queryParameters);
   }
 
-  DevToolsQueryParams withUpdates(Map<String, String?>? updates) {
-    return DevToolsQueryParams({...params, ...?updates});
-  }
+  DevToolsQueryParams withUpdates(final Map<String, String?>? updates) => DevToolsQueryParams({...params, ...?updates});
 
   /// The URI for the VM Service that DevTools is connected to.
   String? get vmServiceUri => params[vmServiceUriKey];
@@ -86,7 +84,7 @@ extension type DevToolsQueryParams(Map<String, String?> params) {
   static const legacyPageKey = 'page';
 }
 
-String _simplifyDevToolsUrl(String url) {
+String _simplifyDevToolsUrl(final String url) {
   // DevTools urls can have the form:
   // http://localhost:123/?key=value
   // http://localhost:123/#/?key=value

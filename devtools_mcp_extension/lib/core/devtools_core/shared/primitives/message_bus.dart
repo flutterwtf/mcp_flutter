@@ -29,14 +29,12 @@ class MessageBus {
 
   /// Listen for events on the event bus. Clients can pass in an optional [type],
   /// which filters the events to only those specific ones.
-  Stream<BusEvent> onEvent({String? type}) {
-    return type == null
+  Stream<BusEvent> onEvent({final String? type}) => type == null
         ? _controller.stream
-        : _controller.stream.where((BusEvent event) => event.type == type);
-  }
+        : _controller.stream.where((final event) => event.type == type);
 
   /// Add an event to the event bus.
-  void addEvent(BusEvent event) {
+  void addEvent(final BusEvent event) {
     _controller.add(event);
   }
 

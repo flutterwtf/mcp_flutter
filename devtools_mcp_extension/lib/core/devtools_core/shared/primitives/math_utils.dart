@@ -5,11 +5,11 @@ import 'dart:math' as math;
 
 // TODO(jacobr): move more math utils over to this library.
 
-double sum(Iterable<double> numbers) =>
-    numbers.fold(0, (sum, cur) => sum + cur);
+double sum(final Iterable<double> numbers) =>
+    numbers.fold(0, (final sum, final cur) => sum + cur);
 
-double min(Iterable<double> numbers) =>
-    numbers.fold(double.infinity, (minimum, cur) => math.min(minimum, cur));
+double min(final Iterable<double> numbers) =>
+    numbers.fold(double.infinity, math.min);
 
-double max(Iterable<double> numbers) =>
-    numbers.fold(-double.infinity, (minimum, cur) => math.max(minimum, cur));
+double max(final Iterable<double> numbers) =>
+    numbers.fold(-double.infinity, math.max);

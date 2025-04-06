@@ -5,7 +5,7 @@
 import 'package:vm_service/vm_service.dart';
 
 class RecordFields {
-  RecordFields(List<BoundField>? fields) {
+  RecordFields(final List<BoundField>? fields) {
     positional = <BoundField>[];
     named = <BoundField>[];
     for (final field in fields ?? []) {
@@ -22,11 +22,11 @@ class RecordFields {
   late final List<BoundField> positional;
   late final List<BoundField> named;
 
-  static bool _isPositionalField(BoundField field) => field.name is int;
+  static bool _isPositionalField(final BoundField field) => field.name is int;
 
   // Sorts positional fields in ascending order:
-  static void _sortPositionalFields(List<BoundField> fields) {
-    fields.sort((field1, field2) {
+  static void _sortPositionalFields(final List<BoundField> fields) {
+    fields.sort((final field1, final field2) {
       assert(field1.name is int && field2.name is int);
       final name1 = field1.name as int;
       final name2 = field2.name as int;

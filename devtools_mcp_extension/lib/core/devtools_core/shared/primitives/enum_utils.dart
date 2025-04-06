@@ -4,21 +4,13 @@
 
 mixin EnumIndexOrdering<T extends Enum> on Enum implements Comparable<T> {
   @override
-  int compareTo(T other) => index.compareTo(other.index);
+  int compareTo(final T other) => index.compareTo(other.index);
 
-  bool operator <(T other) {
-    return index < other.index;
-  }
+  bool operator <(final T other) => index < other.index;
 
-  bool operator >(T other) {
-    return index > other.index;
-  }
+  bool operator >(final T other) => index > other.index;
 
-  bool operator >=(T other) {
-    return index >= other.index;
-  }
+  bool operator >=(final T other) => index >= other.index;
 
-  bool operator <=(T other) {
-    return index <= other.index;
-  }
+  bool operator <=(final T other) => index <= other.index;
 }

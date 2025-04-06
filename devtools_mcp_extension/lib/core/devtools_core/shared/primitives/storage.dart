@@ -8,8 +8,8 @@
 /// Flutter web when launched from the DevTools server.
 abstract class Storage {
   /// Return the value associated with the given key.
-  Future<String?> getValue(String key);
+  Future<String?> getValue(final String key);
 
   /// Set a value for the given key.
-  Future<void> setValue(String key, String value);
+  Future<void> setValue(final String key, final String value);
 }

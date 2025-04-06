@@ -4,14 +4,13 @@
 
 import 'dart:async';
 
+import 'package:devtools_mcp_extension/core/devtools_core/shared/memory/class_name.dart';
+import 'package:devtools_mcp_extension/core/devtools_core/shared/memory/classes.dart';
+import 'package:devtools_mcp_extension/core/devtools_core/shared/memory/retainers.dart';
+import 'package:devtools_mcp_extension/core/devtools_core/shared/memory/simple_items.dart';
+import 'package:devtools_mcp_extension/core/devtools_core/shared/primitives/utils.dart';
 import 'package:flutter/foundation.dart';
 import 'package:vm_service/vm_service.dart';
-
-import '../primitives/utils.dart';
-import 'class_name.dart';
-import 'classes.dart';
-import 'retainers.dart';
-import 'simple_items.dart';
 
 /// Raw and calculated data of the heap snapshot.
 class HeapData {
@@ -43,17 +42,15 @@ class HeapData {
   };
 
   @visibleForTesting
-  bool isReachable(int index) {
-    return retainedSizes![index] > 0;
-  }
+  bool isReachable(final int index) => retainedSizes![index] > 0;
 
   static final _uiReleaser = UiReleaser();
 
   /// Calculate the heap data from the given [graph].
   Future<void> _calculate({
-    @visibleForTesting bool calculateRetainingPaths = true,
-    @visibleForTesting bool calculateRetainedSizes = true,
-    @visibleForTesting bool calculateClassData = true,
+    @visibleForTesting final bool calculateRetainingPaths = true,
+    @visibleForTesting final bool calculateRetainedSizes = true,
+    @visibleForTesting final bool calculateClassData = true,
   }) async {
     if (!calculateClassData) return;
 
@@ -66,8 +63,8 @@ class HeapData {
         graphSize: graph.objects.length,
         rootIndex: heapRootIndex,
         isWeak: weakClasses.isWeak,
-        refs: (int index) => graph.objects[index].references,
-        shallowSize: (int index) => graph.objects[index].shallowSize,
+        refs: (final index) => graph.objects[index].references,
+        shallowSize: (final index) => graph.objects[index].shallowSize,
         calculateSizes: calculateRetainedSizes,
       );
 
@@ -153,7 +150,7 @@ class _WeakClasses {
   late final _weakClasses = <int>{};
 
   /// Returns true if the object cannot retain other objects.
-  bool isWeak(int objectIndex) {
+  bool isWeak(final int objectIndex) {
     final object = graph.objects[objectIndex];
     if (object.references.isEmpty) return true;
     final classId = object.classId;

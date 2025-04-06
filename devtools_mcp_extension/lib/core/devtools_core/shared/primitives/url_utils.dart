@@ -3,7 +3,7 @@
 // found in the LICENSE file or at https://developers.google.com/open-source/licenses/bsd.
 
 /// Extracts the current DevTools page from the given [url].
-String extractCurrentPageFromUrl(String url) {
+String extractCurrentPageFromUrl(final String url) {
   // The url can be in one of two forms:
   // - /page?uri=xxx
   // - /?page=xxx&uri=yyy (original formats IDEs may use)
@@ -18,7 +18,7 @@ String extractCurrentPageFromUrl(String url) {
 /// in the new URL format.
 ///
 /// Returns `null` if [url] is not a legacy URL.
-String? mapLegacyUrl(String url) {
+String? mapLegacyUrl(final String url) {
   final uri = Uri.parse(url);
   // Old formats include:
   //   http://localhost:123/#/inspector?uri=ws://...

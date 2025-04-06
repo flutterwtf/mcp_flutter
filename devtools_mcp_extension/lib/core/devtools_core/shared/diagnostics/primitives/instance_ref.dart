@@ -13,7 +13,7 @@ class InspectorInstanceRef {
   const InspectorInstanceRef(this.id);
 
   @override
-  bool operator ==(Object other) {
+  bool operator ==(final Object other) {
     if (other is InspectorInstanceRef) {
       return id == other.id;
     }

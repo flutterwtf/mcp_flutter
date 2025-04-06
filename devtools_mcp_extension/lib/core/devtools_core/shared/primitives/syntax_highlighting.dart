@@ -24,7 +24,7 @@ void main() {
 // todo: test basic parsing
 
 class TextmateGrammar {
-  TextmateGrammar(String syntaxDefinition) {
+  TextmateGrammar(final String syntaxDefinition) {
     _definition = jsonDecode(syntaxDefinition);
 
     _parseFileRules();

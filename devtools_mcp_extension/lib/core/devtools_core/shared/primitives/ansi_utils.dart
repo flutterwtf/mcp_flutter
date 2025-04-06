@@ -4,7 +4,7 @@
 
 /// Parse text containing ANSI color escape codes.
 class AnsiParser {
-  AnsiParser(String text) : _text = text;
+  AnsiParser(final String text) : _text = text;
 
   String _text;
   int _style = StyledText.kNone;
@@ -104,7 +104,7 @@ class AnsiParser {
     return pkt;
   }
 
-  void _processAnsi(_TextPacket textPacket) {
+  void _processAnsi(final _TextPacket textPacket) {
     final sgrCmds = textPacket.text.split(';');
     int index = 0;
     while (index < sgrCmds.length) {
@@ -192,7 +192,7 @@ class AnsiParser {
     }
   }
 
-  _TextWithAttr _withState(_TextPacket packet) =>
+  _TextWithAttr _withState(final _TextPacket packet) =>
       _TextWithAttr(text: packet.text, style: _style, fg: _fg, bg: _bg);
 }
 
@@ -250,18 +250,18 @@ final _csiRegex = RegExp(
   '^' // beginning of line
   // First attempt
   '(?:' // legal sequence
-  '\\x1b\\[' // CSI
-  '([\\x3c-\\x3f]?)' // private-mode char
-  '([\\d;]*)' // any digits or semicolons
-  '([\\x20-\\x2f]?' // an intermediate modifier
-  '[\\x40-\\x7e])' // the command
+  r'\x1b\[' // CSI
+  r'([\x3c-\x3f]?)' // private-mode char
+  r'([\d;]*)' // any digits or semicolons
+  r'([\x20-\x2f]?' // an intermediate modifier
+  r'[\x40-\x7e])' // the command
   ')'
   // Second attempt
   '|'
   '(?:' // illegal sequence
-  '\\x1b\\[' // CSI
-  '[\\x20-\\x7e]*' // anything legal
-  '([\\x00-\\x1f:])' // anything illegal
+  r'\x1b\[' // CSI
+  r'[\x20-\x7e]*' // anything legal
+  r'([\x00-\x1f:])' // anything illegal
   ')',
 );
 
@@ -304,7 +304,7 @@ class StyledText {
     this.bgColor,
   });
 
-  factory StyledText._from(_TextWithAttr fragment) => StyledText(
+  factory StyledText._from(final _TextWithAttr fragment) => StyledText(
     fragment.text,
     textStyle: fragment.style,
     fgColor: fragment.fg?.rgb.toList(),
@@ -338,8 +338,9 @@ class StyledText {
   bool get hasStyling => textStyle != 0 || fgColor != null || bgColor != null;
 
   String get describeStyle {
-    String hex(int value) => value.toRadixString(16).padLeft(2, '0');
-    String color(List<int> rgb) => '${hex(rgb[0])}${hex(rgb[2])}${hex(rgb[2])}';
+    String hex(final int value) => value.toRadixString(16).padLeft(2, '0');
+    String color(final List<int> rgb) =>
+        '${hex(rgb[0])}${hex(rgb[2])}${hex(rgb[2])}';
 
     return [
       if (bgColor != null) 'background #${color(bgColor!)}',

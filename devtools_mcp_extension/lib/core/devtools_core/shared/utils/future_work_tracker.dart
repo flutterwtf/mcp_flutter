@@ -4,9 +4,8 @@
 
 import 'dart:async';
 
+import 'package:devtools_mcp_extension/core/devtools_core/shared/primitives/utils.dart';
 import 'package:flutter/foundation.dart';
-
-import '../primitives/utils.dart';
 
 /// Class that tracks whether work defined by when futures complete is still in
 /// progress.
@@ -34,8 +33,8 @@ class FutureWorkTracker {
   /// Unless [clear] is called, [active] will now return true until
   /// [futureCallback] completes either with a value or an error.
   Future<Object?> track(
-    Future<Object?> Function() futureCallback, {
-    int delayMicros = 0,
+    final Future<Object?> Function() futureCallback, {
+    final int delayMicros = 0,
   }) async {
     _active.value = true;
 

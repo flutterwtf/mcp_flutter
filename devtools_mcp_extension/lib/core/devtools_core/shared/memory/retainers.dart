@@ -36,12 +36,12 @@ const _sentinelIndex = 0;
 /// Index 0 is reserved for sentinel object.
 /// The sentinel object should not have size and references.
 ShortestRetainersResult findShortestRetainers({
-  required int graphSize,
-  required int rootIndex,
-  required IsWeak isWeak,
-  required References refs,
-  required ShallowSize shallowSize,
-  bool calculateSizes = true,
+  required final int graphSize,
+  required final int rootIndex,
+  required final IsWeak isWeak,
+  required final References refs,
+  required final ShallowSize shallowSize,
+  final bool calculateSizes = true,
 }) {
   assert(refs(_sentinelIndex).isEmpty);
   assert(
@@ -97,9 +97,9 @@ ShortestRetainersResult findShortestRetainers({
 /// and adds the size to each shortest retainer recursively.
 void _addRetainedSize({
   required int index,
-  required Uint32List retainedSizes,
-  required Uint32List retainers,
-  required ShallowSize shallowSize,
+  required final Uint32List retainedSizes,
+  required final Uint32List retainers,
+  required final ShallowSize shallowSize,
 }) {
   final addedSize = shallowSize(index);
   retainedSizes[index] = addedSize;

@@ -23,14 +23,10 @@ class HistoryManager<T> extends DisposableController {
 
   /// Returns true if there is a previous historical item available on the
   /// stack.
-  bool get hasPrevious {
-    return _history.isNotEmpty && _historyIndex > 0;
-  }
+  bool get hasPrevious => _history.isNotEmpty && _historyIndex > 0;
 
   /// Returns true if there is a next historical item available on the stack.
-  bool get hasNext {
-    return _history.isNotEmpty && _historyIndex < _history.length - 1;
-  }
+  bool get hasNext => _history.isNotEmpty && _historyIndex < _history.length - 1;
 
   /// Move to next historical item on the stack.
   ///
@@ -83,7 +79,7 @@ class HistoryManager<T> extends DisposableController {
 
   /// Insert a new historical item at the end of the stack and set [current] to
   /// point to the new item.
-  void push(T value) {
+  void push(final T value) {
     _history.add(value);
     _historyIndex = _history.length - 1;
     _current.value = _history[_historyIndex];
@@ -91,7 +87,7 @@ class HistoryManager<T> extends DisposableController {
 
   /// Replaces the [current] item with a provided value.
   /// If history is empty, the value is pushed into the stack.
-  void replaceCurrent(T value) {
+  void replaceCurrent(final T value) {
     if (current.value == null) {
       push(value);
     } else {

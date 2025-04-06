@@ -3,12 +3,11 @@
 // found in the LICENSE file or at https://developers.google.com/open-source/licenses/bsd.
 
 import 'package:collection/collection.dart';
+import 'package:devtools_mcp_extension/core/devtools_core/shared/memory/class_name.dart';
+import 'package:devtools_mcp_extension/core/devtools_core/shared/memory/simple_items.dart';
+import 'package:devtools_mcp_extension/core/devtools_core/shared/primitives/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:vm_service/vm_service.dart';
-
-import '../primitives/utils.dart';
-import 'class_name.dart';
-import 'simple_items.dart';
 
 // ignore: avoid-dynamic, defined in package:collection
 bool Function(List<dynamic>? list1, List<dynamic>? list2) _listEquality =
@@ -41,7 +40,7 @@ class DebugRetainingPathUsage {
 class PathFromRoot {
   PathFromRoot._(
     this.path, {
-    @visibleForTesting bool debugOmitClassesInRetainingPath = false,
+    @visibleForTesting final bool debugOmitClassesInRetainingPath = false,
   }) : assert(() {
          debugUsage.constructed++;
          return true;
@@ -56,11 +55,11 @@ class PathFromRoot {
       hashCode = _hashOfEmptyPath;
 
   factory PathFromRoot.forObject(
-    HeapSnapshotGraph graph, {
-    required List<int> shortestRetainers,
-    required int index,
+    final HeapSnapshotGraph graph, {
+    required final List<int> shortestRetainers,
+    required final int index,
   }) {
-    HeapClassName objectClass(int index) {
+    HeapClassName objectClass(final int index) {
       final classId = graph.objects[index].classId;
       return HeapClassName.fromHeapSnapshotClass(graph.classes[classId]);
     }
@@ -82,8 +81,8 @@ class PathFromRoot {
   }
 
   factory PathFromRoot.fromPath(
-    List<HeapClassName> path, {
-    @visibleForTesting debugOmitClassesInRetainingPath = false,
+    final List<HeapClassName> path, {
+    @visibleForTesting final debugOmitClassesInRetainingPath = false,
   }) {
     if (path.isEmpty) return empty;
     final existingInstance = instances.lookup(
@@ -134,7 +133,7 @@ class PathFromRoot {
   final Set<HeapClassName> classes;
 
   @override
-  bool operator ==(Object other) {
+  bool operator ==(final Object other) {
     if (other.runtimeType != runtimeType) {
       return false;
     }
@@ -144,22 +143,23 @@ class PathFromRoot {
   @override
   final int hashCode;
 
-  String toShortString({String? delimiter, bool inverted = false}) {
-    return _asString(
-      data: path.map((e) => e.className).toList(),
-      delimiter: _delimiter(
-        delimiter: delimiter,
-        inverted: inverted,
-        isLong: false,
-      ),
+  String toShortString({
+    final String? delimiter,
+    final bool inverted = false,
+  }) => _asString(
+    data: path.map((final e) => e.className).toList(),
+    delimiter: _delimiter(
+      delimiter: delimiter,
       inverted: inverted,
-    );
-  }
+      isLong: false,
+    ),
+    inverted: inverted,
+  );
 
   String toLongString({
-    String? delimiter,
-    bool inverted = false,
-    bool hideStandard = false,
+    final String? delimiter,
+    final bool inverted = false,
+    final bool hideStandard = false,
   }) {
     final List<String> data;
     bool justAddedEllipsis = false;
@@ -177,7 +177,7 @@ class PathFromRoot {
         }
       }
     } else {
-      data = classes.map((e) => e.fullName).toList();
+      data = classes.map((final e) => e.fullName).toList();
     }
 
     return _asString(
@@ -192,9 +192,9 @@ class PathFromRoot {
   }
 
   static String _delimiter({
-    required String? delimiter,
-    required bool inverted,
-    required bool isLong,
+    required final String? delimiter,
+    required final bool inverted,
+    required final bool isLong,
   }) {
     if (delimiter != null) return delimiter;
     if (isLong) {
@@ -205,8 +205,8 @@ class PathFromRoot {
 
   static String _asString({
     required List<String> data,
-    required String delimiter,
-    required bool inverted,
+    required final String delimiter,
+    required final bool inverted,
   }) {
     assert(() {
       debugUsage.stringified++;

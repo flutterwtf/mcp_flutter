@@ -98,16 +98,15 @@ class ChromeTraceEvent {
   final Map<String, Object?>? args;
 
   ChromeTraceEvent copy({
-    String? name,
-    String? category,
-    String? phase,
-    int? processId,
-    int? threadId,
-    int? duration,
-    int? timestampMicros,
-    Map<String, dynamic>? args,
-  }) {
-    return ChromeTraceEvent({
+    final String? name,
+    final String? category,
+    final String? phase,
+    final int? processId,
+    final int? threadId,
+    final int? duration,
+    final int? timestampMicros,
+    final Map<String, dynamic>? args,
+  }) => ChromeTraceEvent({
       nameKey: name ?? this.name,
       categoryKey: category ?? this.category,
       phaseKey: phase ?? this.phase,
@@ -117,7 +116,6 @@ class ChromeTraceEvent {
       timestampKey: timestampMicros ?? this.timestampMicros,
       argsKey: args ?? this.args,
     });
-  }
 
   @override
   String toString() =>

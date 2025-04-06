@@ -2,11 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file or at https://developers.google.com/open-source/licenses/bsd.
 
+import 'package:devtools_mcp_extension/core/devtools_core/shared/memory/class_name.dart';
+import 'package:devtools_mcp_extension/core/devtools_core/shared/memory/heap_data.dart';
+import 'package:devtools_mcp_extension/core/devtools_core/shared/memory/simple_items.dart';
 import 'package:flutter/foundation.dart';
-
-import 'class_name.dart';
-import 'heap_data.dart';
-import 'simple_items.dart';
 
 /// Object in a heap snapshot.
 @immutable
@@ -21,7 +20,7 @@ class HeapObject {
   /// located in the heap.
   final int? index;
 
-  Iterable<int>? _refs(RefDirection direction) {
+  Iterable<int>? _refs(final RefDirection direction) {
     final theIndex = index;
     if (theIndex == null) return null;
 
@@ -33,10 +32,10 @@ class HeapObject {
     }
   }
 
-  List<HeapObject> references(RefDirection direction) =>
-      (_refs(direction) ?? []).map((i) => HeapObject(heap, index: i)).toList();
+  List<HeapObject> references(final RefDirection direction) =>
+      (_refs(direction) ?? []).map((final i) => HeapObject(heap, index: i)).toList();
 
-  int? countOfReferences(RefDirection? direction) =>
+  int? countOfReferences(final RefDirection? direction) =>
       direction == null ? null : _refs(direction)?.length;
 
   HeapObject withoutObject() {

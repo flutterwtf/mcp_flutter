@@ -25,7 +25,7 @@ class MemoryFootprint {
 const heapRootIndex = 1;
 
 extension HeapSnapshotGraphSerialization on HeapSnapshotGraph {
-  static Future<HeapSnapshotGraph> load(XFile file) async {
+  static Future<HeapSnapshotGraph> load(final XFile file) async {
     final bytes = await file.readAsBytes();
     final data = bytes.buffer.asByteData();
     return HeapSnapshotGraph.fromChunks([data]);

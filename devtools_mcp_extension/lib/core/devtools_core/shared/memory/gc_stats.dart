@@ -22,8 +22,8 @@ class GCStats with Serializable {
   });
 
   factory GCStats.parse({
-    required String heap,
-    required Map<String, dynamic> json,
+    required final String heap,
+    required final Map<String, dynamic> json,
   }) {
     final collections = json[collectionsKey] as int;
     return GCStats(
@@ -35,15 +35,13 @@ class GCStats with Serializable {
     );
   }
 
-  factory GCStats.fromJson(Map<String, dynamic> json) {
-    return GCStats(
+  factory GCStats.fromJson(final Map<String, dynamic> json) => GCStats(
       heap: json[_Json.heap] as String,
       usage: json[_Json.usage] as int,
       capacity: json[_Json.capacity] as int,
       collections: json[_Json.collections] as int,
       averageCollectionTime: json[_Json.averageCollectionTime] as double,
     );
-  }
 
   @override
   Map<String, dynamic> toJson() => {

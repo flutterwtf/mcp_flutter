@@ -11,11 +11,11 @@ import 'package:vm_service/vm_service.dart';
 
 /// Encodes and decodes a value of type [T].
 abstract class EncodeDecode<T> {
-  Object toEncodable(T value);
+  Object toEncodable(final T value);
 
-  T decode(Object value);
+  T decode(final Object value);
 
-  T? decodeNullable(Object? value) {
+  T? decodeNullable(final Object? value) {
     if (value == null) return null;
     return decode(value);
   }
@@ -28,9 +28,7 @@ class HeapSnapshotGraphEncodeDecode extends EncodeDecode<HeapSnapshotGraph> {
   static final instance = HeapSnapshotGraphEncodeDecode._();
 
   @override
-  Object toEncodable(HeapSnapshotGraph value) {
-    return value.toChunks();
-  }
+  Object toEncodable(final HeapSnapshotGraph value) => value.toChunks();
 
   @override
   HeapSnapshotGraph decode(Object value) {
@@ -38,7 +36,7 @@ class HeapSnapshotGraphEncodeDecode extends EncodeDecode<HeapSnapshotGraph> {
     if (value is String) value = jsonDecode(value);
     value = value as List;
     final chunks =
-        value.map((s) => ByteDataEncodeDecode.instance.decode(s)).toList();
+        value.map(ByteDataEncodeDecode.instance.decode).toList();
     return HeapSnapshotGraph.fromChunks(chunks);
   }
 }
@@ -50,7 +48,7 @@ class ByteDataEncodeDecode extends EncodeDecode<ByteData> {
   static final instance = ByteDataEncodeDecode._();
 
   @override
-  Object toEncodable(ByteData value) {
+  Object toEncodable(final ByteData value) {
     final list = value.buffer.asUint8List();
     return base64Encode(list);
   }
@@ -71,12 +69,10 @@ class DateTimeEncodeDecode extends EncodeDecode<DateTime> {
   static final instance = DateTimeEncodeDecode._();
 
   @override
-  Object toEncodable(DateTime value) {
-    return value.microsecondsSinceEpoch;
-  }
+  Object toEncodable(final DateTime value) => value.microsecondsSinceEpoch;
 
   @override
-  DateTime decode(Object value) {
+  DateTime decode(final Object value) {
     if (value is DateTime) return value;
     return DateTime.fromMicrosecondsSinceEpoch(value as int);
   }
@@ -89,12 +85,10 @@ class IsolateRefEncodeDecode extends EncodeDecode<IsolateRef> {
   static final instance = IsolateRefEncodeDecode._();
 
   @override
-  Object toEncodable(IsolateRef value) {
-    return value.toJson();
-  }
+  Object toEncodable(final IsolateRef value) => value.toJson();
 
   @override
-  IsolateRef decode(Object value) {
+  IsolateRef decode(final Object value) {
     if (value is IsolateRef) return value;
     final json = value as Map<String, dynamic>;
     return IsolateRef.parse(json)!;
@@ -108,12 +102,10 @@ class ClassRefEncodeDecode extends EncodeDecode<ClassRef> {
   static final instance = ClassRefEncodeDecode._();
 
   @override
-  Object toEncodable(ClassRef value) {
-    return value.toJson();
-  }
+  Object toEncodable(final ClassRef value) => value.toJson();
 
   @override
-  ClassRef decode(Object value) {
+  ClassRef decode(final Object value) {
     if (value is ClassRef) return value;
     final json = value as Map<String, dynamic>;
     return ClassRef.parse(json)!;
@@ -121,8 +113,7 @@ class ClassRefEncodeDecode extends EncodeDecode<ClassRef> {
 }
 
 /// Function to be passed to [jsonEncode] to enable encoding for more types.
-Object? toEncodable(Object? value) {
-  return switch (value) {
+Object? toEncodable(final Object? value) => switch (value) {
     null => null,
     final HeapSnapshotGraph value => HeapSnapshotGraphEncodeDecode.instance
         .toEncodable(value),
@@ -139,4 +130,3 @@ Object? toEncodable(Object? value) {
       // To see the actual type, put breakpoint here:
       throw StateError('Unsupported type: ${value.runtimeType}'),
   };
-}

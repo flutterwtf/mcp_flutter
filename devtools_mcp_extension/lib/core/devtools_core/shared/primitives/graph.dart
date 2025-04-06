@@ -54,26 +54,26 @@ class GraphNode {
 
   /// Returns the percentage of this node's predecessor edges that connect to
   /// [node].
-  double predecessorEdgePercentage(GraphNode node) {
+  double predecessorEdgePercentage(final GraphNode node) {
     if (predecessorEdgeCounts.keys.contains(node)) {
       final totalEdgeCount = predecessorEdgeCounts.values.sum;
       return predecessorEdgeCounts[node]! / totalEdgeCount;
     }
-    return 0.0;
+    return 0;
   }
 
   /// Returns the percentage of this node's sucessor edges that connect to
   /// [node].
-  double successorEdgePercentage(GraphNode node) {
+  double successorEdgePercentage(final GraphNode node) {
     if (successorEdgeCounts.keys.contains(node)) {
       final totalEdgeCount = successorEdgeCounts.values.sum;
       return successorEdgeCounts[node]! / totalEdgeCount;
     }
-    return 0.0;
+    return 0;
   }
 
   /// Create outgoing edge from `this` node to the given node [n].
-  void outgoingEdge(GraphNode n, {int edgeWeight = 1}) {
+  void outgoingEdge(final GraphNode n, {final int edgeWeight = 1}) {
     n.predecessors.add(this);
     final predEdgeCount = n.predecessorEdgeCounts[this] ?? 0;
     n.predecessorEdgeCounts[this] = predEdgeCount + edgeWeight;

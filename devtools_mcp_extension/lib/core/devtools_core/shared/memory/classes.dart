@@ -4,11 +4,10 @@
 
 import 'package:collection/collection.dart';
 import 'package:devtools_mcp_extension/core/devtools_core/shared/memory/class_filter.dart';
-import 'package:flutter/foundation.dart';
-import 'package:vm_service/vm_service.dart';
-
 import 'package:devtools_mcp_extension/core/devtools_core/shared/memory/class_name.dart';
 import 'package:devtools_mcp_extension/core/devtools_core/shared/memory/retaining_path.dart';
+import 'package:flutter/foundation.dart';
+import 'package:vm_service/vm_service.dart';
 
 /// Statistical size-information about objects.
 class ObjectSetStats {

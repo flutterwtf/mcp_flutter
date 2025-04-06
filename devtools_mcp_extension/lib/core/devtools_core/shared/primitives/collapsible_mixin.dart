@@ -30,7 +30,7 @@ mixin CollapsibleAnimationMixin<T extends StatefulWidget>
   bool shouldShow();
 
   /// Callback triggered when whether the collapsible is expanded changes.
-  void onExpandChanged(bool expanded);
+  void onExpandChanged(final bool expanded);
 
   /// Whether the collapsible is currently expanded.
   bool get isExpanded;
@@ -42,7 +42,7 @@ mixin CollapsibleAnimationMixin<T extends StatefulWidget>
     expandCurve = defaultCurvedAnimation(expandController);
     expandArrowAnimation = Tween<double>(
       begin: 0.75,
-      end: 1.0,
+      end: 1,
     ).animate(expandCurve);
     if (isExpanded) {
       expandController.value = 1.0;
@@ -55,7 +55,7 @@ mixin CollapsibleAnimationMixin<T extends StatefulWidget>
     super.dispose();
   }
 
-  void setExpanded(bool expanded) {
+  void setExpanded(final bool expanded) {
     setState(() {
       if (expanded) {
         expandController.forward();
@@ -67,7 +67,7 @@ mixin CollapsibleAnimationMixin<T extends StatefulWidget>
   }
 
   @override
-  void didUpdateWidget(Widget oldWidget) {
+  void didUpdateWidget(final Widget oldWidget) {
     super.didUpdateWidget(oldWidget as T);
     if (isExpanded) {
       expandController.forward();
