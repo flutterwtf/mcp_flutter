@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_catches_without_on_clauses
+
 import 'package:devtools_mcp_extension/common_imports.dart';
 import 'package:devtools_mcp_extension/services/custom_devtools_service.dart';
 import 'package:devtools_mcp_extension/services/forwarding_rpc_listener.dart';
@@ -66,25 +68,25 @@ class RpcClientsOrchestrator with ChangeNotifier {
   /// {@macro rpc_clients_orchestrator}
   RpcClientsOrchestrator() {
     // Initialize the TypeScript client
-    _serviceBridge = DevtoolsService();
-    _customDevtoolsService = CustomDevtoolsService(_serviceBridge);
+    _serviceBridge = DartVmDevtoolsService();
+    customDevtoolsService = CustomDevtoolsService(_serviceBridge);
 
     // Initialize the forwarding service
     _forwardingClient = ForwardingClient(ForwardingClientType.flutter);
     _forwardingRpcListener = ForwardingRpcListener(
       forwardingClient: _forwardingClient,
       devtoolsService: _serviceBridge,
-      customDevtoolsService: _customDevtoolsService,
+      customDevtoolsService: customDevtoolsService,
     );
   }
 
-  late final DevtoolsService _serviceBridge;
-  late final CustomDevtoolsService _customDevtoolsService;
+  late final DartVmDevtoolsService _serviceBridge;
+  late final CustomDevtoolsService customDevtoolsService;
   late final ForwardingClient _forwardingClient;
   late final ForwardingRpcListener _forwardingRpcListener;
 
   /// Service extension bridge for Flutter VM interaction
-  DevtoolsService get serviceBridge => _serviceBridge;
+  DartVmDevtoolsService get serviceBridge => _serviceBridge;
 
   /// Forwarding service for communication with flutter_inspector
   ForwardingClient get forwardingService => _forwardingClient;
@@ -93,7 +95,9 @@ class RpcClientsOrchestrator with ChangeNotifier {
   Future<void> initializeAll() async {
     // Connect to VM service
     await _serviceBridge.connectToVmService();
-    await connectToForwardingService();
+    const forwardingServiceEnabled = false;
+    if (forwardingServiceEnabled) await connectToForwardingService();
+    await customDevtoolsService.init();
   }
 
   /// Connect to the Flutter VM service
@@ -114,10 +118,14 @@ class RpcClientsOrchestrator with ChangeNotifier {
     final h = host ?? Envs.forwardingServer.host;
     final p = port ?? Envs.forwardingServer.port;
     final pth = path ?? Envs.forwardingServer.path;
-
-    await _forwardingClient.connect(h, p, path: pth);
-    _forwardingRpcListener.init();
-    notifyListeners();
+    try {
+      await _forwardingClient.connect(h, p, path: pth);
+      _forwardingRpcListener.init();
+      notifyListeners();
+    } catch (e, stackTrace) {
+      print(e);
+      print(stackTrace);
+    }
   }
 
   /// Disconnect from the forwarding service

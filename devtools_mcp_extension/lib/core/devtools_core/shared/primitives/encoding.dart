@@ -33,10 +33,15 @@ class HeapSnapshotGraphEncodeDecode extends EncodeDecode<HeapSnapshotGraph> {
   @override
   HeapSnapshotGraph decode(Object value) {
     if (value is HeapSnapshotGraph) return value;
+    // ignore: parameter_assignments
     if (value is String) value = jsonDecode(value);
+    // ignore: parameter_assignments
     value = value as List;
     final chunks =
-        value.map(ByteDataEncodeDecode.instance.decode).toList();
+        value
+            // ignore: unnecessary_lambdas
+            .map((final e) => ByteDataEncodeDecode.instance.decode(e))
+            .toList();
     return HeapSnapshotGraph.fromChunks(chunks);
   }
 }
@@ -56,6 +61,7 @@ class ByteDataEncodeDecode extends EncodeDecode<ByteData> {
   @override
   ByteData decode(Object value) {
     if (value is ByteData) return value;
+    // ignore: parameter_assignments
     value = value as String;
     final list = base64Decode(value);
     return ByteData.sublistView(Uint8List.fromList(list));
@@ -114,19 +120,18 @@ class ClassRefEncodeDecode extends EncodeDecode<ClassRef> {
 
 /// Function to be passed to [jsonEncode] to enable encoding for more types.
 Object? toEncodable(final Object? value) => switch (value) {
-    null => null,
-    final HeapSnapshotGraph value => HeapSnapshotGraphEncodeDecode.instance
-        .toEncodable(value),
-    final ByteData value => ByteDataEncodeDecode.instance.toEncodable(value),
-    final DateTime value => DateTimeEncodeDecode.instance.toEncodable(value),
-    final IsolateRef value => IsolateRefEncodeDecode.instance.toEncodable(
-      value,
-    ),
-    final ClassRef value => ClassRefEncodeDecode.instance.toEncodable(value),
-    final Serializable value => value.toJson(),
-    _ =>
-      // For some reasons the failures show different error:
-      // `Converting object to an encodable object failed: Instance of 'some other type'`.
-      // To see the actual type, put breakpoint here:
-      throw StateError('Unsupported type: ${value.runtimeType}'),
-  };
+  null => null,
+  final HeapSnapshotGraph value => HeapSnapshotGraphEncodeDecode.instance
+      .toEncodable(value),
+  final ByteData value => ByteDataEncodeDecode.instance.toEncodable(value),
+  final DateTime value => DateTimeEncodeDecode.instance.toEncodable(value),
+  final IsolateRef value => IsolateRefEncodeDecode.instance.toEncodable(value),
+  final ClassRef value => ClassRefEncodeDecode.instance.toEncodable(value),
+  final Serializable value => value.toJson(),
+  _ =>
+    // For some reasons the failures show different error:
+    // `Converting object to an encodable object failed: Instance of
+    // 'some other type'`.
+    // To see the actual type, put breakpoint here:
+    throw StateError('Unsupported type: ${value.runtimeType}'),
+};

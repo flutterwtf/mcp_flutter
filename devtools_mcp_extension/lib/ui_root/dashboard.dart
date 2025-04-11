@@ -1,7 +1,6 @@
 // ignore_for_file: avoid_catches_without_on_clauses
 
 import 'package:devtools_mcp_extension/common_imports.dart';
-import 'package:devtools_mcp_extension/services/custom_devtools_service.dart';
 import 'package:mcp_dart_forwarding_client/mcp_dart_forwarding_client.dart';
 
 /// {@template rpc_connection_status}
@@ -78,7 +77,7 @@ class VmServiceConnectionStatus extends StatelessWidget {
   const VmServiceConnectionStatus({required this.serviceBridge, super.key});
 
   /// The service bridge to monitor
-  final DevtoolsService serviceBridge;
+  final DartVmDevtoolsService serviceBridge;
 
   @override
   Widget build(final BuildContext context) {
@@ -347,7 +346,7 @@ class _VmServiceBridgeCard extends StatefulWidget {
   const _VmServiceBridgeCard({required this.serviceBridge});
 
   /// The service bridge to display
-  final DevtoolsService serviceBridge;
+  final DartVmDevtoolsService serviceBridge;
 
   @override
   State<_VmServiceBridgeCard> createState() => _VmServiceBridgeCardState();
@@ -375,6 +374,7 @@ class _VmServiceBridgeCardState extends State<_VmServiceBridgeCard> {
   Widget build(final BuildContext context) {
     // Get the connected state from service manager for real-time updates
     final connectedState = widget.serviceBridge.serviceManager.connectedState;
+    final orchestrator = context.watch<RpcClientsOrchestrator>();
 
     return AnimatedBuilder(
       animation: connectedState,
@@ -481,9 +481,10 @@ class _VmServiceBridgeCardState extends State<_VmServiceBridgeCard> {
                       ),
                     FilledButton.tonal(
                       onPressed: () async {
-                        await CustomDevtoolsService(
-                          widget.serviceBridge,
-                        ).getVisualErrors({});
+                        // await orchestrator.customDevtoolsService
+                        //     .getVisualErrors({});
+                        await orchestrator.customDevtoolsService
+                            .getVisualErrors({});
                       },
                       child: const Text('Custom Method'),
                     ),

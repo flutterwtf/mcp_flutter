@@ -12,39 +12,42 @@ import 'package:devtools_mcp_extension/services/object_group_manager.dart';
 import 'package:devtools_shared/service.dart' as devtools_shared;
 import 'package:vm_service/vm_service.dart';
 
-const freelyForwardingExtensions = [
-  'ext.flutter.inspector.structuredErrors',
-  'ext.flutter.inspector.show',
-  'ext.flutter.inspector.trackRebuildDirtyWidgets',
-  'ext.flutter.inspector.widgetLocationIdMap',
-  'ext.flutter.inspector.trackRepaintWidgets',
-  'ext.flutter.inspector.disposeAllGroups',
-  'ext.flutter.inspector.disposeGroup',
-  'ext.flutter.inspector.isWidgetTreeReady',
-  'ext.flutter.inspector.disposeId',
-  'ext.flutter.inspector.setPubRootDirectories',
-  'ext.flutter.inspector.addPubRootDirectories',
-  'ext.flutter.inspector.removePubRootDirectories',
-  'ext.flutter.inspector.getPubRootDirectories',
-  'ext.flutter.inspector.setSelectionById',
-  'ext.flutter.inspector.getParentChain',
-  'ext.flutter.inspector.getProperties',
-  'ext.flutter.inspector.getChildren',
-  'ext.flutter.inspector.getChildrenSummaryTree',
-  'ext.flutter.inspector.getChildrenDetailsSubtree',
-  // 'ext.flutter.inspector.getRootWidget', // replaced with custom method
-  'ext.flutter.inspector.getRootWidgetSummaryTree',
-  'ext.flutter.inspector.getRootWidgetSummaryTreeWithPreviews',
-  'ext.flutter.inspector.getRootWidgetTree',
-  'ext.flutter.inspector.getDetailsSubtree',
-  'ext.flutter.inspector.getSelectedWidget',
-  'ext.flutter.inspector.getSelectedSummaryWidget',
-  'ext.flutter.inspector.isWidgetCreationTracked',
-  // 'ext.flutter.inspector.screenshot', // replaced with _flutter.screenshot
-  'ext.flutter.inspector.getLayoutExplorerNode',
-  'ext.flutter.inspector.setFlexFit',
-  'ext.flutter.inspector.setFlexFactor',
-  'ext.flutter.inspector.setFlexProperties',
+final freelyForwardingExtensions =
+    _freelyForwardingExtensions.map((final e) => e.name).toList();
+
+const _freelyForwardingExtensions = [
+  WidgetInspectorServiceExtensions.structuredErrors,
+  WidgetInspectorServiceExtensions.show,
+  WidgetInspectorServiceExtensions.trackRebuildDirtyWidgets,
+  WidgetInspectorServiceExtensions.widgetLocationIdMap,
+  WidgetInspectorServiceExtensions.trackRepaintWidgets,
+  WidgetInspectorServiceExtensions.disposeAllGroups,
+  WidgetInspectorServiceExtensions.disposeGroup,
+  WidgetInspectorServiceExtensions.isWidgetTreeReady,
+  WidgetInspectorServiceExtensions.disposeId,
+  WidgetInspectorServiceExtensions.setPubRootDirectories,
+  WidgetInspectorServiceExtensions.addPubRootDirectories,
+  WidgetInspectorServiceExtensions.removePubRootDirectories,
+  WidgetInspectorServiceExtensions.getPubRootDirectories,
+  WidgetInspectorServiceExtensions.setSelectionById,
+  WidgetInspectorServiceExtensions.getParentChain,
+  WidgetInspectorServiceExtensions.getProperties,
+  WidgetInspectorServiceExtensions.getChildren,
+  WidgetInspectorServiceExtensions.getChildrenSummaryTree,
+  WidgetInspectorServiceExtensions.getChildrenDetailsSubtree,
+  // 'getRootWidget', // replaced with custom method
+  WidgetInspectorServiceExtensions.getRootWidgetSummaryTree,
+  WidgetInspectorServiceExtensions.getRootWidgetSummaryTreeWithPreviews,
+  WidgetInspectorServiceExtensions.getRootWidgetTree,
+  WidgetInspectorServiceExtensions.getDetailsSubtree,
+  WidgetInspectorServiceExtensions.getSelectedWidget,
+  WidgetInspectorServiceExtensions.getSelectedSummaryWidget,
+  WidgetInspectorServiceExtensions.isWidgetCreationTracked,
+  // 'screenshot', // replaced with _flutter.screenshot
+  WidgetInspectorServiceExtensions.getLayoutExplorerNode,
+  WidgetInspectorServiceExtensions.setFlexFit,
+  WidgetInspectorServiceExtensions.setFlexFactor,
+  WidgetInspectorServiceExtensions.setFlexProperties,
 ];
 
 /// analogue of [ServiceExtensionResponse]
@@ -86,9 +89,9 @@ class RPCResponse {
 /// This simplified version focuses only on VM service initialization
 /// and handling basic service functions.
 /// {@endtemplate}
-class DevtoolsService with ChangeNotifier {
+class DartVmDevtoolsService with ChangeNotifier {
   /// {@macro service_extension_bridge}
-  DevtoolsService();
+  DartVmDevtoolsService();
 
   /// The service manager instance
   final _serviceManager = ServiceManager();
@@ -198,7 +201,7 @@ class DevtoolsService with ChangeNotifier {
   }
 }
 
-extension DevtoolsServiceExtension on DevtoolsService {
+extension DevtoolsServiceExtension on DartVmDevtoolsService {
   /// Take a screenshot of the current UI
   Future<RPCResponse> takeScreenshot(final Map<String, dynamic> params) async {
     try {

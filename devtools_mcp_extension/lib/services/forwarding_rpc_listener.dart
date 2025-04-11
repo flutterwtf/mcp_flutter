@@ -17,7 +17,7 @@ class ForwardingRpcListener {
   });
 
   final ForwardingClient forwardingClient;
-  final DevtoolsService devtoolsService;
+  final DartVmDevtoolsService devtoolsService;
   final CustomDevtoolsService customDevtoolsService;
 
   void init() {

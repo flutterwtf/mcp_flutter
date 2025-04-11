@@ -371,56 +371,6 @@ class DartObjectNode extends TreeNode<DartObjectNode> {
     return '$name - $value';
   }
 
-  /// Selects the object in the Flutter Widget inspector.
-  ///
-  /// Returns whether the inspector selection was changed
-  Future<bool> inspectWidget() async {
-    if (ref?.instanceRef == null) {
-      return false;
-    }
-    final inspectorService = serviceConnection.inspectorService;
-    if (inspectorService == null) {
-      return false;
-    }
-    // Group name doesn't matter in this case.
-    final group = inspectorService.createObjectGroup('inspect-variables');
-    if (group is ObjectGroup) {
-      try {
-        return await group.setSelection(ref!);
-      } catch (e) {
-        // This is somewhat unexpected. The inspectorRef must have been disposed.
-        return false;
-      } finally {
-        // Not really needed as we shouldn't actually be allocating anything.
-        unawaited(group.dispose());
-      }
-    }
-    return false;
-  }
-
-  Future<bool> get isInspectable async {
-    if (_isInspectable != null) return _isInspectable!;
-
-    if (ref == null) return false;
-    final inspectorService = serviceConnection.inspectorService;
-    if (inspectorService == null) {
-      return false;
-    }
-
-    // Group name doesn't matter in this case.
-    final group = inspectorService.createObjectGroup('inspect-variables');
-
-    try {
-      _isInspectable = await group.isInspectable(ref!);
-    } catch (e) {
-      _isInspectable = false;
-      // This is somewhat unexpected. The inspectorRef must have been disposed.
-    } finally {
-      // Not really needed as we shouldn't actually be allocating anything.
-      unawaited(group.dispose());
-    }
-    return _isInspectable ?? false;
-  }
 
   bool? _isInspectable;
 

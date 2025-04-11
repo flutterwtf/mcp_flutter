@@ -327,38 +327,6 @@ class InspectorService extends InspectorServiceBase {
   void _onRootDirectoriesChanged(final List<String> directories) {
     _rootDirectories.value = directories;
     _rootPackagePrefixes = [];
-    for (final directory in directories) {
-      // TODO(jacobr): add an API to DDS to provide the actual mapping to and
-      // from absolute file paths to packages instead of having to guess it
-      // here.
-      assert(!directory.startsWith('package:'));
-
-      final parts =
-          directory
-              .split('/')
-              .where((final element) => element.isNotEmpty)
-              .toList();
-      final libIndex = parts.lastIndexOf('lib');
-      final path = libIndex > 0 ? parts.sublist(0, libIndex) : parts;
-      // Special case handling of bazel packages.
-      if (isGoogle3Path(path)) {
-        var packageParts = stripGoogle3(path);
-        // A well formed third_party dart package should be in a directory of
-        // the form
-        // third_party/dart/packageName                    (package:packageName)
-        // or
-        // third_party/dart_src/long/package/name    (package:long.package.name)
-        // so its path should be at minimum depth 3.
-        const minThirdPartyPathDepth = 3;
-        if (packageParts.first == 'third_party' &&
-            packageParts.length >= minThirdPartyPathDepth) {
-          assert(packageParts[1] == 'dart' || packageParts[1] == 'dart_src');
-          packageParts = packageParts.sublist(2);
-        }
-        final google3PackageName = packageParts.join('.');
-        _rootPackagePrefixes.add('$google3PackageName.');
-      }
-    }
   }
 
   Future<void> addPubRootDirectories(final List<String> rootDirectories) async {
