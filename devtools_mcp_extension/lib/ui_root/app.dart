@@ -1,7 +1,5 @@
 // ignore_for_file: avoid_catches_without_on_clauses
 
-import 'dart:async';
-
 import 'package:devtools_mcp_extension/common_imports.dart';
 
 /// {@template inspector_app}
@@ -67,7 +65,12 @@ class _InspectorAppState extends State<InspectorApp> {
           );
         }
 
-        final rpcOrchestrator = snapshot.data!;
+        final rpcOrchestrator = snapshot.data;
+        if (rpcOrchestrator == null) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
 
         return ChangeNotifierProvider.value(
           value: rpcOrchestrator,

@@ -6,9 +6,9 @@
 /// @docImport 'primitives/instance_ref.dart';
 library;
 
-import 'package:devtools_mcp_extension/core/devtools_core/shared//memory/heap_object.dart';
-import 'package:devtools_mcp_extension/core/devtools_core/shared//memory/simple_items.dart';
 import 'package:devtools_mcp_extension/core/devtools_core/shared/diagnostics/diagnostics_node.dart';
+import 'package:devtools_mcp_extension/core/devtools_core/shared/memory/heap_object.dart';
+import 'package:devtools_mcp_extension/core/devtools_core/shared/memory/simple_items.dart';
 import 'package:devtools_mcp_extension/core/devtools_core/shared/utils/vm_utils.dart';
 import 'package:vm_service/vm_service.dart';
 

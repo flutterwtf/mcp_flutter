@@ -69,7 +69,7 @@ class CustomDevtoolsService {
     final group = _objectGroupManager.next;
     final response = await vmService.callServiceExtension(
       'ext.flutter.inspector.'
-      '${WidgetInspectorServiceExtensions.getRootWidgetTree.name}',
+      '${WidgetInspectorServiceExtensions.setFlexFit.name}',
       isolateId: isolateId,
       args: {
         'objectGroup': group.groupName,
@@ -109,15 +109,7 @@ class CustomDevtoolsService {
     }
 
     final rootNode = await findNodeWithId(rootNodes, errors.first.renderFlexId);
-    // final layoutExplorerNode = await vmService.callServiceExtension(
-    //   'ext.flutter.inspector.${WidgetInspectorServiceExtensions.getLayoutExplorerNode.name}',
-    //   isolateId: isolateId,
-    //   args: {
-    //     'objectGroup': group.groupName,
-    //     'id': rootNode.valueRef.id,
-    //     'subtreeDepth': '-1',
-    //   },
-    // );
+
     print(jsonEncode(rootNode?.json));
 
     return RPCResponse.successMap({'errors': errors});
