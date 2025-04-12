@@ -2,10 +2,10 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file or at https://developers.google.com/open-source/licenses/bsd.
 
+import 'package:devtools_app_shared/service.dart';
 import 'package:devtools_mcp_extension/core/devtools_core/shared/diagnostics/primitives/instance_ref.dart';
 import 'package:flutter/foundation.dart';
 import 'package:vm_service/vm_service.dart';
-import 'package:xsoulspace_foundation/xsoulspace_foundation.dart';
 
 abstract class InspectorObjectGroupApi<T extends DiagnosticableTree>
     implements Disposable {

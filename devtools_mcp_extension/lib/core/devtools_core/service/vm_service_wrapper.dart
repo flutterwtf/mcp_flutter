@@ -16,8 +16,6 @@ import 'package:dap/dap.dart' as dap;
 import 'package:dds_service_extensions/dap.dart';
 import 'package:dds_service_extensions/dds_service_extensions.dart';
 import 'package:devtools_app_shared/service.dart';
-import 'package:devtools_mcp_extension/core/devtools_core/screens/vm_developer/vm_service_private_extensions.dart';
-import 'package:devtools_mcp_extension/core/devtools_core/service/json_to_service_cache.dart';
 import 'package:devtools_mcp_extension/core/devtools_core/shared/primitives/utils.dart';
 import 'package:devtools_shared/devtools_shared.dart';
 import 'package:flutter/foundation.dart';
@@ -92,7 +90,7 @@ class VmServiceWrapper extends VmService {
 
   // A local cache of "fake" service objects. Used to convert JSON objects to
   // VM service response formats to be used with APIs that require them.
-  final fakeServiceCache = JsonToServiceCache();
+  // final fakeServiceCache = JsonToServiceCache();
 
   /// A counter for unique ids to add to each of a future's messages.
   static var _logIdCounter = 0;
@@ -138,7 +136,7 @@ class VmServiceWrapper extends VmService {
       // running with VM developer mode enabled. This data isn't accessible
       // in non-VM developer mode, so not requesting the code profile will
       // save on space and network usage.
-      '_code': preferences.vmDeveloperModeEnabled.value,
+      // '_code': preferences.vmDeveloperModeEnabled.value,
     },
   ).then((final e) => e as CpuSamples);
 
@@ -150,14 +148,14 @@ class VmServiceWrapper extends VmService {
     final int? count,
     final String? idZoneId,
   }) {
-    final cachedObj = fakeServiceCache.getObject(
-      objectId: objectId,
-      offset: offset,
-      count: count,
-    );
-    if (cachedObj != null) {
-      return Future.value(cachedObj);
-    }
+    // final cachedObj = fakeServiceCache.getObject(
+    //   objectId: objectId,
+    //   offset: offset,
+    //   count: count,
+    // );
+    // if (cachedObj != null) {
+    //   return Future.value(cachedObj);
+    // }
     return super.getObject(isolateId, objectId, offset: offset, count: count);
   }
 
@@ -407,12 +405,12 @@ class VmServiceWrapper extends VmService {
     parser: InstanceRef.parse,
   );
 
-  Future<ObjectStore?> getObjectStore(final String isolateId) =>
-      _privateRpcInvoke(
-        'getObjectStore',
-        isolateId: isolateId,
-        parser: ObjectStore.parse,
-      );
+  // Future<ObjectStore?> getObjectStore(final String isolateId) =>
+  //     _privateRpcInvoke(
+  //       'getObjectStore',
+  //       isolateId: isolateId,
+  //       parser: ObjectStore.parse,
+  //     );
 
   Future<dap.VariablesResponseBody?> dapVariablesRequest(
     final dap.VariablesArguments args,
@@ -447,7 +445,7 @@ class VmServiceWrapper extends VmService {
     final String command, {
     required final Object? args,
   }) async {
-    if (!FeatureFlags.dapDebugging) return null;
+    // if (!FeatureFlags.dapDebugging) return null;
 
     // Warn the user if there is no DDS connection.
     if (!_ddsSupported) {

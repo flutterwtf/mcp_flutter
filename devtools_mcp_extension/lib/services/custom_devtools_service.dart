@@ -28,6 +28,11 @@ class CustomDevtoolsService {
       isolate: devtoolsService.serviceManager.isolateManager.mainIsolate,
     );
 
+    await devtoolsService.callServiceExtension(
+      'ext.flutter.inspector.${WidgetInspectorServiceExtensions.structuredErrors.name}',
+      {},
+    );
+
     await _flutterErrorMonitor.initialize();
   }
 
@@ -51,23 +56,42 @@ class CustomDevtoolsService {
     if (isolateId == null) {
       return RPCResponse.error('No main isolate available');
     }
+    final errors = _flutterErrorMonitor.errors;
+
+    print(jsonEncode(errors.map((final e) => e.toString()).toList()));
+
+    final objectRef = await vmService.getObject(
+      isolateId,
+      'RenderFlex#f8f6b', // The ID from RenderFlex#f8f6b
+    );
+    final group = _objectGroupManager.next;
+
+    // Get the diagnostic node using the object ID
+    final rootNode = RemoteDiagnosticsNode(
+      {'valueId': 'f8f6b'}, // The ID from RenderFlex#f8f6b
+      null,
+      false,
+      null,
+    );
+
+    final layoutExplorerNode = await vmService.callServiceExtension(
+      'ext.flutter.inspector.${WidgetInspectorServiceExtensions.getLayoutExplorerNode.name}',
+      isolateId: isolateId,
+      args: {
+        'objectGroup': group.groupName,
+        'id': rootNode.valueRef.id,
+        'subtreeDepth': '-1',
+      },
+    );
+    print(jsonEncode(objectRef.json));
+
+    return RPCResponse.successMap({'errors': errors});
 
     try {
       // Get a new object group for this operation
       final group = _objectGroupManager.next;
 
       try {
-        final errorsResponse = await vmService.callServiceExtension(
-          'ext.flutter.inspector.${WidgetInspectorServiceExtensions.structuredErrors.name}',
-          isolateId: isolateId,
-          args: {'objectGroup': group.groupName},
-        );
-
-        print(jsonEncode(errorsResponse));
-
-        final errors = _flutterErrorMonitor.errors;
-
-        return RPCResponse.successMap({'errors': errors});
         // Get the root widget tree with full details to analyze for errors
         final response = await vmService.callServiceExtension(
           'ext.flutter.inspector.getRootWidgetTree',

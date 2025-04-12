@@ -18,72 +18,120 @@ class FlutterErrorMonitor {
 
   /// Controller for broadcasting error events.
   final _errorController = StreamController<FlutterErrorEvent>.broadcast();
-  final _errors = <FlutterErrorEvent>[];
+  final _errors = <FlutterErrorEvent>{};
 
-  VmService get vmService => service.serviceManager.service!;
-  String get isolateId =>
-      service.serviceManager.isolateManager.mainIsolate.value!.id!;
+  VmService? get vmService => service.serviceManager.service;
+  String? get isolateId =>
+      service.serviceManager.isolateManager.mainIsolate.value?.id;
 
   /// Stream of error events.
   Stream<FlutterErrorEvent> get onError => _errorController.stream;
-  List<FlutterErrorEvent> get errors => _errors;
+  List<FlutterErrorEvent> get errors => _errors.toList();
 
   /// Initialize the error monitor.
   Future<void> initialize() async {
-    // Enable structured errors
-    await service.callServiceExtension(
-      'ext.flutter.inspector.${WidgetInspectorServiceExtensions.structuredErrors.name}',
-      {'enabled': 'true'},
-    );
+    final vm = vmService;
+    final id = isolateId;
+    if (vm == null || id == null) {
+      throw StateError('VM Service or Isolate ID not available');
+    }
 
-    // Setup stream listeners
-    await _setupErrorStreams();
+    try {
+      // Enable structured errors
+      await service.callServiceExtension(
+        'ext.flutter.inspector.${WidgetInspectorServiceExtensions.structuredErrors.name}',
+        {'enabled': 'true'},
+      );
+
+      // Setup stream listeners
+      await _setupErrorStreams();
+    } catch (e, stack) {
+      print('Error initializing FlutterErrorMonitor: $e\n$stack');
+      rethrow;
+    }
   }
 
   /// Setup the error stream listeners.
   Future<void> _setupErrorStreams() async {
-    await Future.wait([
-      vmService.streamListen('Debug'),
-      vmService.streamListen('Extension'),
-      vmService.streamListen('Stderr'),
-      vmService.streamListen('Stdout'),
-    ]);
+    final vm = vmService;
+    if (vm == null) {
+      throw StateError('VM Service not available');
+    }
 
-    vmService.onExtensionEvent.listen(_handleExtensionEvent);
-    vmService.onDebugEvent.listen(_handleDebugEvent);
+    vm.onDebugEvent.listen(
+      _handleDebugEvent,
+      onError:
+          (final e, final stack) =>
+              print('Error in debug event handler: $e\n$stack'),
+    );
+
+    vm.onStderrEvent.listen(
+      _handleExtensionEvent,
+      onError:
+          (final e, final stack) =>
+              print('Error in stderr event handler: $e\n$stack'),
+    );
+
+    vm.onStdoutEvent.listen(
+      _handleExtensionEvent,
+      onError:
+          (final e, final stack) =>
+              print('Error in stdout event handler: $e\n$stack'),
+    );
+
+    // Setup event listeners
+    vm.onExtensionEvent.listen(
+      _handleExtensionEvent,
+      onError:
+          (final e, final stack) =>
+              print('Error in extension event handler: $e\n$stack'),
+    );
+
+    vm.onDebugEvent.listen(
+      _handleDebugEvent,
+      onError:
+          (final e, final stack) =>
+              print('Error in debug event handler: $e\n$stack'),
+    );
   }
 
   /// Handle Flutter extension events.
   Future<void> _handleExtensionEvent(final Event event) async {
-    if (event.extensionKind == FlutterEvent.error) {
-      final data = event.extensionData?.data;
-      if (data is! Map<String, Object?>) return;
+    if (event.extensionKind != FlutterEvent.error) return;
 
-      final errorData = RemoteDiagnosticsNode(data, null, false, null);
+    final data = event.extensionData?.data;
+    if (data is! Map<String, Object?>) return;
 
-      final type = errorData.getStringMember('type') ?? 'Flutter Error';
-      final message = errorData.getStringMember('description') ?? '';
+    final errorData = RemoteDiagnosticsNode(data, null, false, null);
 
-      final errorEvent = FlutterErrorEvent(
-        type: type,
-        message: message,
-        diagnostics: await _getErrorInstance(data),
-        timestamp: DateTime.now(),
-        severity: _determineSeverity(errorData),
-      );
+    final type = errorData.getStringMember('type') ?? 'Flutter Error';
+    final message = errorData.getStringMember('description') ?? '';
 
-      _errorController.add(errorEvent);
-      _errors.add(errorEvent);
-    }
+    final errorEvent = FlutterErrorEvent(
+      nodeId: errorData.getStringMember('nodeId') ?? '',
+      type: type,
+      message: message,
+      diagnostics: await _getErrorInstance(data),
+      timestamp: DateTime.now(),
+      severity: _determineSeverity(errorData),
+      json: errorData.json,
+    );
+
+    _errorController.add(errorEvent);
+    _errors.add(errorEvent);
   }
 
   /// Get an Instance object from error data.
   Future<Instance?> _getErrorInstance(final Map<String, Object?> data) async {
+    final vm = vmService;
+    final id = isolateId;
+    if (vm == null || id == null) return null;
+
     try {
       final instanceId = data['objectId'] as String?;
       if (instanceId == null) return null;
 
-      final obj = await vmService.getObject(isolateId, instanceId);
+      final obj = await vm.getObject(id, instanceId);
       if (obj is! Instance) return null;
 
       // Ensure we have a valid Instance with a string value
@@ -99,6 +147,10 @@ class FlutterErrorMonitor {
 
   /// Handle debug events from the VM.
   Future<void> _handleDebugEvent(final Event event) async {
+    final vm = vmService;
+    final id = isolateId;
+    if (vm == null || id == null) return;
+
     if (event.kind == EventKind.kPauseException) {
       final error = event.exception;
       if (error != null) {
@@ -109,16 +161,22 @@ class FlutterErrorMonitor {
 
   /// Process VM errors.
   Future<void> _processVmError(final InstanceRef error) async {
-    final errorObj = await vmService.getObject(isolateId, error.id!);
+    final vm = vmService;
+    final id = isolateId;
+    if (vm == null || id == null) return;
+
+    final errorObj = await vm.getObject(id, error.id!);
 
     if (errorObj is! Instance) return;
 
     final errorEvent = FlutterErrorEvent(
       type: 'VM Error',
+      nodeId: error.id!,
       message: errorObj.valueAsString ?? '',
       diagnostics: errorObj,
       stackTrace: await _getErrorStackTrace(errorObj),
       timestamp: DateTime.now(),
+      json: errorObj.json ?? {},
     );
 
     _errorController.add(errorEvent);
@@ -126,6 +184,10 @@ class FlutterErrorMonitor {
 
   /// Get the stack trace from a VM error object.
   Future<StackTrace?> _getErrorStackTrace(final Instance error) async {
+    final vm = vmService;
+    final id = isolateId;
+    if (vm == null || id == null) return null;
+
     try {
       final fields = error.fields;
       if (fields == null) return null;
@@ -142,7 +204,7 @@ class FlutterErrorMonitor {
       final value = stackTraceField.value;
       if (value is! InstanceRef) return null;
 
-      final stackObj = await vmService.getObject(isolateId, value.id!);
+      final stackObj = await vm.getObject(id, value.id!);
       if (stackObj is! Instance) return null;
 
       final stackTrace = stackObj.valueAsString;

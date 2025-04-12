@@ -2,15 +2,14 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file or at https://developers.google.com/open-source/licenses/bsd.
 
-import 'dart:async';
 import 'dart:math';
 
+import 'package:devtools_mcp_extension/common_imports.dart';
 import 'package:devtools_mcp_extension/core/devtools_core/shared/diagnostics/dart_object_node.dart';
 import 'package:devtools_mcp_extension/core/devtools_core/shared/diagnostics/generic_instance_reference.dart';
 import 'package:devtools_mcp_extension/core/devtools_core/shared/diagnostics/helpers.dart';
 import 'package:devtools_mcp_extension/core/devtools_core/shared/diagnostics/primitives/record_fields.dart';
 import 'package:devtools_mcp_extension/core/devtools_core/shared/memory/class_name.dart';
-import 'package:devtools_mcp_extension/core/devtools_core/shared/memory/heap_object.dart';
 import 'package:devtools_mcp_extension/core/devtools_core/shared/memory/heap_object.dart';
 import 'package:devtools_mcp_extension/core/devtools_core/shared/primitives/utils.dart';
 import 'package:vm_service/vm_service.dart';
@@ -49,7 +48,11 @@ HeapObject _refreshStaticSelection(
   return HeapObject(selection.heap, index: index);
 }
 
-Future<void> addChildReferences(final DartObjectNode variable) async {
+Future<void> addChildReferences({
+  required final DartObjectNode variable,
+  required final ValueNotifier<int> refLimit,
+  required final ServiceManager serviceManager,
+}) async {
   final ref = variable.ref!;
   if (ref is! ObjectReferences) {
     throw StateError('Wrong type: ${ref.runtimeType}');
@@ -160,9 +163,9 @@ Future<void> addChildReferences(final DartObjectNode variable) async {
       if (value is! InstanceRef) {
         return;
       }
-      final limit = preferences.memory.refLimit.value;
+      final limit = refLimit.value;
       final refs =
-          (await serviceConnection.serviceManager.service!.getInboundReferences(
+          (await serviceManager.service!.getInboundReferences(
             ref.isolateRef.id!,
             value.id!,
             limit + 1,
@@ -189,7 +192,7 @@ Future<void> addChildReferences(final DartObjectNode variable) async {
       if (refs.length > limit) {
         variable.addChild(
           DartObjectNode.text(
-            '...\nTo get more items, increase "${preferences.memory.refLimitTitle}" in memory settings.',
+            '...\nTo get more items, increase refLimitTime "${refLimit.value}" in memory settings.',
           ),
         );
       }
@@ -201,6 +204,7 @@ Future<void> addChildReferences(final DartObjectNode variable) async {
       final instance = await getObject(
         isolateRef: isolateRef,
         value: ref.instanceRef!,
+        serviceManager: serviceManager,
       );
 
       if (instance is Instance) {
@@ -209,6 +213,7 @@ Future<void> addChildReferences(final DartObjectNode variable) async {
           value: instance,
           isolateRef: isolateRef,
           heapSelection: ref.heapSelection,
+          serviceManager: serviceManager,
         );
       }
       return;
@@ -220,6 +225,7 @@ Future<void> _addOutboundLiveReferences({
   required final Instance value,
   required final IsolateRef isolateRef,
   required final HeapObject heapSelection,
+  required final ServiceManager serviceManager,
 }) async {
   switch (value.kind) {
     case InstanceKind.kMap:
@@ -252,6 +258,7 @@ Future<void> _addOutboundLiveReferences({
           value,
           isolateRef,
           heapSelection.withoutObject(),
+          serviceManager: serviceManager,
         ),
       );
     default:
@@ -367,13 +374,18 @@ List<DartObjectNode> _createLiveOutboundReferencesForList(
 Future<List<DartObjectNode>> _createLiveOutboundReferencesForClosure(
   final Instance instance,
   final IsolateRef isolateRef,
-  final HeapObject heapSelection,
-) async {
+  final HeapObject heapSelection, {
+  required final ServiceManager serviceManager,
+}) async {
   final variables = <DartObjectNode>[];
   final contextRef = instance.closureContext;
   if (contextRef == null) return [];
 
-  final context = await getObject(isolateRef: isolateRef, value: contextRef);
+  final context = await getObject(
+    isolateRef: isolateRef,
+    value: contextRef,
+    serviceManager: serviceManager,
+  );
   if (context is! Context) return [];
 
   if (context.parent != null) {

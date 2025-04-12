@@ -10,25 +10,23 @@
 /// @docImport '../../screens/performance/panes/rebuild_stats/rebuild_stats_model.dart';
 library;
 
-import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 
-import 'package:devtools_app_shared/service.dart';
 import 'package:devtools_app_shared/service_extensions.dart';
 import 'package:devtools_app_shared/ui.dart';
 import 'package:devtools_app_shared/utils.dart';
-import 'package:devtools_mcp_extension/core/devtools_core/console/primitives/simple_items.dart';
-import 'package:devtools_mcp_extension/core/devtools_core/globals.dart';
+import 'package:devtools_mcp_extension/common_imports.dart';
 import 'package:devtools_mcp_extension/core/devtools_core/shared/diagnostics/diagnostics_node.dart';
 import 'package:devtools_mcp_extension/core/devtools_core/shared/diagnostics/generic_instance_reference.dart';
 import 'package:devtools_mcp_extension/core/devtools_core/shared/diagnostics/object_group_api.dart';
 import 'package:devtools_mcp_extension/core/devtools_core/shared/diagnostics/primitives/instance_ref.dart';
 import 'package:devtools_mcp_extension/core/devtools_core/shared/diagnostics/primitives/source_location.dart';
-import 'package:devtools_mcp_extension/core/devtools_core/utils/utils.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:vm_service/vm_service.dart';
+
+// TODO(jacobr): add render, semantics, and layer trees.
+enum FlutterTreeType { widget }
 
 const _inspectorLibraryUri =
     'package:flutter/src/widgets/widget_inspector.dart';
@@ -39,31 +37,27 @@ abstract class InspectorServiceBase extends DisposableController
     required this.clientInspectorName,
     required this.serviceExtensionPrefix,
     required final String inspectorLibraryUri,
+    required this.dartVmDevtoolsService,
     final ValueListenable<IsolateRef?>? evalIsolate,
-  }) : assert(serviceConnection.serviceManager.connectedAppInitialized),
-       assert(serviceConnection.serviceManager.service != null),
-       clients = {},
+  }) : clients = {},
        inspectorLibrary = EvalOnDartLibrary(
          inspectorLibraryUri,
-         serviceConnection.serviceManager.service!,
-         serviceManager: serviceConnection.serviceManager,
+         dartVmDevtoolsService.serviceManager.service!,
+         serviceManager: dartVmDevtoolsService.serviceManager,
          isolate: evalIsolate,
        ) {
-    _lastMainIsolate =
-        serviceConnection.serviceManager.isolateManager.mainIsolate.value;
-    addAutoDisposeListener(
-      serviceConnection.serviceManager.isolateManager.mainIsolate,
-      () {
-        final mainIsolate =
-            serviceConnection.serviceManager.isolateManager.mainIsolate.value;
-        if (mainIsolate != _lastMainIsolate) {
-          onIsolateStopped();
-        }
-        _lastMainIsolate = mainIsolate;
-      },
-    );
+    final serviceManager = dartVmDevtoolsService.serviceManager;
+    _lastMainIsolate = serviceManager.isolateManager.mainIsolate.value;
+    addAutoDisposeListener(serviceManager.isolateManager.mainIsolate, () {
+      final mainIsolate = serviceManager.isolateManager.mainIsolate.value;
+      if (mainIsolate != _lastMainIsolate) {
+        onIsolateStopped();
+      }
+      _lastMainIsolate = mainIsolate;
+    });
   }
-
+  final DartVmDevtoolsService dartVmDevtoolsService;
+  ServiceManager get serviceManager => dartVmDevtoolsService.serviceManager;
   static int nextGroupId = 0;
 
   // The class name of the inspector that [InspectorServiceBase] is connecting
@@ -111,8 +105,7 @@ abstract class InspectorServiceBase extends DisposableController
   /// The VM Service protocol must be used when paused at a breakpoint as the
   /// Daemon API calls won't execute until after the current frame is done
   /// rendering.
-  bool get useDaemonApi =>
-      !serviceConnection.serviceManager.isMainIsolatePaused;
+  bool get useDaemonApi => !serviceManager.isMainIsolatePaused;
 
   @override
   void dispose() {
@@ -156,22 +149,20 @@ abstract class InspectorServiceBase extends DisposableController
     final Map<String, Object?>? args,
   }) async {
     final callMethodName = '$serviceExtensionPrefix.$methodName';
-    if (!serviceConnection.serviceManager.serviceExtensionManager
-        .isServiceExtensionAvailable(callMethodName)) {
-      final available = await serviceConnection
-          .serviceManager
-          .serviceExtensionManager
+    if (!serviceManager.serviceExtensionManager.isServiceExtensionAvailable(
+      callMethodName,
+    )) {
+      final available = await serviceManager.serviceExtensionManager
           .waitForServiceExtensionAvailable(callMethodName);
       if (!available) return {'result': null};
     }
 
-    final r = await serviceConnection.serviceManager.service!
-        .callServiceExtension(
-          callMethodName,
-          isolateId: isolateRef!.id,
-          args: args,
-        );
-    final json = r.json;
+    final r = await serviceManager.service!.callServiceExtension(
+      callMethodName,
+      isolateId: isolateRef!.id,
+      args: args,
+    );
+    final json = r.json ?? {};
     if (json['errorMessage'] != null) {
       throw Exception('$methodName -- ${json['errorMessage']}');
     }
@@ -182,25 +173,23 @@ abstract class InspectorServiceBase extends DisposableController
 /// Manages communication between inspector code running in the Flutter app and
 /// the inspector.
 class InspectorService extends InspectorServiceBase {
-  InspectorService()
+  InspectorService({required super.dartVmDevtoolsService})
     : super(
         clientInspectorName: 'WidgetInspectorService',
         serviceExtensionPrefix: inspectorExtensionPrefix,
         inspectorLibraryUri: _inspectorLibraryUri,
         evalIsolate:
-            serviceConnection.serviceManager.isolateManager.mainIsolate,
+            dartVmDevtoolsService.serviceManager.isolateManager.mainIsolate,
       ) {
     // Note: We do not need to listen to event history here because the
     // inspector uses a separate API to get the current inspector selection.
     autoDisposeStreamSubscription(
-      serviceConnection.serviceManager.service!.onExtensionEvent.listen(
+      serviceManager.service!.onExtensionEvent.listen(
         onExtensionVmServiceReceived,
       ),
     );
     autoDisposeStreamSubscription(
-      serviceConnection.serviceManager.service!.onDebugEvent.listen(
-        onDebugVmServiceReceived,
-      ),
+      serviceManager.service!.onDebugEvent.listen(onDebugVmServiceReceived),
     );
   }
 
@@ -262,7 +251,7 @@ class InspectorService extends InspectorServiceBase {
   void onDebugVmServiceReceived(final Event event) {
     if (event.kind == EventKind.kInspect) {
       // Update the UI in IntelliJ.
-      notifySelectionChanged();
+      unawaited(notifySelectionChanged());
     }
   }
 
@@ -342,7 +331,7 @@ class InspectorService extends InspectorServiceBase {
   }
 
   Future<void> _addPubRootDirectories(final List<String> pubDirectories) async {
-    await serviceConnection.serviceManager.waitUntilNotPaused();
+    await serviceManager.waitUntilNotPaused();
     assert(useDaemonApi);
     await invokeServiceMethodDaemonNoGroupArgs(
       WidgetInspectorServiceExtensions.addPubRootDirectories.name,
@@ -353,7 +342,7 @@ class InspectorService extends InspectorServiceBase {
   Future<void> _removePubRootDirectories(
     final List<String> pubDirectories,
   ) async {
-    await serviceConnection.serviceManager.waitUntilNotPaused();
+    await serviceManager.waitUntilNotPaused();
     assert(useDaemonApi);
     await invokeServiceMethodDaemonNoGroupArgs(
       WidgetInspectorServiceExtensions.removePubRootDirectories.name,
@@ -362,7 +351,7 @@ class InspectorService extends InspectorServiceBase {
   }
 
   Future<List<String>?> getPubRootDirectories() async {
-    await serviceConnection.serviceManager.waitUntilNotPaused();
+    await serviceManager.waitUntilNotPaused();
     assert(useDaemonApi);
     final response = await invokeServiceMethodDaemonNoGroupArgs(
       WidgetInspectorServiceExtensions.getPubRootDirectories.name,
@@ -379,7 +368,7 @@ class InspectorService extends InspectorServiceBase {
   ///
   /// See [LocationMap] which provides support to parse this JSON.
   Future<Map<String, Object?>> widgetLocationIdMap() async {
-    await serviceConnection.serviceManager.waitUntilNotPaused();
+    await serviceManager.waitUntilNotPaused();
     assert(useDaemonApi);
     final response = await invokeServiceMethodDaemonNoGroupArgs(
       'widgetLocationIdMap',
@@ -444,6 +433,7 @@ abstract class InspectorObjectGroupBase
   final String groupName;
 
   InspectorServiceBase get inspectorService;
+  ServiceManager get serviceManager => inspectorService.serviceManager;
 
   @override
   bool disposed = false;
@@ -568,11 +558,10 @@ abstract class InspectorObjectGroupBase
   ) async {
     final callMethodName =
         '${inspectorService.serviceExtensionPrefix}.$methodName';
-    if (!serviceConnection.serviceManager.serviceExtensionManager
-        .isServiceExtensionAvailable(callMethodName)) {
-      final available = await serviceConnection
-          .serviceManager
-          .serviceExtensionManager
+    if (!serviceManager.serviceExtensionManager.isServiceExtensionAvailable(
+      callMethodName,
+    )) {
+      final available = await serviceManager.serviceExtensionManager
           .waitForServiceExtensionAvailable(callMethodName);
       if (!available) return null;
     }
@@ -589,14 +578,13 @@ abstract class InspectorObjectGroupBase
     }
 
     return inspectorLibrary.addRequest(this, () async {
-      final r = await serviceConnection.serviceManager.service!
-          .callServiceExtension(
-            extension,
-            isolateId: inspectorService.isolateRef!.id,
-            args: args,
-          );
+      final r = await serviceManager.service!.callServiceExtension(
+        extension,
+        isolateId: inspectorService.isolateRef!.id,
+        args: args,
+      );
       if (disposed) return null;
-      final json = r.json;
+      final json = r.json ?? {};
       if (json['errorMessage'] != null) {
         throw Exception('$extension -- ${json['errorMessage']}');
       }
@@ -1056,7 +1044,7 @@ class ObjectGroup extends InspectorObjectGroupBase {
     final bool uiAlreadyUpdated,
   ) {
     if (selectionChanged && !uiAlreadyUpdated && !disposed) {
-      inspectorService.notifySelectionChanged();
+      unawaited(inspectorService.notifySelectionChanged());
     }
     return selectionChanged && !disposed;
   }

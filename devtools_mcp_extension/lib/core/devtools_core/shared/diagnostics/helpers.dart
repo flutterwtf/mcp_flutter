@@ -4,6 +4,7 @@
 
 import 'dart:async';
 
+import 'package:devtools_app_shared/service.dart';
 import 'package:devtools_mcp_extension/core/devtools_core/shared/diagnostics/dart_object_node.dart';
 import 'package:vm_service/vm_service.dart';
 
@@ -12,6 +13,7 @@ import 'package:vm_service/vm_service.dart';
 Future<Object?> getObject({
   required final IsolateRef? isolateRef,
   required final ObjRef value,
+  required final ServiceManager serviceManager,
   final DartObjectNode? variable,
 }) async {
   // Don't include the offset and count parameters if we are not fetching a
@@ -19,13 +21,10 @@ Future<Object?> getObject({
   // subranges of the following instance kinds:
   // https://api.flutter.dev/flutter/vm_service/VmServiceInterface/getObject.html
   if (variable == null || !variable.isPartialObject) {
-    return await serviceConnection.serviceManager.service!.getObject(
-      isolateRef!.id!,
-      value.id!,
-    );
+    return serviceManager.service!.getObject(isolateRef!.id!, value.id!);
   }
 
-  return await serviceConnection.serviceManager.service!.getObject(
+  return serviceManager.service!.getObject(
     isolateRef!.id!,
     value.id!,
     offset: variable.offset,

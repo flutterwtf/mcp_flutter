@@ -2,10 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file or at https://developers.google.com/open-source/licenses/bsd.
 
-import 'dart:async';
 import 'dart:math';
 
 import 'package:devtools_app_shared/utils.dart';
+import 'package:devtools_mcp_extension/common_imports.dart'
+    hide SentinelException;
 import 'package:devtools_mcp_extension/core/devtools_core/shared/diagnostics/dart_object_node.dart';
 import 'package:devtools_mcp_extension/core/devtools_core/shared/diagnostics/diagnostics_node.dart';
 import 'package:devtools_mcp_extension/core/devtools_core/shared/diagnostics/generic_instance_reference.dart';
@@ -23,12 +24,23 @@ final _log = Logger('tree_builder');
 Future<void> _addExpandableChildren(
   final DartObjectNode variable,
   final List<DartObjectNode> children, {
+  required final ServiceManager serviceManager,
+  required final InspectorService? inspectorService,
+  required final ValueNotifier<int> refLimit,
   final bool expandAll = false,
 }) async {
   final tasks = <Future>[];
   for (final child in children) {
     if (expandAll) {
-      tasks.add(buildVariablesTree(child, expandAll: expandAll));
+      tasks.add(
+        buildVariablesTree(
+          child,
+          expandAll: expandAll,
+          serviceManager: serviceManager,
+          inspectorService: inspectorService,
+          refLimit: refLimit,
+        ),
+      );
     }
     variable.addChild(child);
   }
@@ -37,12 +49,15 @@ Future<void> _addExpandableChildren(
   }
 }
 
-Future<void> _addDiagnosticsIfNeeded(
-  final RemoteDiagnosticsNode? diagnostic,
-  final IsolateRef? isolateRef,
-  final DartObjectNode variable,
-) async {
-  if (diagnostic == null || !includeDiagnosticPropertiesInDebugger) return;
+Future<void> _addDiagnosticsIfNeeded({
+  required final RemoteDiagnosticsNode? diagnostic,
+  required final IsolateRef? isolateRef,
+  required final DartObjectNode variable,
+  required final ServiceManager serviceManager,
+  required final InspectorService? inspectorService,
+  required final ValueNotifier<int> refLimit,
+}) async {
+  if (diagnostic == null) return;
 
   final service = diagnostic.objectGroupApi;
   Future<void> addPropertiesHelper(
@@ -53,6 +68,9 @@ Future<void> _addDiagnosticsIfNeeded(
       variable,
       await createVariablesForDiagnostics(service, properties, isolateRef),
       expandAll: true,
+      serviceManager: serviceManager,
+      inspectorService: inspectorService,
+      refLimit: refLimit,
     );
   }
 
@@ -66,13 +84,16 @@ Future<void> _addDiagnosticsIfNeeded(
   }
 }
 
-Future<void> _addDiagnosticChildrenIfNeeded(
-  final DartObjectNode variable,
-  final RemoteDiagnosticsNode? diagnostic,
-  final IsolateRef? isolateRef,
-  final bool expandAll,
-) async {
-  if (diagnostic == null || !includeDiagnosticChildren) return;
+Future<void> _addDiagnosticChildrenIfNeeded({
+  required final DartObjectNode variable,
+  required final RemoteDiagnosticsNode? diagnostic,
+  required final IsolateRef? isolateRef,
+  required final bool expandAll,
+  required final ServiceManager serviceManager,
+  required final InspectorService? inspectorService,
+  required final ValueNotifier<int> refLimit,
+}) async {
+  if (diagnostic == null) return;
 
   // Always add children last after properties to avoid confusion.
   final service = diagnostic.objectGroupApi;
@@ -91,6 +112,9 @@ Future<void> _addDiagnosticChildrenIfNeeded(
           isolateRef,
         ),
         expandAll: expandAll,
+        serviceManager: serviceManager,
+        inspectorService: inspectorService,
+        refLimit: refLimit,
       );
     }
   }
@@ -131,11 +155,12 @@ void _addInstanceSetItems(
   );
 }
 
-Future<void> _addInstanceRefItems(
-  final DartObjectNode variable,
-  final InstanceRef instanceRef,
-  final IsolateRef? isolateRef,
-) async {
+Future<void> _addInstanceRefItems({
+  required final DartObjectNode variable,
+  required final InstanceRef instanceRef,
+  required final IsolateRef? isolateRef,
+  required final ServiceManager serviceManager,
+}) async {
   final ref = variable.ref;
   assert(ref is! ObjectReferences);
 
@@ -156,6 +181,7 @@ Future<void> _addInstanceRefItems(
     variable: variable,
     isolateRef: variable.ref!.isolateRef,
     value: instanceRef,
+    serviceManager: serviceManager,
   );
 
   if (result is Instance) {
@@ -244,18 +270,26 @@ void _addChildrenToInstanceVariable({
   }
 }
 
-Future<void> _addValueItems(
-  final DartObjectNode variable,
-  final IsolateRef? isolateRef,
-  Object? value,
-) async {
+Future<void> _addValueItems({
+  required final DartObjectNode variable,
+  required final IsolateRef? isolateRef,
+  required Object? value,
+  required final ServiceManager serviceManager,
+}) async {
   if (value is ObjRef) {
-    value = await getObject(isolateRef: isolateRef, value: value);
+    value = await getObject(
+      isolateRef: isolateRef,
+      value: value,
+      serviceManager: serviceManager,
+    );
     switch (value.runtimeType) {
       case const (Func):
         final function = value! as Func;
+        if (isolateRef == null) return;
         variable.addAllChildren(createVariablesForFunc(function, isolateRef));
       case const (Context):
+        if (isolateRef == null) return;
+
         final context = value! as Context;
         variable.addAllChildren(createVariablesForContext(context, isolateRef));
     }
@@ -272,9 +306,9 @@ Future<void> _addValueItems(
 
 Future<void> _addInspectorItems(
   final DartObjectNode variable,
-  final IsolateRef? isolateRef,
-) async {
-  final inspectorService = serviceConnection.inspectorService;
+  final IsolateRef? isolateRef, {
+  required final InspectorService? inspectorService,
+}) async {
   if (inspectorService != null) {
     final tasks = <Future>[];
     InspectorObjectGroupBase? group;
@@ -331,6 +365,9 @@ Future<void> _addInspectorItems(
 /// building the tree for all variable data at once is very expensive.
 Future<void> buildVariablesTree(
   final DartObjectNode variable, {
+  required final ServiceManager serviceManager,
+  required final InspectorService? inspectorService,
+  required final ValueNotifier<int> refLimit,
   final bool expandAll = false,
 }) async {
   final ref = variable.ref;
@@ -344,20 +381,40 @@ Future<void> buildVariablesTree(
   final diagnostic = ref.diagnostic;
   final value = variable.value;
 
-  await _addDiagnosticsIfNeeded(diagnostic, isolateRef, variable);
+  await _addDiagnosticsIfNeeded(
+    diagnostic: diagnostic,
+    isolateRef: isolateRef,
+    variable: variable,
+    serviceManager: serviceManager,
+    inspectorService: inspectorService,
+    refLimit: refLimit,
+  );
 
   try {
     if (ref is ObjectReferences) {
-      await addChildReferences(variable);
+      await addChildReferences(
+        variable: variable,
+        refLimit: refLimit,
+        serviceManager: serviceManager,
+      );
     } else if (variable.childCount > DartObjectNode.maxChildrenInGrouping) {
       _setupGrouping(variable);
-    } else if (instanceRef != null &&
-        serviceConnection.serviceManager.service != null) {
-      await _addInstanceRefItems(variable, instanceRef, isolateRef);
+    } else if (instanceRef != null && serviceManager.service != null) {
+      await _addInstanceRefItems(
+        variable: variable,
+        instanceRef: instanceRef,
+        isolateRef: isolateRef,
+        serviceManager: serviceManager,
+      );
     } else if (value is InstanceSet) {
       _addInstanceSetItems(variable, isolateRef, value);
     } else if (value != null) {
-      await _addValueItems(variable, isolateRef, value);
+      await _addValueItems(
+        variable: variable,
+        isolateRef: isolateRef,
+        value: value,
+        serviceManager: serviceManager,
+      );
     }
   } on SentinelException {
     // Fail gracefully if calling `getObject` throws a SentinelException.
@@ -372,13 +429,20 @@ Future<void> buildVariablesTree(
   }
 
   await _addDiagnosticChildrenIfNeeded(
-    variable,
-    diagnostic,
-    isolateRef,
-    expandAll,
+    variable: variable,
+    diagnostic: diagnostic,
+    isolateRef: isolateRef,
+    expandAll: expandAll,
+    serviceManager: serviceManager,
+    inspectorService: inspectorService,
+    refLimit: refLimit,
   );
 
-  await _addInspectorItems(variable, isolateRef);
+  await _addInspectorItems(
+    variable,
+    isolateRef,
+    inspectorService: inspectorService,
+  );
 
   variable.treeInitializeComplete = true;
 }
