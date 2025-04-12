@@ -4,6 +4,8 @@ import 'dart:convert';
 
 import 'package:devtools_mcp_extension/common_imports.dart';
 import 'package:devtools_mcp_extension/core/devtools_core/shared/diagnostics/diagnostics_node.dart';
+import 'package:devtools_mcp_extension/core/devtools_core/shared/diagnostics/inspector_service.dart'
+    as inspector_service;
 import 'package:devtools_mcp_extension/services/error_devtools/error_monitor.dart';
 import 'package:devtools_mcp_extension/services/object_group_manager.dart';
 
@@ -60,30 +62,63 @@ class CustomDevtoolsService {
 
     print(jsonEncode(errors.map((final e) => e.toString()).toList()));
 
-    final objectRef = await vmService.getObject(
-      isolateId,
-      'RenderFlex#f8f6b', // The ID from RenderFlex#f8f6b
-    );
+    // final objectRef = await vmService.getObject(
+    //   isolateId,
+    //   'RenderFlex#${errors.first.renderFlexId}', // The ID from RenderFlex#f8f6b
+    // );
     final group = _objectGroupManager.next;
-
-    // Get the diagnostic node using the object ID
-    final rootNode = RemoteDiagnosticsNode(
-      {'valueId': 'f8f6b'}, // The ID from RenderFlex#f8f6b
-      null,
-      false,
-      null,
-    );
-
-    final layoutExplorerNode = await vmService.callServiceExtension(
-      'ext.flutter.inspector.${WidgetInspectorServiceExtensions.getLayoutExplorerNode.name}',
+    final response = await vmService.callServiceExtension(
+      'ext.flutter.inspector.'
+      '${WidgetInspectorServiceExtensions.getRootWidgetTree.name}',
       isolateId: isolateId,
       args: {
         'objectGroup': group.groupName,
-        'id': rootNode.valueRef.id,
-        'subtreeDepth': '-1',
+        'isSummaryTree': 'false',
+        'withPreviews': 'true',
+        'fullDetails': 'true',
       },
     );
-    print(jsonEncode(objectRef.json));
+
+    final objectGroupApi = inspector_service.ObjectGroup(
+      'visual-errors',
+      inspector_service.InspectorService(
+        dartVmDevtoolsService: devtoolsService,
+      ),
+    );
+
+    final rootNodes = RemoteDiagnosticsNode(
+      response.json!['result'] as Map<String, Object?>,
+      objectGroupApi,
+      false,
+      null,
+    );
+    // one of children contains in description correct renderFlexId.
+    // so we need to find it and use it as rootNode.
+    Future<RemoteDiagnosticsNode?> findNodeWithId(
+      final RemoteDiagnosticsNode node,
+      final String id,
+    ) async {
+      if (node.description?.contains(id) ?? false) return node;
+      if (!node.hasChildren) return null;
+      final children = await node.children ?? [];
+      for (final child in children) {
+        final found = await findNodeWithId(child, id);
+        if (found != null) return found;
+      }
+      return null;
+    }
+
+    final rootNode = await findNodeWithId(rootNodes, errors.first.renderFlexId);
+    // final layoutExplorerNode = await vmService.callServiceExtension(
+    //   'ext.flutter.inspector.${WidgetInspectorServiceExtensions.getLayoutExplorerNode.name}',
+    //   isolateId: isolateId,
+    //   args: {
+    //     'objectGroup': group.groupName,
+    //     'id': rootNode.valueRef.id,
+    //     'subtreeDepth': '-1',
+    //   },
+    // );
+    print(jsonEncode(rootNode?.json));
 
     return RPCResponse.successMap({'errors': errors});
 

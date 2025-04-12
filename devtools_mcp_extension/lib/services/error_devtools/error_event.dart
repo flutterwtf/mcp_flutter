@@ -60,19 +60,7 @@ class FlutterErrorEvent with EquatableMixin {
 
     final id = idMatch?.group(1);
 
-    if (id == null) {
-      return '';
-    }
-
-    final lettersIdMatch = RegExp(
-      '([a-zA-Z0-9]+)',
-    ).firstMatch(renderedErrorText ?? '');
-
-    if (lettersIdMatch != null) {
-      return lettersIdMatch.group(1) ?? '';
-    }
-
-    return id;
+    return id ?? '';
   }
 
   String get renderedErrorText => json['renderedErrorText'] ?? '';
@@ -85,5 +73,5 @@ class FlutterErrorEvent with EquatableMixin {
       'renderedErrorText: $renderedErrorText)';
 
   @override
-  List<Object?> get props => [type, message, timestamp, nodeId, json];
+  List<Object?> get props => [type, message, renderFlexId];
 }
