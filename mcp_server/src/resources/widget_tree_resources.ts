@@ -8,14 +8,22 @@ export const TREE_RESOURCES: Resource[] = [
     mimeType: "application/json",
   },
   {
-    uri: "visual://localhost/view/errors",
-    name: "View Errors",
-    description: "Get current view errors",
-  },
-  {
     uri: "visual://localhost/view/info",
     name: "View Info",
     description: "Get current view information",
+    mimeType: "application/json",
+  },
+  {
+    uri: "visual://localhost/app/errors/latest",
+    name: "Latest Application Error",
+    description: "Get 1 latest application error",
+    mimeType: "application/json",
+  },
+  {
+    uri: "visual://localhost/app/errors/ten",
+    name: "10 Latest Application Errors",
+    description: "Get 10 latest application errors",
+    mimeType: "application/json",
   },
 ];
 

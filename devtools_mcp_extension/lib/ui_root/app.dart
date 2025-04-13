@@ -1,7 +1,5 @@
 // ignore_for_file: avoid_catches_without_on_clauses
 
-import 'dart:async';
-
 import 'package:devtools_mcp_extension/common_imports.dart';
 
 /// {@template inspector_app}
@@ -16,6 +14,18 @@ class InspectorApp extends StatefulWidget {
 }
 
 class _InspectorAppState extends State<InspectorApp> {
+  Future<RpcClientsOrchestrator>? _rpcClientsOrchestratorFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((final timeStamp) async {
+      _rpcClientsOrchestratorFuture = _initRpcClients().whenComplete(
+        () => setState(() {}),
+      );
+    });
+  }
+
   @override
   Widget build(final BuildContext context) => MaterialApp(
     title: 'Flutter Inspector',
@@ -32,7 +42,7 @@ class _InspectorAppState extends State<InspectorApp> {
     ),
     home: FutureBuilder(
       // ignore: discarded_futures
-      future: _initRpcClients(),
+      future: _rpcClientsOrchestratorFuture,
       builder: (final context, final snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
@@ -55,7 +65,12 @@ class _InspectorAppState extends State<InspectorApp> {
           );
         }
 
-        final rpcOrchestrator = snapshot.data!;
+        final rpcOrchestrator = snapshot.data;
+        if (rpcOrchestrator == null) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
 
         return ChangeNotifierProvider.value(
           value: rpcOrchestrator,

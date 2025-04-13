@@ -1,49 +1,51 @@
 // Import necessary packages
 // ignore_for_file: avoid_catches_without_on_clauses
 
-import 'dart:async';
 import 'dart:developer';
 
-import 'package:devtools_app_shared/service.dart';
 import 'package:devtools_app_shared/utils.dart';
 import 'package:devtools_mcp_extension/common_imports.dart';
 import 'package:devtools_mcp_extension/services/forwarding_rpc_listener.dart';
+import 'package:devtools_mcp_extension/services/object_group_manager.dart';
 import 'package:devtools_shared/service.dart' as devtools_shared;
 import 'package:vm_service/vm_service.dart';
 
-const freelyForwardingExtensions = [
-  'ext.flutter.inspector.structuredErrors',
-  'ext.flutter.inspector.show',
-  'ext.flutter.inspector.trackRebuildDirtyWidgets',
-  'ext.flutter.inspector.widgetLocationIdMap',
-  'ext.flutter.inspector.trackRepaintWidgets',
-  'ext.flutter.inspector.disposeAllGroups',
-  'ext.flutter.inspector.disposeGroup',
-  'ext.flutter.inspector.isWidgetTreeReady',
-  'ext.flutter.inspector.disposeId',
-  'ext.flutter.inspector.setPubRootDirectories',
-  'ext.flutter.inspector.addPubRootDirectories',
-  'ext.flutter.inspector.removePubRootDirectories',
-  'ext.flutter.inspector.getPubRootDirectories',
-  'ext.flutter.inspector.setSelectionById',
-  'ext.flutter.inspector.getParentChain',
-  'ext.flutter.inspector.getProperties',
-  'ext.flutter.inspector.getChildren',
-  'ext.flutter.inspector.getChildrenSummaryTree',
-  'ext.flutter.inspector.getChildrenDetailsSubtree',
-  // 'ext.flutter.inspector.getRootWidget', // replaced with custom method
-  'ext.flutter.inspector.getRootWidgetSummaryTree',
-  'ext.flutter.inspector.getRootWidgetSummaryTreeWithPreviews',
-  'ext.flutter.inspector.getRootWidgetTree',
-  'ext.flutter.inspector.getDetailsSubtree',
-  'ext.flutter.inspector.getSelectedWidget',
-  'ext.flutter.inspector.getSelectedSummaryWidget',
-  'ext.flutter.inspector.isWidgetCreationTracked',
-  // 'ext.flutter.inspector.screenshot', // replaced with _flutter.screenshot
-  'ext.flutter.inspector.getLayoutExplorerNode',
-  'ext.flutter.inspector.setFlexFit',
-  'ext.flutter.inspector.setFlexFactor',
-  'ext.flutter.inspector.setFlexProperties',
+final freelyForwardingExtensions =
+    _freelyForwardingExtensions.map((final e) => e.name).toList();
+
+const _freelyForwardingExtensions = [
+  WidgetInspectorServiceExtensions.structuredErrors,
+  WidgetInspectorServiceExtensions.show,
+  WidgetInspectorServiceExtensions.trackRebuildDirtyWidgets,
+  WidgetInspectorServiceExtensions.widgetLocationIdMap,
+  WidgetInspectorServiceExtensions.trackRepaintWidgets,
+  WidgetInspectorServiceExtensions.disposeAllGroups,
+  WidgetInspectorServiceExtensions.disposeGroup,
+  WidgetInspectorServiceExtensions.isWidgetTreeReady,
+  WidgetInspectorServiceExtensions.disposeId,
+  WidgetInspectorServiceExtensions.setPubRootDirectories,
+  WidgetInspectorServiceExtensions.addPubRootDirectories,
+  WidgetInspectorServiceExtensions.removePubRootDirectories,
+  WidgetInspectorServiceExtensions.getPubRootDirectories,
+  WidgetInspectorServiceExtensions.setSelectionById,
+  WidgetInspectorServiceExtensions.getParentChain,
+  WidgetInspectorServiceExtensions.getProperties,
+  WidgetInspectorServiceExtensions.getChildren,
+  WidgetInspectorServiceExtensions.getChildrenSummaryTree,
+  WidgetInspectorServiceExtensions.getChildrenDetailsSubtree,
+  // 'getRootWidget', // replaced with custom method
+  WidgetInspectorServiceExtensions.getRootWidgetSummaryTree,
+  WidgetInspectorServiceExtensions.getRootWidgetSummaryTreeWithPreviews,
+  WidgetInspectorServiceExtensions.getRootWidgetTree,
+  WidgetInspectorServiceExtensions.getDetailsSubtree,
+  WidgetInspectorServiceExtensions.getSelectedWidget,
+  WidgetInspectorServiceExtensions.getSelectedSummaryWidget,
+  WidgetInspectorServiceExtensions.isWidgetCreationTracked,
+  // 'screenshot', // replaced with _flutter.screenshot
+  WidgetInspectorServiceExtensions.getLayoutExplorerNode,
+  WidgetInspectorServiceExtensions.setFlexFit,
+  WidgetInspectorServiceExtensions.setFlexFactor,
+  WidgetInspectorServiceExtensions.setFlexProperties,
 ];
 
 /// analogue of [ServiceExtensionResponse]
@@ -85,12 +87,14 @@ class RPCResponse {
 /// This simplified version focuses only on VM service initialization
 /// and handling basic service functions.
 /// {@endtemplate}
-class DevtoolsService with ChangeNotifier {
+class DartVmDevtoolsService with ChangeNotifier {
   /// {@macro service_extension_bridge}
-  DevtoolsService();
+  DartVmDevtoolsService();
 
   /// The service manager instance
   final _serviceManager = ServiceManager();
+
+  ObjectGroupManager? _treeGroupManager;
 
   /// Stores the VM service URI when connected
   Uri? _vmServiceUri;
@@ -109,6 +113,7 @@ class DevtoolsService with ChangeNotifier {
 
   /// Connect to a VM service
   Future<bool> connectToVmService([final Uri? uri]) async {
+    print('Connect to VM service');
     // Store the URI for later use
     _vmServiceUri =
         uri ??
@@ -143,6 +148,13 @@ class DevtoolsService with ChangeNotifier {
         onClosed: finishedCompleter.future,
       );
 
+      // Initialize the ObjectGroupManager
+      _treeGroupManager = ObjectGroupManager(
+        debugName: 'treeGroupManager',
+        vmService: vmService,
+        isolate: _serviceManager.isolateManager.mainIsolate,
+      );
+
       notifyListeners();
       return true;
     } catch (e, stackTrace) {
@@ -150,26 +162,35 @@ class DevtoolsService with ChangeNotifier {
       _vmServiceUri = null;
       print('Error connecting to VM service: $e');
       print('Stack trace: $stackTrace');
+      await _disposeManagers();
       return false;
     }
   }
 
+  Future<void> _disposeManagers() async {
+    await _treeGroupManager?.dispose();
+    _treeGroupManager = null;
+  }
+
   /// Disconnect from the VM service
   Future<void> disconnectFromVmService() async {
+    await _disposeManagers();
     await _serviceManager.vmServiceClosed();
     _vmServiceUri = null;
     notifyListeners();
   }
 
+  Future<Response> callServiceExtensionRaw(
+    final String extension, {
+    required final Map<String, dynamic> args,
+  }) => serviceManager.callServiceExtensionOnMainIsolate(extension, args: args);
+
   Future<RPCResponse> callServiceExtension(
-    final String extension,
-    final Map<String, dynamic> params,
-  ) async {
+    final String extension, {
+    required final Map<String, dynamic> args,
+  }) async {
     try {
-      final result = await serviceManager.callServiceExtensionOnMainIsolate(
-        extension,
-        args: params,
-      );
+      final result = await callServiceExtensionRaw(extension, args: args);
       return RPCResponse.successMap(result.toJson());
     } catch (e, stackTrace) {
       return RPCResponse.error(
@@ -180,7 +201,7 @@ class DevtoolsService with ChangeNotifier {
   }
 }
 
-extension DevtoolsServiceExtension on DevtoolsService {
+extension DevtoolsServiceExtension on DartVmDevtoolsService {
   /// Take a screenshot of the current UI
   Future<RPCResponse> takeScreenshot(final Map<String, dynamic> params) async {
     try {
@@ -217,6 +238,13 @@ extension DevtoolsServiceExtension on DevtoolsService {
   }
 
   Future<RPCResponse> getRootWidget() async {
+    final treeManager = _treeGroupManager;
+    if (treeManager == null) {
+      return RPCResponse.error('Service is not connected.');
+    }
+
+    final group = treeManager.next;
+
     try {
       final callMethodName =
           '$flutterInspectorName.'
@@ -225,7 +253,7 @@ extension DevtoolsServiceExtension on DevtoolsService {
           .callServiceExtensionOnMainIsolate(
             callMethodName,
             args: {
-              'groupName': 'root',
+              'groupName': group.groupName,
               'isSummaryTree': 'true',
               'withPreviews': 'false',
               'fullDetails': 'false',
@@ -233,15 +261,25 @@ extension DevtoolsServiceExtension on DevtoolsService {
           );
       print('Root widget tree: $rootWidgetTree');
       if (rootWidgetTree.json == null) {
+        await treeManager.cancelNext();
         return RPCResponse.error(
           'Root widget tree not available, '
           'rootWidgetTree: ${rootWidgetTree.toJson()}',
         );
       }
+
+      if (group.disposed) {
+        // Handle cancellation
+        print('Object group disposed, handling cancellation');
+        return RPCResponse.error('Object group disposed');
+      }
+
+      await treeManager.promoteNext();
       return RPCResponse.successMap(rootWidgetTree.json!);
     } catch (e, stackTrace) {
       print('Error getting root widget tree: $e');
       print('Stack trace: $stackTrace');
+      await _treeGroupManager?.cancelNext();
       return RPCResponse.error(
         'Error getting root widget tree: $e',
         stackTrace,

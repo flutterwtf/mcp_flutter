@@ -1,4 +1,7 @@
+// ignore_for_file: avoid_catches_without_on_clauses
+
 import 'package:devtools_mcp_extension/common_imports.dart';
+import 'package:devtools_mcp_extension/services/custom_devtools_service.dart';
 import 'package:devtools_mcp_extension/services/forwarding_rpc_listener.dart';
 import 'package:mcp_dart_forwarding_client/mcp_dart_forwarding_client.dart';
 
@@ -65,22 +68,31 @@ class RpcClientsOrchestrator with ChangeNotifier {
   /// {@macro rpc_clients_orchestrator}
   RpcClientsOrchestrator() {
     // Initialize the TypeScript client
-    _serviceBridge = DevtoolsService();
-
+    _dartVmDevtoolsService = DartVmDevtoolsService();
+    customDevtoolsService = CustomDevtoolsService(
+      devtoolsService: _dartVmDevtoolsService,
+    );
+    errorDevtoolsService = ErrorDevtoolsService(
+      devtoolsService: _dartVmDevtoolsService,
+    );
     // Initialize the forwarding service
     _forwardingClient = ForwardingClient(ForwardingClientType.flutter);
     _forwardingRpcListener = ForwardingRpcListener(
       forwardingClient: _forwardingClient,
-      devtoolsService: _serviceBridge,
+      devtoolsService: _dartVmDevtoolsService,
+      customDevtoolsService: customDevtoolsService,
+      errorDevtoolsService: errorDevtoolsService,
     );
   }
 
-  late final DevtoolsService _serviceBridge;
+  late final DartVmDevtoolsService _dartVmDevtoolsService;
+  late final CustomDevtoolsService customDevtoolsService;
+  late final ErrorDevtoolsService errorDevtoolsService;
   late final ForwardingClient _forwardingClient;
   late final ForwardingRpcListener _forwardingRpcListener;
 
   /// Service extension bridge for Flutter VM interaction
-  DevtoolsService get serviceBridge => _serviceBridge;
+  DartVmDevtoolsService get serviceBridge => _dartVmDevtoolsService;
 
   /// Forwarding service for communication with flutter_inspector
   ForwardingClient get forwardingService => _forwardingClient;
@@ -88,17 +100,20 @@ class RpcClientsOrchestrator with ChangeNotifier {
   /// Initialize and connect all clients
   Future<void> initializeAll() async {
     // Connect to VM service
-    await _serviceBridge.connectToVmService();
-    await connectToForwardingService();
+    await _dartVmDevtoolsService.connectToVmService();
+    const forwardingServiceEnabled = false;
+    if (forwardingServiceEnabled) await connectToForwardingService();
+    await customDevtoolsService.init();
+    await errorDevtoolsService.init();
   }
 
   /// Connect to the Flutter VM service
   Future<bool> connectToFlutterVmService() =>
-      _serviceBridge.connectToVmService();
+      _dartVmDevtoolsService.connectToVmService();
 
   /// Disconnect from the Flutter VM service
   Future<void> disconnectFromFlutterVmService() async {
-    await _serviceBridge.disconnectFromVmService();
+    await _dartVmDevtoolsService.disconnectFromVmService();
   }
 
   /// Connect to the forwarding service
@@ -110,10 +125,14 @@ class RpcClientsOrchestrator with ChangeNotifier {
     final h = host ?? Envs.forwardingServer.host;
     final p = port ?? Envs.forwardingServer.port;
     final pth = path ?? Envs.forwardingServer.path;
-
-    await _forwardingClient.connect(h, p, path: pth);
-    _forwardingRpcListener.init();
-    notifyListeners();
+    try {
+      await _forwardingClient.connect(h, p, path: pth);
+      _forwardingRpcListener.init();
+      notifyListeners();
+    } catch (e, stackTrace) {
+      print(e);
+      print(stackTrace);
+    }
   }
 
   /// Disconnect from the forwarding service

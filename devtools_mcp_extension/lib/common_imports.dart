@@ -1,3 +1,6 @@
+export 'dart:async';
+
+export 'package:devtools_app_shared/service.dart';
 export 'package:flutter/material.dart';
 export 'package:flutter/widgets.dart';
 export 'package:intl/intl.dart' hide TextDirection;
