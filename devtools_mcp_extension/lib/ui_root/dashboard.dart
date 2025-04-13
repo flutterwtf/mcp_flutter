@@ -484,7 +484,7 @@ class _VmServiceBridgeCardState extends State<_VmServiceBridgeCard> {
                         // await orchestrator.customDevtoolsService
                         //     .getVisualErrors({});
                         await orchestrator.customDevtoolsService
-                            .getVisualErrors({});
+                            .callPlaygroundFunction({});
                       },
                       child: const Text('Custom Method'),
                     ),

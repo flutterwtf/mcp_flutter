@@ -68,25 +68,31 @@ class RpcClientsOrchestrator with ChangeNotifier {
   /// {@macro rpc_clients_orchestrator}
   RpcClientsOrchestrator() {
     // Initialize the TypeScript client
-    _serviceBridge = DartVmDevtoolsService();
-    customDevtoolsService = CustomDevtoolsService(_serviceBridge);
-
+    _dartVmDevtoolsService = DartVmDevtoolsService();
+    customDevtoolsService = CustomDevtoolsService(
+      devtoolsService: _dartVmDevtoolsService,
+    );
+    errorDevtoolsService = ErrorDevtoolsService(
+      devtoolsService: _dartVmDevtoolsService,
+    );
     // Initialize the forwarding service
     _forwardingClient = ForwardingClient(ForwardingClientType.flutter);
     _forwardingRpcListener = ForwardingRpcListener(
       forwardingClient: _forwardingClient,
-      devtoolsService: _serviceBridge,
+      devtoolsService: _dartVmDevtoolsService,
       customDevtoolsService: customDevtoolsService,
+      errorDevtoolsService: errorDevtoolsService,
     );
   }
 
-  late final DartVmDevtoolsService _serviceBridge;
+  late final DartVmDevtoolsService _dartVmDevtoolsService;
   late final CustomDevtoolsService customDevtoolsService;
+  late final ErrorDevtoolsService errorDevtoolsService;
   late final ForwardingClient _forwardingClient;
   late final ForwardingRpcListener _forwardingRpcListener;
 
   /// Service extension bridge for Flutter VM interaction
-  DartVmDevtoolsService get serviceBridge => _serviceBridge;
+  DartVmDevtoolsService get serviceBridge => _dartVmDevtoolsService;
 
   /// Forwarding service for communication with flutter_inspector
   ForwardingClient get forwardingService => _forwardingClient;
@@ -94,19 +100,20 @@ class RpcClientsOrchestrator with ChangeNotifier {
   /// Initialize and connect all clients
   Future<void> initializeAll() async {
     // Connect to VM service
-    await _serviceBridge.connectToVmService();
+    await _dartVmDevtoolsService.connectToVmService();
     const forwardingServiceEnabled = false;
     if (forwardingServiceEnabled) await connectToForwardingService();
     await customDevtoolsService.init();
+    await errorDevtoolsService.init();
   }
 
   /// Connect to the Flutter VM service
   Future<bool> connectToFlutterVmService() =>
-      _serviceBridge.connectToVmService();
+      _dartVmDevtoolsService.connectToVmService();
 
   /// Disconnect from the Flutter VM service
   Future<void> disconnectFromFlutterVmService() async {
-    await _serviceBridge.disconnectFromVmService();
+    await _dartVmDevtoolsService.disconnectFromVmService();
   }
 
   /// Connect to the forwarding service

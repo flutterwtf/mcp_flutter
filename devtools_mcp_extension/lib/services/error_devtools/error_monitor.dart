@@ -1,8 +1,5 @@
 // ignore_for_file: avoid_catches_without_on_clauses
 
-import 'dart:async';
-
-import 'package:devtools_app_shared/service.dart';
 import 'package:devtools_mcp_extension/common_imports.dart';
 import 'package:devtools_mcp_extension/core/devtools_core/shared/diagnostics/diagnostics_node.dart';
 import 'package:devtools_mcp_extension/services/error_devtools/error_event.dart';
@@ -38,9 +35,9 @@ class FlutterErrorMonitor {
 
     try {
       // Enable structured errors
-      await service.callServiceExtension(
+      await service.callServiceExtensionRaw(
         'ext.flutter.inspector.${WidgetInspectorServiceExtensions.structuredErrors.name}',
-        {'enabled': 'true'},
+        args: {'enabled': 'true'},
       );
 
       // Setup stream listeners

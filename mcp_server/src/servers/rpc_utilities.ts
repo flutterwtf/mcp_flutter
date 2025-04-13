@@ -283,7 +283,10 @@ export class RpcUtilities {
       }
 
       // Override sendWebSocketRequest to directly use the forwardingClient for better tracking
-      if (method.includes("ext.flutter.inspector")) {
+      if (
+        method.startsWith("ext.flutter.inspector") ||
+        method.startsWith("ext.mcpdevtools")
+      ) {
         this.logger.debug(
           `[ForwardingClient][${requestId}] Using direct forwardingClient.callMethod for inspector method: ${method}`
         );

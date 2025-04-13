@@ -64,13 +64,17 @@ class FlutterErrorEvent with EquatableMixin {
   }
 
   String get renderedErrorText => json['renderedErrorText'] ?? '';
+  Map<String, dynamic> toJson() => {
+    'type': type,
+    'message': message,
+    'severity': severity,
+    'timestamp': timestamp,
+    'renderFlexId': renderFlexId,
+    'renderedErrorText': renderedErrorText,
+  };
 
   @override
-  String toString() =>
-      'FlutterErrorEvent(type: $type, message: $message, '
-      'severity: $severity, timestamp: $timestamp, '
-      'renderFlexId: $renderFlexId, '
-      'renderedErrorText: $renderedErrorText)';
+  String toString() => 'FlutterErrorEvent(${toJson()})';
 
   @override
   List<Object?> get props => [type, message, renderFlexId];

@@ -1,10 +1,8 @@
 // Import necessary packages
 // ignore_for_file: avoid_catches_without_on_clauses
 
-import 'dart:async';
 import 'dart:developer';
 
-import 'package:devtools_app_shared/service.dart';
 import 'package:devtools_app_shared/utils.dart';
 import 'package:devtools_mcp_extension/common_imports.dart';
 import 'package:devtools_mcp_extension/services/forwarding_rpc_listener.dart';
@@ -182,15 +180,17 @@ class DartVmDevtoolsService with ChangeNotifier {
     notifyListeners();
   }
 
+  Future<Response> callServiceExtensionRaw(
+    final String extension, {
+    required final Map<String, dynamic> args,
+  }) => serviceManager.callServiceExtensionOnMainIsolate(extension, args: args);
+
   Future<RPCResponse> callServiceExtension(
-    final String extension,
-    final Map<String, dynamic> params,
-  ) async {
+    final String extension, {
+    required final Map<String, dynamic> args,
+  }) async {
     try {
-      final result = await serviceManager.callServiceExtensionOnMainIsolate(
-        extension,
-        args: params,
-      );
+      final result = await callServiceExtensionRaw(extension, args: args);
       return RPCResponse.successMap(result.toJson());
     } catch (e, stackTrace) {
       return RPCResponse.error(
@@ -253,7 +253,7 @@ extension DevtoolsServiceExtension on DartVmDevtoolsService {
           .callServiceExtensionOnMainIsolate(
             callMethodName,
             args: {
-              'objectGroup': group.groupName,
+              'groupName': group.groupName,
               'isSummaryTree': 'true',
               'withPreviews': 'false',
               'fullDetails': 'false',

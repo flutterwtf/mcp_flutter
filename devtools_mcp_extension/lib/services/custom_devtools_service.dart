@@ -9,41 +9,46 @@ import 'package:devtools_mcp_extension/core/devtools_core/shared/diagnostics/ins
 import 'package:devtools_mcp_extension/services/error_devtools/error_monitor.dart';
 import 'package:devtools_mcp_extension/services/object_group_manager.dart';
 
-// class DevtoolsService {
-//   DevtoolsService(this.devtoolsService);
-//   final DevtoolsService devtoolsService;
-// }
+part 'error_devtools/error_devtools_service.dart';
 
-/// Service for analyzing and detecting visual errors in Flutter applications
-/// using the VM Service and Widget Inspector.
-class CustomDevtoolsService {
-  CustomDevtoolsService(this.devtoolsService);
+base class BaseDevtoolsService {
+  BaseDevtoolsService({required this.devtoolsService});
   final DartVmDevtoolsService devtoolsService;
-  late final ObjectGroupManager _objectGroupManager;
-  late final _flutterErrorMonitor = FlutterErrorMonitor(
-    service: devtoolsService,
-  );
-  Future<void> init() async {
-    _objectGroupManager = ObjectGroupManager(
-      debugName: 'visual-errors',
+
+  /// Expando is used to associate ObjectGroupManager instances with debug names
+  /// without creating a direct reference that would prevent garbage collection.
+  /// This allows us to manage object groups efficiently
+  /// while maintaining memory safety.
+  final Expando<ObjectGroupManager> _objectGroupManagers = Expando();
+
+  ObjectGroupManager initObjectGroup({required final String debugName}) {
+    final manager = ObjectGroupManager(
+      debugName: debugName,
       vmService: devtoolsService.serviceManager.service!,
       isolate: devtoolsService.serviceManager.isolateManager.mainIsolate,
     );
-
-    await devtoolsService.callServiceExtension(
-      'ext.flutter.inspector.${WidgetInspectorServiceExtensions.structuredErrors.name}',
-      {},
-    );
-
-    await _flutterErrorMonitor.initialize();
+    _objectGroupManagers[debugName] = manager;
+    return manager;
   }
+}
 
+/// Service for analyzing visual trees in Flutter applications
+/// using the VM Service and Widget Inspector.
+final class CustomDevtoolsService extends BaseDevtoolsService {
+  CustomDevtoolsService({required super.devtoolsService});
+
+  Future<void> init() async {}
+
+  /// This function is used as playground for testing.
+  ///
   /// Returns a list of visual errors in the Flutter application.
   /// Each error contains:
   /// - nodeId: The ID of the DiagnosticsNode with the error
   /// - description: Description of the error
   /// - errorType: Type of the error (e.g., "Layout Overflow", "Render Issue")
-  Future<RPCResponse> getVisualErrors(final Map<String, dynamic> params) async {
+  Future<RPCResponse> callPlaygroundFunction(
+    final Map<String, dynamic> params,
+  ) async {
     final serviceManager = devtoolsService.serviceManager;
     if (!serviceManager.connectedState.value.connected) {
       return RPCResponse.error('Not connected to VM service');
@@ -53,26 +58,18 @@ class CustomDevtoolsService {
     if (vmService == null) {
       return RPCResponse.error('VM service not available');
     }
-
-    final isolateId = serviceManager.isolateManager.mainIsolate.value?.id;
-    if (isolateId == null) {
-      return RPCResponse.error('No main isolate available');
-    }
-    final errors = _flutterErrorMonitor.errors;
-
-    print(jsonEncode(errors.map((final e) => e.toString()).toList()));
+    final objectGroupManager = initObjectGroup(debugName: 'playground');
 
     // final objectRef = await vmService.getObject(
     //   isolateId,
     //   'RenderFlex#${errors.first.renderFlexId}', // The ID from RenderFlex#f8f6b
     // );
-    final group = _objectGroupManager.next;
-    final response = await vmService.callServiceExtension(
+    final group = objectGroupManager.next;
+    final response = await devtoolsService.callServiceExtensionRaw(
       'ext.flutter.inspector.'
-      '${WidgetInspectorServiceExtensions.setFlexFit.name}',
-      isolateId: isolateId,
+      '${WidgetInspectorServiceExtensions.widgetLocationIdMap.name}',
       args: {
-        'objectGroup': group.groupName,
+        'groupName': group.groupName,
         'isSummaryTree': 'false',
         'withPreviews': 'true',
         'fullDetails': 'true',
@@ -92,13 +89,16 @@ class CustomDevtoolsService {
       false,
       null,
     );
+
     // one of children contains in description correct renderFlexId.
     // so we need to find it and use it as rootNode.
     Future<RemoteDiagnosticsNode?> findNodeWithId(
       final RemoteDiagnosticsNode node,
       final String id,
     ) async {
-      if (node.description?.contains(id) ?? false) return node;
+      if (node.toString(minLevel: DiagnosticLevel.debug).contains(id)) {
+        return node;
+      }
       if (!node.hasChildren) return null;
       final children = await node.children ?? [];
       for (final child in children) {
@@ -108,23 +108,23 @@ class CustomDevtoolsService {
       return null;
     }
 
-    final rootNode = await findNodeWithId(rootNodes, errors.first.renderFlexId);
+    // final rootNode = await findNodeWithId(rootNodes, errors.first.renderFlexId);
 
-    print(jsonEncode(rootNode?.json));
+    // print(jsonEncode(rootNode?.json));
 
-    return RPCResponse.successMap({'errors': errors});
+    // return RPCResponse.successMap({'errors': errors});
 
     try {
       // Get a new object group for this operation
-      final group = _objectGroupManager.next;
+      final group = objectGroupManager.next;
 
       try {
         // Get the root widget tree with full details to analyze for errors
         final response = await vmService.callServiceExtension(
           'ext.flutter.inspector.getRootWidgetTree',
-          isolateId: isolateId,
+          // isolateId: isolateId,
           args: {
-            'objectGroup': group.groupName,
+            'groupName': group.groupName,
             'isSummaryTree': 'true',
             'withPreviews': 'true',
             'fullDetails': 'false',
@@ -132,7 +132,7 @@ class CustomDevtoolsService {
         );
 
         if (response.json == null || response.json!['result'] == null) {
-          await _objectGroupManager.cancelNext();
+          await objectGroupManager.cancelNext();
           return RPCResponse.error('Root widget tree not available');
         }
 
@@ -149,12 +149,12 @@ class CustomDevtoolsService {
         // final errors = await _findErrors(rootNode);
 
         // Promote the group after successful operation
-        await _objectGroupManager.promoteNext();
+        await objectGroupManager.promoteNext();
 
-        return RPCResponse.successMap({'errors': errors});
+        return RPCResponse.successMap({'errors': []});
       } catch (e) {
         // Cancel the group on error
-        await _objectGroupManager.cancelNext();
+        await objectGroupManager.cancelNext();
         rethrow;
       }
     } catch (e, stackTrace) {
@@ -243,10 +243,11 @@ class CustomDevtoolsService {
     if (isolateId == null) {
       return RPCResponse.error('No main isolate available');
     }
+    final objectGroupManager = initObjectGroup(debugName: 'playground');
 
     try {
       // Get a new object group for this operation
-      final group = _objectGroupManager.next;
+      final group = objectGroupManager.next;
 
       try {
         // Use the appropriate extension based on parameters
@@ -269,7 +270,7 @@ class CustomDevtoolsService {
         );
 
         if (response.json == null || response.json!['result'] == null) {
-          await _objectGroupManager.cancelNext();
+          await objectGroupManager.cancelNext();
           return RPCResponse.error('Root widget tree not available');
         }
 
@@ -282,7 +283,7 @@ class CustomDevtoolsService {
         );
 
         // Promote the group after successful operation
-        await _objectGroupManager.promoteNext();
+        await objectGroupManager.promoteNext();
 
         return RPCResponse.successMap({
           'root': rootNode.json,
@@ -290,7 +291,7 @@ class CustomDevtoolsService {
         });
       } catch (e, stack) {
         // Cancel the group on error
-        await _objectGroupManager.cancelNext();
+        await objectGroupManager.cancelNext();
         return RPCResponse.error('Error getting diagnostic tree: $e', stack);
       }
     } catch (e, stack) {
@@ -476,11 +477,6 @@ class CustomDevtoolsService {
     } catch (e, stack) {
       return RPCResponse.error('Error getting node children: $e', stack);
     }
-  }
-
-  /// Cleanup resources when the service is disposed
-  Future<void> dispose() async {
-    await _objectGroupManager.dispose();
   }
 }
 
