@@ -12,6 +12,10 @@ final class ErrorDevtoolsService extends BaseDevtoolsService {
     await _flutterErrorMonitor.initialize();
   }
 
+  Future<void> dispose() async {
+    await _flutterErrorMonitor.dispose();
+  }
+
   /// Returns a list of visual errors in the Flutter application.
   ///
   /// Before calling this function, make sure it was launched before the error
