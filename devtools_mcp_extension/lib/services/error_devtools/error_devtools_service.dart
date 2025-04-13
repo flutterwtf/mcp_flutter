@@ -40,9 +40,7 @@ final class ErrorDevtoolsService extends BaseDevtoolsService {
 
     return RPCResponse.successMap({
       'message': 'Errors found',
-      'errors': jsonEncode(
-        errors.take(count).map((final e) => e.toJson()).toList(),
-      ),
+      'errors': errors.take(count).map((final e) => e.toJson()).toList(),
     });
   }
 }

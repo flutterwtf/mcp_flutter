@@ -20,6 +20,12 @@ export type RpcToolResponseType = {
   isError?: boolean;
 };
 
+export type FlutterExtensionResponse = {
+  success: boolean;
+  data: unknown;
+  error?: string;
+};
+
 /**
  * Utilities for handling RPC communication with Flutter applications
  */
@@ -255,7 +261,7 @@ export class RpcUtilities {
   async callFlutterExtension(
     method: string,
     params: Record<string, unknown> = {}
-  ): Promise<unknown> {
+  ): Promise<FlutterExtensionResponse> {
     try {
       const port = undefined;
       const requestId = `req_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
@@ -298,7 +304,7 @@ export class RpcUtilities {
           this.logger.debug(`[ForwardingClient][${requestId}] Result:`, {
             result,
           });
-          return result;
+          return result as FlutterExtensionResponse;
         } catch (error) {
           this.logger.error(
             `[ForwardingClient][${requestId}] Direct call failed for ${method}:`,
@@ -318,7 +324,7 @@ export class RpcUtilities {
           `[ForwardingClient][${requestId}] Method ${method} result:`,
           { result }
         );
-        return result;
+        return result as FlutterExtensionResponse;
       }
     } catch (error) {
       const errorId = `err_${Date.now()}`;

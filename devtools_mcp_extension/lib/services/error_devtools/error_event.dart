@@ -1,5 +1,11 @@
+// ignore_for_file: invalid_annotation_target
+
 import 'package:equatable/equatable.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:vm_service/vm_service.dart';
+
+part 'error_event.freezed.dart';
+part 'error_event.g.dart';
 
 /// Represents the severity level of an error.
 enum ErrorSeverity {
@@ -14,42 +20,35 @@ enum ErrorSeverity {
 }
 
 /// Represents a Flutter error event with diagnostic information.
-class FlutterErrorEvent with EquatableMixin {
+@Freezed(toJson: true)
+abstract class FlutterErrorEvent with _$FlutterErrorEvent, EquatableMixin {
   /// Creates a new [FlutterErrorEvent] instance.
-  FlutterErrorEvent({
-    required this.type,
-    required this.message,
-    required this.timestamp,
-    required this.nodeId,
-    required this.json,
-    this.diagnostics,
-    this.stackTrace,
-    this.severity = ErrorSeverity.error,
-  });
+  const factory FlutterErrorEvent({
+    /// The JSON data associated with the error event.
+    @JsonKey(includeToJson: false) required final Map<String, dynamic> json,
 
-  /// The JSON data associated with the error event.
-  final Map<String, dynamic> json;
+    /// The unique identifier for the error event.
+    required final String nodeId,
 
-  /// The unique identifier for the error event.
-  final String nodeId;
+    /// The type of error (e.g., 'Flutter Error', 'VM Error').
+    required final String type,
 
-  /// The type of error (e.g., 'Flutter Error', 'VM Error').
-  final String type;
+    /// The error message.
+    required final String message,
 
-  /// The error message.
-  final String message;
+    /// When the error occurred.
+    required final DateTime timestamp,
 
-  /// Diagnostic information about the error.
-  final Instance? diagnostics;
+    /// Diagnostic information about the error.
+    @JsonKey(includeToJson: false) final Instance? diagnostics,
 
-  /// The stack trace of the error, if available.
-  final StackTrace? stackTrace;
+    /// The stack trace of the error, if available.
+    @JsonKey(includeToJson: false) final StackTrace? stackTrace,
 
-  /// When the error occurred.
-  final DateTime timestamp;
-
-  /// The severity level of the error.
-  final ErrorSeverity severity;
+    /// The severity level of the error.
+    @Default(ErrorSeverity.error) final ErrorSeverity severity,
+  }) = _FlutterErrorEvent;
+  const FlutterErrorEvent._();
 
   /// The ID of the RenderFlex widget that caused the error.
   String get renderFlexId {
@@ -64,18 +63,12 @@ class FlutterErrorEvent with EquatableMixin {
   }
 
   String get renderedErrorText => json['renderedErrorText'] ?? '';
-  Map<String, dynamic> toJson() => {
-    'type': type,
-    'message': message,
-    'severity': severity,
-    'timestamp': timestamp,
-    'renderFlexId': renderFlexId,
-    'renderedErrorText': renderedErrorText,
-  };
 
   @override
-  String toString() => 'FlutterErrorEvent(${toJson()})';
-
-  @override
+  @JsonKey(includeToJson: false)
   List<Object?> get props => [type, message, renderFlexId];
+
+  @override
+  @JsonKey(includeToJson: false)
+  bool? get stringify => true;
 }

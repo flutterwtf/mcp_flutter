@@ -14,6 +14,10 @@ import {
   TREE_RESOURCES_TEMPLATES,
 } from "./widget_tree_resources.js";
 
+type AppErrorsResponse = {
+  message: string;
+  errors: unknown[];
+};
 type ResourceType =
   | "root"
   | "node"
@@ -45,14 +49,26 @@ export class ResourcesHandlers {
       return this.handleRead(request.params.uri, rpcUtils, rpcToolHandlers);
     });
   }
-
+  _test = true;
   async handleRead(
     uri: string,
     rpcUtils: RpcUtilities,
     rpcToolHandlers: FlutterRpcHandlers
   ): Promise<ResourceContents> {
     const parsedUri = this.parseUri(uri);
-
+    // if (this._test) {
+    //   return {
+    //     contents: [
+    //       {
+    //         uri: uri,
+    //         text: "HOHOHO",
+    //         json: {
+    //           test: "test",
+    //         },
+    //       },
+    //     ],
+    //   };
+    // }
     try {
       switch (parsedUri.type) {
         case "root":
@@ -136,14 +152,27 @@ export class ResourcesHandlers {
                 count: parsedUri.count,
               }
             );
+            const errorsListJson = appErrorsResult?.data as AppErrorsResponse;
+
+            const errorsList = errorsListJson?.errors ?? [];
             return {
-              contents: [
-                {
-                  uri: uri,
-                  json: appErrorsResult,
-                  mimeType: "application/json",
-                },
-              ],
+              contents:
+                errorsList.length == 0
+                  ? [
+                      {
+                        uri: uri,
+                        text: errorsListJson.message,
+                        mimeType: "text/plain",
+                      },
+                    ]
+                  : [
+                      {
+                        uri: uri,
+                        text: errorsListJson.message,
+                        json: errorsList,
+                        mimeType: "application/json",
+                      },
+                    ],
             };
           } catch (error) {
             throw new McpError(
@@ -208,43 +237,55 @@ export class ResourcesHandlers {
     nodeId?: string;
     count?: number;
   } {
-    // Parse visual://[host]/tree/root format
-    const match = uri.match(/^visual:\/\/([^\/]+)\/(?:tree|view|app)\/(.+)$/);
-    if (!match) {
+    try {
+      const parsedUri = new URL(uri);
+
+      if (parsedUri.protocol !== "visual:") {
+        return { type: "unknown", appId: "unknown" };
+      }
+
+      const appId = parsedUri.host;
+      const pathParts = parsedUri.pathname.split("/").filter(Boolean);
+
+      if (pathParts.length < 2) {
+        return { type: "unknown", appId };
+      }
+
+      const [category, action, ...rest] = pathParts;
+
+      switch (category) {
+        case "tree":
+          if (action === "root") {
+            return { type: "root", appId };
+          } else if (["node", "parent", "children"].includes(action)) {
+            return {
+              type: action as ResourceType,
+              appId,
+              nodeId: rest[0],
+            };
+          }
+          break;
+
+        case "app":
+          if (action === "errors") {
+            return {
+              type: "app_errors",
+              appId,
+              count: rest.includes("latest") ? 1 : 10,
+            };
+          }
+          break;
+
+        case "view":
+          if (action === "info") {
+            return { type: "info", appId };
+          }
+          return { type: "view", appId };
+      }
+
+      return { type: "unknown", appId };
+    } catch (e) {
       return { type: "unknown", appId: "unknown" };
     }
-
-    const [_, appId, path] = match;
-
-    if (path === "root") {
-      return { type: "root", appId };
-    } else if (path.startsWith("node/")) {
-      return { type: "node", appId, nodeId: path.split("/")[1] };
-    } else if (path.startsWith("parent/")) {
-      return { type: "parent", appId, nodeId: path.split("/")[1] };
-    } else if (path.startsWith("children/")) {
-      return { type: "children", appId, nodeId: path.split("/")[1] };
-    } else if (path.startsWith("app/errors/")) {
-      return {
-        type: "app_errors",
-        appId,
-        count: (() => {
-          switch (path) {
-            case "app/errors/latest":
-              return 1;
-            case "app/errors/ten":
-              return 10;
-            default:
-              return 10;
-          }
-        })(),
-      };
-    } else if (path === "info") {
-      return { type: "info", appId };
-    } else if (path.startsWith("view/")) {
-      return { type: "view", appId };
-    }
-
-    return { type: "unknown", appId };
   }
 }
