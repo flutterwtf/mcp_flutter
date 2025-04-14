@@ -8,6 +8,7 @@ import {
 import { Logger } from "flutter_mcp_forwarding_server";
 import path from "path";
 import { fileURLToPath } from "url";
+import { Env } from "../index.js";
 import { ResourcesHandlers } from "../resources/resource_handlers.js";
 import { RpcUtilities } from "../servers/rpc_utilities.js";
 import { createCustomRpcHandlerMap } from "./create_custom_rpc_handler_map.js";
@@ -40,17 +41,30 @@ export class ToolsHandlers {
     // Load tools configuration
     const serverToolsFlutter = rpcUtils.loadYamlConfig(serverToolsFlutterPath);
     const serverToolsCustom = rpcUtils.loadYamlConfig(serverToolsCustomPath);
-    const toolSchemes = [
-      ...serverToolsFlutter.tools,
-      ...serverToolsCustom.tools,
-    ];
+    let toolSchemes = <
+      {
+        [toolname: string]: unknown;
+      }
+    >(<unknown>[...serverToolsFlutter.tools, ...serverToolsCustom.tools]);
     if (rpcUtils.args.areResourcesSupported) {
-      toolSchemes.push(...resourcesHandlers.getToolSchemes(rpcUtils));
+      toolSchemes = {
+        ...toolSchemes,
+        ...resourcesHandlers.getToolSchemes(rpcUtils),
+      };
     }
+
+    const filteredToolSchemes = Object.fromEntries(
+      Object.entries(toolSchemes).filter(([toolname, tool]) => {
+        if (rpcUtils.args.env === Env.Production || toolname.includes("dump")) {
+          return true;
+        }
+        return false;
+      })
+    );
 
     server.setRequestHandler(ListToolsRequestSchema, async () => {
       return {
-        tools: toolSchemes,
+        tools: filteredToolSchemes,
       };
     });
 

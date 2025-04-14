@@ -14,6 +14,11 @@ export const defaultEnvConfig = {
   resourcesSupported: true,
 };
 
+export enum Env {
+  Development = "development",
+  Production = "production",
+}
+
 // Load environment variables
 dotenv.config();
 export interface CommandLineConfig {
@@ -26,6 +31,7 @@ export interface CommandLineConfig {
   forwardingServerPort: number;
   forwardingServerHost: string;
   areResourcesSupported: boolean;
+  env: Env;
 }
 
 export class CommandLineArgs {
@@ -110,6 +116,12 @@ export class CommandLineArgs {
           ] as const,
           default: process.env.LOG_LEVEL || "critical",
         },
+        env: {
+          alias: "e",
+          description: "Environment",
+          type: "string",
+          default: process.env.NODE_ENV || Env.Production,
+        },
       })
       .help()
       .parseSync();
@@ -124,6 +136,7 @@ export class CommandLineArgs {
       port: argv.port,
       host: argv.host,
       areResourcesSupported: Boolean(argv.resources),
+      env: argv.env as Env,
     });
   }
 }
