@@ -6,14 +6,21 @@ import {
   McpError,
   ReadResourceRequestSchema,
   ResourceContents,
+  Tool,
 } from "@modelcontextprotocol/sdk/types.js";
 import { RpcUtilities } from "../servers/rpc_utilities.js";
-import { FlutterRpcHandlers } from "../tools/flutter_rpc_handlers.generated.js";
+import {
+  FlutterRpcHandlers,
+  RpcToolName,
+} from "../tools/flutter_rpc_handlers.generated.js";
+import { CustomRpcHandlerMap } from "../tools/index.js";
 import {
   TREE_RESOURCES,
   TREE_RESOURCES_TEMPLATES,
 } from "./widget_tree_resources.js";
-
+const ToolNames = {
+  getAppErrors: "ext.mcpdevtools.getAppErrors",
+} as const;
 type AppErrorsResponse = {
   message: string;
   errors: unknown[];
@@ -23,6 +30,7 @@ type ResourceType =
   | "node"
   | "parent"
   | "children"
+  | "screenshot"
   | "app_errors"
   | "view"
   | "info"
@@ -46,16 +54,44 @@ export class ResourcesHandlers {
     });
     // Return resource content when clients request it
     server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
-      return this.handleRead(request.params.uri, rpcUtils, rpcToolHandlers);
+      return this.#handleRead(request.params.uri, rpcUtils, rpcToolHandlers);
     });
   }
-  _test = true;
-  async handleRead(
+  /**
+   * Get the flutter application errors list.
+   * @param count - The count of errors to get.
+   * @param rpcUtils - The RPC utilities.
+   * @returns The errors list.
+   */
+  async #getErrorsList(
+    count: number | undefined,
+    rpcUtils: RpcUtilities
+  ): Promise<{
+    errorsListJson: AppErrorsResponse;
+    errorsList: unknown[];
+  }> {
+    const appErrorsResult = await rpcUtils.callFlutterExtension(
+      ToolNames.getAppErrors as RpcToolName,
+      {
+        count: count ?? 10,
+      }
+    );
+    const errorsListJson = appErrorsResult?.data as AppErrorsResponse;
+
+    const errorsList = errorsListJson?.errors ?? [];
+
+    return {
+      errorsListJson,
+      errorsList,
+    };
+  }
+
+  async #handleRead(
     uri: string,
     rpcUtils: RpcUtilities,
     rpcToolHandlers: FlutterRpcHandlers
   ): Promise<ResourceContents> {
-    const parsedUri = this.parseUri(uri);
+    const parsedUri = this.#parseUri(uri);
     // if (this._test) {
     //   return {
     //     contents: [
@@ -146,15 +182,10 @@ export class ResourcesHandlers {
 
         case "app_errors":
           try {
-            const appErrorsResult = await rpcUtils.callFlutterExtension(
-              "ext.mcpdevtools.getAppErrors",
-              {
-                count: parsedUri.count,
-              }
+            const { errorsListJson, errorsList } = await this.#getErrorsList(
+              parsedUri.count,
+              rpcUtils
             );
-            const errorsListJson = appErrorsResult?.data as AppErrorsResponse;
-
-            const errorsList = errorsListJson?.errors ?? [];
             return {
               contents:
                 errorsList.length == 0
@@ -214,11 +245,20 @@ export class ResourcesHandlers {
             ],
           };
 
-        default:
-          throw new McpError(
-            ErrorCode.MethodNotFound,
-            `Unsupported resource URI: ${uri}`
+        case "screenshot":
+          const screenshotResult = await rpcUtils.callFlutterExtension(
+            "ext.flutter.inspector.screenshot",
+            {}
           );
+          return {
+            contents: [
+              {
+                uri: uri,
+                blob: screenshotResult,
+                mimeType: "image/png",
+              },
+            ],
+          };
       }
     } catch (error) {
       if (error instanceof McpError) {
@@ -230,10 +270,13 @@ export class ResourcesHandlers {
       );
     }
   }
-
-  private parseUri(uri: string): {
+  /**
+   * Parse the URI to get the resource type and parameters.
+   * @param uri - The URI to parse.
+   * @returns The resource type and parameters.
+   */
+  #parseUri(uri: string): {
     type: ResourceType;
-    appId?: string;
     nodeId?: string;
     count?: number;
   } {
@@ -241,14 +284,14 @@ export class ResourcesHandlers {
       const parsedUri = new URL(uri);
 
       if (parsedUri.protocol !== "visual:") {
-        return { type: "unknown", appId: "unknown" };
+        return { type: "unknown" };
       }
 
-      const appId = parsedUri.host;
+      const host = parsedUri.host;
       const pathParts = parsedUri.pathname.split("/").filter(Boolean);
 
       if (pathParts.length < 2) {
-        return { type: "unknown", appId };
+        return { type: "unknown" };
       }
 
       const [category, action, ...rest] = pathParts;
@@ -256,11 +299,10 @@ export class ResourcesHandlers {
       switch (category) {
         case "tree":
           if (action === "root") {
-            return { type: "root", appId };
+            return { type: "root" };
           } else if (["node", "parent", "children"].includes(action)) {
             return {
               type: action as ResourceType,
-              appId,
               nodeId: rest[0],
             };
           }
@@ -268,24 +310,85 @@ export class ResourcesHandlers {
 
         case "app":
           if (action === "errors") {
+            const count = rest.includes("latest")
+              ? 1
+              : parseInt(rest[rest.length - 1] ?? "10");
             return {
               type: "app_errors",
-              appId,
-              count: rest.includes("latest") ? 1 : 10,
+              count,
+            };
+          } else if (action === "screenshot") {
+            return {
+              type: "screenshot",
             };
           }
           break;
 
         case "view":
           if (action === "info") {
-            return { type: "info", appId };
+            return { type: "info" };
           }
-          return { type: "view", appId };
+          return { type: "view" };
       }
 
-      return { type: "unknown", appId };
+      return { type: "unknown" };
     } catch (e) {
-      return { type: "unknown", appId: "unknown" };
+      return { type: "unknown" };
     }
+  }
+
+  /**
+   * Get the tools for the resources if resources are not supported.
+   * @param rpcUtils - The RPC utilities.
+   * @returns The tools.
+   */
+  getTools(rpcUtils: RpcUtilities): CustomRpcHandlerMap {
+    if (rpcUtils.args.areResourcesSupported) {
+      return {};
+    }
+    return {
+      [ToolNames.getAppErrors]: async (request) => {
+        const count = request.params.arguments.count;
+        const { errorsListJson, errorsList } = await this.#getErrorsList(
+          count,
+          rpcUtils
+        );
+        return {
+          content: [
+            {
+              type: "text",
+              text: errorsListJson.message,
+            },
+            {
+              type: "json",
+              json: errorsList,
+            },
+          ],
+        };
+      },
+    };
+  }
+
+  /**
+   * Get the tool schemes for the resources if resources are not supported.
+   * @param rpcUtils - The RPC utilities.
+   * @returns The tool schemes.
+   */
+  getToolSchemes(rpcUtils: RpcUtilities): Tool[] {
+    if (rpcUtils.args.areResourcesSupported) {
+      return [];
+    }
+    return <Tool>[
+      {
+        name: ToolNames.getAppErrors,
+        description: "Get the errors of the app",
+        inputSchema: {
+          type: "object",
+          properties: {
+            count: { type: "number", default: 1 },
+          },
+        },
+      },
+    ];
   }
 }

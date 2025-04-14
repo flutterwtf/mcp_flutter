@@ -9,20 +9,15 @@
   <img width="380" height="200" src="https://glama.ai/mcp/servers/qnu3f0fa20/badge" alt="Flutter Inspector Server MCP server" />
 </a>
 
-This project is a work in progress and not all methods (mostly Flutter Inspector related) are implemented yet.
-
-However, two methods are tested with Flutter:
-
-- screenshot
-- get_root_widget
+⚠️ This project is a work in progress and not all methods (mostly Flutter Inspector related) are implemented yet.
 
 Currently Flutter works with MCP server via forwarding server. Please see [Architecture](https://github.com/Arenukvern/mcp_flutter/blob/main/ARCHITECTURE.md) for more details.
 
 Some of other methods are not tested - they may work or not. Please use with caution. It is possible that the most methods will be removed from the MCP server later to focus solely on Flutter applications and maybe Jaspr.
 
-# !!WARNING!!
+# ⚠️ WARNING ⚠️
 
-ALL DUMPS TOOLS ARE VERY HEAVY OPERATION and can easily overload context window of AI agent. Please use them with extreme caution.
+Debug methods, which may use huge amount of tokens and therefore overload context now placed under "debug-tools" parameter. In production, any debug methods are disabled by default.
 
 ## 🚀 Quick Start
 
@@ -110,6 +105,10 @@ For developers who want to contribute to the project or run the latest version d
 
    #### Cursor Setup
 
+   # ⚠️ Resources Limitations ⚠️
+
+   - Since Cursor doesn't support resources, make sure you passed `RESOURCES_SUPPORTED=false` as environment variable. It will make some resources to be displayed as tools.
+
    1. Open Cursor's settings
    2. Go to the Features tab
    3. Under "Model Context Protocol", add the server:
@@ -121,7 +120,9 @@ For developers who want to contribute to the project or run the latest version d
             "args": [
               "/path/to/your/cloned/flutter-inspector/mcp_server/build/index.js"
             ],
-            "env": {},
+            "env": {
+              "RESOURCES_SUPPORTED": false
+            },
             "disabled": false,
             "autoApprove": []
           }
@@ -155,13 +156,6 @@ For developers who want to contribute to the project or run the latest version d
    2. Restart Claude
    3. The Flutter inspector tools will be automatically available
 
-## 🎯 What You Can Do (Hopefully)
-
-- **Analyze Widget Trees**: Get detailed information about your Flutter app's structure
-- **Inspect Navigation**: See current routes and navigation state
-- **Debug Layout Issues**: Understand widget relationships and properties
-<!-- - **AI-Powered Assistance**: Get smarter code suggestions based on your app's context -->
-
 ## 🔧 Configuration Options
 
 ### Environment Variables (`.env`)
@@ -184,6 +178,9 @@ LOG_LEVEL=critical
 
 # Development configuration
 NODE_ENV=development
+
+# Resources configuration
+RESOURCES_SUPPORTED=true
 ```
 
 ### Command Line Arguments
@@ -191,6 +188,7 @@ NODE_ENV=development
 ```bash
 --port, -p     # Server port
 --stdio        # Run in stdio mode (default: true)
+--resources    # Enable resources support (default: true)
 --log-level    # Set logging level (debug, info, notice, warning, error, critical, alert, emergency) according to https://spec.modelcontextprotocol.io/specification/2025-03-26/server/utilities/logging/#log-levels
 --help         # Show help
 ```
@@ -222,16 +220,28 @@ Example usage:
 
 ## 🔧 Troubleshooting
 
-1. **Connection Issues**
+Make sure you:
+
+1. Verify that forwarding server is running.
+2. Opened Devtools in Browser.
+3. Have added MCP extension to your Flutter app dev dependencies and enabled it in Devtools.
+
+4. **Connection Issues**
 
    - Ensure your Flutter app is running in debug mode
    - Verify the port matches in both Flutter app and inspector
    - Check if the port is not being used by another process
 
-2. **AI Tool Not Detecting Inspector**
+5. **AI Tool Not Detecting Inspector**
    - Restart the AI tool after configuration changes
    - Verify the configuration JSON syntax
    - Check the tool's logs for connection errors
+
+## 🎯 What You Can Hopefully Do
+
+- **Analyze Widget Trees**: Get detailed information about your Flutter app's structure
+- **Inspect Navigation**: See current routes and navigation state
+- **Debug Layout Issues**: Understand widget relationships and properties
 
 ## 📚 Available Tools
 
@@ -285,30 +295,6 @@ Direct RPC methods for Dart I/O operations:
    - Protocol inspection (`get_supported_protocols`)
    - VM interaction (`get_vm_info`)
    - RPC discovery (`get_extension_rpcs`)
-
-### Method Naming Convention
-
-All methods follow a consistent naming pattern:
-
-- Utility methods: descriptive_name
-- Debug methods: debug\_\*
-- Inspector methods: inspector\_\*
-- DartIO methods: dart*io*\*
-- Stream methods: stream\_\*
-
-Each method name indicates its category and functionality, making it easier to understand its purpose and capabilities.
-
-### Method Documentation Format
-
-Each method includes:
-
-- Clear description of functionality
-- Required and optional parameters
-- Return value format
-- Category indication (RPC vs Utility)
-- Corresponding Flutter RPC endpoint (if applicable)
-
-For detailed implementation instructions, see the "Implementing New RPC Methods" section.
 
 ## Smithery Integration
 

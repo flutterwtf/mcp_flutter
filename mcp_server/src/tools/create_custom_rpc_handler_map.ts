@@ -7,10 +7,10 @@ import {
 import { FlutterPort, IsolateInfo } from "../types/types.js";
 
 // Define a type for the handler function
-type RpcHandler = (request: any) => Promise<any>;
+export type RpcHandler = (request: any) => Promise<any>;
 
 // Define a type for the handler map with an index signature
-interface CustomRpcHandlerMap {
+export interface CustomRpcHandlerMap {
   [key: string]: RpcHandler;
 }
 

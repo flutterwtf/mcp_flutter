@@ -36,7 +36,7 @@ export class RpcUtilities {
 
   constructor(
     private readonly logger: Logger,
-    private readonly args: CommandLineConfig
+    public readonly args: CommandLineConfig
   ) {
     this.dartVmClient = new RpcClient(logger);
     this.forwardingClient = new ForwardingClient(ClientType.INSPECTOR, logger);

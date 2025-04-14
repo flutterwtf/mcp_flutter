@@ -11,6 +11,7 @@ export const defaultEnvConfig = {
   mcpServerHost: "localhost",
   forwardingServerPort: 8143,
   forwardingServerHost: "localhost",
+  resourcesSupported: true,
 };
 
 // Load environment variables
@@ -24,6 +25,7 @@ export interface CommandLineConfig {
   dartVMHost: string;
   forwardingServerPort: number;
   forwardingServerHost: string;
+  areResourcesSupported: boolean;
 }
 
 export class CommandLineArgs {
@@ -86,6 +88,14 @@ export class CommandLineArgs {
           type: "boolean",
           default: true,
         },
+        resources: {
+          alias: "resources",
+          description: "Enable resources support",
+          type: "boolean",
+          default:
+            process.env.RESOURCES_SUPPORTED ||
+            defaultEnvConfig.resourcesSupported,
+        },
         "log-level": {
           description: "Logging level",
           choices: [
@@ -113,6 +123,7 @@ export class CommandLineArgs {
       forwardingServerHost: argv.forwardingServerHost,
       port: argv.port,
       host: argv.host,
+      areResourcesSupported: Boolean(argv.resources),
     });
   }
 }

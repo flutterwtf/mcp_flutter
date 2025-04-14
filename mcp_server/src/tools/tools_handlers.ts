@@ -8,6 +8,7 @@ import {
 import { Logger } from "flutter_mcp_forwarding_server";
 import path from "path";
 import { fileURLToPath } from "url";
+import { ResourcesHandlers } from "../resources/resource_handlers.js";
 import { RpcUtilities } from "../servers/rpc_utilities.js";
 import { createCustomRpcHandlerMap } from "./create_custom_rpc_handler_map.js";
 import { createRpcHandlerMap } from "./create_rpc_handler_map.js";
@@ -25,7 +26,8 @@ export class ToolsHandlers {
     server: Server,
     rpcUtils: RpcUtilities,
     logger: Logger,
-    rpcHandlers: FlutterRpcHandlers
+    rpcHandlers: FlutterRpcHandlers,
+    resourcesHandlers: ResourcesHandlers
   ) {
     const serverToolsFlutterPath = path.join(
       __dirname,
@@ -38,15 +40,19 @@ export class ToolsHandlers {
     // Load tools configuration
     const serverToolsFlutter = rpcUtils.loadYamlConfig(serverToolsFlutterPath);
     const serverToolsCustom = rpcUtils.loadYamlConfig(serverToolsCustomPath);
+    const toolSchemes = [
+      ...serverToolsFlutter.tools,
+      ...serverToolsCustom.tools,
+    ];
+    if (rpcUtils.args.areResourcesSupported) {
+      toolSchemes.push(...resourcesHandlers.getToolSchemes(rpcUtils));
+    }
+
     server.setRequestHandler(ListToolsRequestSchema, async () => {
       return {
-        tools: [...serverToolsFlutter.tools, ...serverToolsCustom.tools],
+        tools: toolSchemes,
       };
     });
-
-    server.setRequestHandler(ListToolsRequestSchema, async () => ({
-      tools: [...serverToolsFlutter.tools, ...serverToolsCustom.tools],
-    }));
 
     // Use the generated function to create the handler map
     const handlerMap = createRpcHandlerMap(rpcHandlers);
@@ -58,6 +64,7 @@ export class ToolsHandlers {
       (request, connectionDestination) =>
         rpcUtils.handlePortParam(request, connectionDestination)
     );
+    const customResourceHandlerMap = resourcesHandlers.getTools(rpcUtils);
 
     server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
       const toolName = request.params.name;
@@ -69,6 +76,10 @@ export class ToolsHandlers {
       // Then check custom handlers
       if (customHandlerMap[toolName]) {
         return customHandlerMap[toolName](request);
+      }
+
+      if (customResourceHandlerMap[toolName]) {
+        return customResourceHandlerMap[toolName](request);
       }
 
       throw new McpError(
