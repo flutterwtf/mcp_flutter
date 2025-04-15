@@ -135,7 +135,7 @@ export class CommandLineArgs {
       forwardingServerHost: argv.forwardingServerHost,
       port: argv.port,
       host: argv.host,
-      areResourcesSupported: Boolean(argv.resources),
+      areResourcesSupported: jsonToBool(argv.resources),
       env: argv.env as Env,
     });
   }
@@ -148,3 +148,10 @@ server.run().catch((error) => {
   console.error("Fatal error:", error);
   process.exit(1);
 });
+
+function jsonToBool(value: string | boolean | undefined): boolean {
+  if (typeof value === "string") {
+    return value === "true";
+  }
+  return Boolean(value);
+}

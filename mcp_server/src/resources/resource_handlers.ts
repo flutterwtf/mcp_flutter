@@ -385,8 +385,12 @@ export class ResourcesHandlers {
         inputSchema: {
           type: "object",
           properties: {
-            count: { type: "number", default: 1 },
+            count: {
+              type: "number",
+              description: "The count of errors to get",
+            },
           },
+          required: [],
         },
       },
     ];
