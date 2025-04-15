@@ -99,8 +99,9 @@ export class CommandLineArgs {
           description: "Enable resources support",
           type: "boolean",
           default:
-            process.env.RESOURCES_SUPPORTED ||
-            defaultEnvConfig.resourcesSupported,
+            process.env.RESOURCES_SUPPORTED == undefined
+              ? defaultEnvConfig.resourcesSupported
+              : boolFromJson(process.env.RESOURCES_SUPPORTED),
         },
         "log-level": {
           description: "Logging level",
@@ -120,7 +121,9 @@ export class CommandLineArgs {
           alias: "e",
           description: "Environment",
           type: "string",
-          default: process.env.NODE_ENV || Env.Production,
+          default: Object.values(Env).includes(process.env.NODE_ENV as Env)
+            ? (process.env.NODE_ENV as Env)
+            : Env.Production,
         },
       })
       .help()
@@ -135,7 +138,7 @@ export class CommandLineArgs {
       forwardingServerHost: argv.forwardingServerHost,
       port: argv.port,
       host: argv.host,
-      areResourcesSupported: jsonToBool(argv.resources),
+      areResourcesSupported: argv.resources,
       env: argv.env as Env,
     });
   }
@@ -149,7 +152,7 @@ server.run().catch((error) => {
   process.exit(1);
 });
 
-function jsonToBool(value: string | boolean | undefined): boolean {
+function boolFromJson(value: string | boolean | undefined): boolean {
   if (typeof value === "string") {
     return value === "true";
   }
