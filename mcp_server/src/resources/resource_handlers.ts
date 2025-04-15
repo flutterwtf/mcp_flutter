@@ -310,9 +310,16 @@ export class ResourcesHandlers {
 
         case "app":
           if (action === "errors") {
-            const count = rest.includes("latest")
-              ? 1
-              : parseInt(rest[rest.length - 1] ?? "10");
+            let count: number;
+            if (rest.includes("latest")) {
+              count = 1;
+            } else {
+              const countParam = rest[rest.length - 1];
+              count =
+                countParam && !isNaN(parseInt(countParam))
+                  ? parseInt(countParam)
+                  : 10; // Default to 10 if not specified or invalid
+            }
             return {
               type: "app_errors",
               count,
