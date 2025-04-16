@@ -45,7 +45,7 @@ dev_dependencies:
   # devtools_mcp_extension:
   #   path: ../devtools_mcp_extension
 
-  devtools_mcp_extension: ^0.1.0
+  devtools_mcp_extension: ^0.2.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

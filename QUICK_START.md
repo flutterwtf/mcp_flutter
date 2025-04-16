@@ -53,7 +53,17 @@ For developers who want to contribute to the project or run the latest version d
    flutter run --debug --observatory-port=8181 --enable-vm-service --disable-service-auth-codes
    ```
 
-6. **🛠️ Add Flutter Inspector to your AI tool**
+6. **Open DevTools in Browser**
+
+   Important part is to open DevTools in browser, and activate `mcp_bridge`.
+
+   - For VSCode, run `cmd+shift+p` and search for `Open DevTools in Browser`.
+   - Then go to `Devtools Extension` button (right corner of the window) and enable `mcp_bridge`.
+     ![DevTools Extension Settings](./docs/devtools_extension_settings.png)
+   - Then open `mcp_bridge` tab and make sure everything is connected.
+     ![MCP Bridge](./docs/devtools_mcp_bridge.png)
+
+7. **🛠️ Add Flutter Inspector to your AI tool**
 
    **Note for Local Development (GitHub Install):**
 

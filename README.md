@@ -21,6 +21,20 @@ Dump RPC methods (like `dump_render_tree`), may cause huge amount of tokens usag
 
 See more details about environment variables in [.env.example](mcp_server/.env.example).
 
+## OS testing status:
+
+✅ macOS - works
+
+Should work, but not tested yet:
+iOS - should work,
+Android - should work, but not tested
+
+Should work, not tested yet, don't have access to OS:
+🤔 Windows
+🤔 Linux
+
+❌ Web - doesn't work currently, not sure why.
+
 ## 🚀 Getting Started
 
 - Quick Start is available in [QUICK_START.md](QUICK_START.md)
