@@ -22,7 +22,7 @@ These are helper methods that provide additional functionality beyond direct Flu
 
 - `dart_io_get_version`: Gets Flutter version information
 
-### Dumps
+### Dumps (To enable, use `--dumps` flag or ENV variable DUMPS_SUPPORTED=true)
 
 - `debug_dump_render_tree`: Dumps the render tree structure
 - `debug_dump_layer_tree`: Dumps the layer tree for rendering analysis
@@ -32,3 +32,7 @@ These are helper methods that provide additional functionality beyond direct Flu
 # Flutter Inspector (forwarded through MCP Devtools Extension) (ext.flutter.inspector.\*)
 
 - `debug_paint_baselines_enabled`: Toggles baseline paint debugging
+
+## Screenshot (to enable use `--images` flag or ENV variable IMAGES_SUPPORTED=true)
+
+- `ext.flutter.inspector.screenshot`: Takes a screenshot of the current Flutter Inspector view

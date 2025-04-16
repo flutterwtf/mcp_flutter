@@ -13,6 +13,7 @@ export const defaultEnvConfig = {
   forwardingServerHost: "localhost",
   resourcesSupported: true,
   imagesSupported: false,
+  dumpsSupported: false,
 };
 
 export enum Env {
@@ -33,6 +34,7 @@ export interface CommandLineConfig {
   forwardingServerHost: string;
   areResourcesSupported: boolean;
   areImagesSupported: boolean;
+  areDumpSupported: boolean;
   env: Env;
 }
 
@@ -114,6 +116,15 @@ export class CommandLineArgs {
               ? defaultEnvConfig.imagesSupported
               : boolFromJson(process.env.IMAGES_SUPPORTED),
         },
+        dumps: {
+          alias: "dumps",
+          description: "Enable dumps support",
+          type: "boolean",
+          default:
+            process.env.DUMPS_SUPPORTED == undefined
+              ? defaultEnvConfig.dumpsSupported
+              : boolFromJson(process.env.DUMPS_SUPPORTED),
+        },
         "log-level": {
           description: "Logging level",
           choices: [
@@ -151,6 +162,7 @@ export class CommandLineArgs {
       host: argv.host,
       areResourcesSupported: argv.resources,
       areImagesSupported: argv.images,
+      areDumpSupported: argv.dumps,
       env: argv.env as Env,
     });
   }

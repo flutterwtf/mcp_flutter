@@ -17,7 +17,9 @@ Some of other methods are not tested - they may work or not. Please use with cau
 
 ## ⚠️ WARNING ⚠️
 
-Debug methods, which may use huge amount of tokens and therefore overload context now placed under "debug-tools" parameter. In production, any debug methods are disabled by default.
+Dump RPC methods (like `dump_render_tree`), may cause huge amount of tokens usage or overload context. Therefore now they are disabled by default, but can be enabled via environment variable `DUMPS_SUPPORTED=true`.
+
+See more details about environment variables in [.env.example](mcp_server/.env.example).
 
 ## 🚀 Getting Started
 
@@ -53,7 +55,7 @@ Debug methods, which may use huge amount of tokens and therefore overload contex
 
 All tools default to using port 8181 if no port is specified. You can override this by providing a specific port number.
 
-Most tools described in [TOOLS.md](TOOLS.md)
+Most tools described in [MCP_RPC_DESCRIPTION](MCP_RPC_DESCRIPTION.md)
 
 todo: add more details about useful methods
 
