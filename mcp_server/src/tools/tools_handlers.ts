@@ -4,10 +4,13 @@ import {
   ErrorCode,
   ListToolsRequestSchema,
   McpError,
+  Tool,
 } from "@modelcontextprotocol/sdk/types.js";
 import { Logger } from "flutter_mcp_forwarding_server";
 import path from "path";
 import { fileURLToPath } from "url";
+import { Env } from "../index.js";
+import { ResourcesHandlers } from "../resources/resource_handlers.js";
 import { RpcUtilities } from "../servers/rpc_utilities.js";
 import { createCustomRpcHandlerMap } from "./create_custom_rpc_handler_map.js";
 import { createRpcHandlerMap } from "./create_rpc_handler_map.js";
@@ -25,7 +28,8 @@ export class ToolsHandlers {
     server: Server,
     rpcUtils: RpcUtilities,
     logger: Logger,
-    rpcHandlers: FlutterRpcHandlers
+    rpcHandlers: FlutterRpcHandlers,
+    resourcesHandlers: ResourcesHandlers
   ) {
     const serverToolsFlutterPath = path.join(
       __dirname,
@@ -36,17 +40,33 @@ export class ToolsHandlers {
       "server_tools_custom.yaml"
     );
     // Load tools configuration
-    const serverToolsFlutter = rpcUtils.loadYamlConfig(serverToolsFlutterPath);
-    const serverToolsCustom = rpcUtils.loadYamlConfig(serverToolsCustomPath);
-    server.setRequestHandler(ListToolsRequestSchema, async () => {
-      return {
-        tools: [...serverToolsFlutter.tools, ...serverToolsCustom.tools],
-      };
+    const serverToolsFlutter: { tools: Tool[] } = rpcUtils.loadYamlConfig(
+      serverToolsFlutterPath
+    );
+    const serverToolsCustom: { tools: Tool[] } = rpcUtils.loadYamlConfig(
+      serverToolsCustomPath
+    );
+    const toolSchemes: Tool[] = [
+      ...serverToolsFlutter.tools,
+      ...serverToolsCustom.tools,
+      ...resourcesHandlers.getToolSchemes(rpcUtils),
+    ];
+
+    const filteredToolSchemes = toolSchemes.filter((tool) => {
+      if (rpcUtils.args.env === Env.Production && !tool.name.includes("dump")) {
+        return true;
+      }
+      if (rpcUtils.args.env === Env.Development) {
+        return true;
+      }
+      return false;
     });
 
-    server.setRequestHandler(ListToolsRequestSchema, async () => ({
-      tools: [...serverToolsFlutter.tools, ...serverToolsCustom.tools],
-    }));
+    server.setRequestHandler(ListToolsRequestSchema, async () => {
+      return {
+        tools: filteredToolSchemes,
+      };
+    });
 
     // Use the generated function to create the handler map
     const handlerMap = createRpcHandlerMap(rpcHandlers);
@@ -57,6 +77,10 @@ export class ToolsHandlers {
       logger,
       (request, connectionDestination) =>
         rpcUtils.handlePortParam(request, connectionDestination)
+    );
+    const customResourceHandlerMap = resourcesHandlers.getTools(
+      rpcUtils,
+      rpcHandlers
     );
 
     server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
@@ -69,6 +93,10 @@ export class ToolsHandlers {
       // Then check custom handlers
       if (customHandlerMap[toolName]) {
         return customHandlerMap[toolName](request);
+      }
+
+      if (customResourceHandlerMap[toolName]) {
+        return customResourceHandlerMap[toolName](request);
       }
 
       throw new McpError(

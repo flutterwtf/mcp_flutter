@@ -1,10 +1,5 @@
 
 export const rpcToolConfigs = {
-  get_vm: {
-    rpcMethod: 'getVM',
-    needsDebugVerification: true,
-    needsDartProxy: false
-  },
   dart_io_socket_profiling_enabled: {
     rpcMethod: 'ext.dart.io.socketProfilingEnabled',
     needsDebugVerification: true,

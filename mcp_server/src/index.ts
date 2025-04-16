@@ -11,7 +11,14 @@ export const defaultEnvConfig = {
   mcpServerHost: "localhost",
   forwardingServerPort: 8143,
   forwardingServerHost: "localhost",
+  resourcesSupported: true,
+  imagesSupported: false,
 };
+
+export enum Env {
+  Development = "development",
+  Production = "production",
+}
 
 // Load environment variables
 dotenv.config();
@@ -24,6 +31,9 @@ export interface CommandLineConfig {
   dartVMHost: string;
   forwardingServerPort: number;
   forwardingServerHost: string;
+  areResourcesSupported: boolean;
+  areImagesSupported: boolean;
+  env: Env;
 }
 
 export class CommandLineArgs {
@@ -37,7 +47,7 @@ export class CommandLineArgs {
           description: "Port to run the server on",
           type: "number",
           default: parseInt(
-            process.env.PORT || `${defaultEnvConfig.mcpServerPort}`,
+            process.env.MCP_SERVER_PORT || `${defaultEnvConfig.mcpServerPort}`,
             10
           ),
         },
@@ -86,6 +96,24 @@ export class CommandLineArgs {
           type: "boolean",
           default: true,
         },
+        resources: {
+          alias: "resources",
+          description: "Enable resources support",
+          type: "boolean",
+          default:
+            process.env.RESOURCES_SUPPORTED == undefined
+              ? defaultEnvConfig.resourcesSupported
+              : boolFromJson(process.env.RESOURCES_SUPPORTED),
+        },
+        images: {
+          alias: "images",
+          description: "Enable images support",
+          type: "boolean",
+          default:
+            process.env.IMAGES_SUPPORTED == undefined
+              ? defaultEnvConfig.imagesSupported
+              : boolFromJson(process.env.IMAGES_SUPPORTED),
+        },
         "log-level": {
           description: "Logging level",
           choices: [
@@ -100,6 +128,14 @@ export class CommandLineArgs {
           ] as const,
           default: process.env.LOG_LEVEL || "critical",
         },
+        env: {
+          alias: "e",
+          description: "Environment",
+          type: "string",
+          default: Object.values(Env).includes(process.env.NODE_ENV as Env)
+            ? (process.env.NODE_ENV as Env)
+            : Env.Production,
+        },
       })
       .help()
       .parseSync();
@@ -113,6 +149,9 @@ export class CommandLineArgs {
       forwardingServerHost: argv.forwardingServerHost,
       port: argv.port,
       host: argv.host,
+      areResourcesSupported: argv.resources,
+      areImagesSupported: argv.images,
+      env: argv.env as Env,
     });
   }
 }
@@ -124,3 +163,10 @@ server.run().catch((error) => {
   console.error("Fatal error:", error);
   process.exit(1);
 });
+
+function boolFromJson(value: string | boolean | undefined): boolean {
+  if (typeof value === "string") {
+    return value === "true";
+  }
+  return Boolean(value);
+}

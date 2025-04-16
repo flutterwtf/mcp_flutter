@@ -63,7 +63,14 @@ export class FlutterInspectorServer {
           this.rpcUtils.handlePortParam(request, connectionDestination)
       );
       this.resources.setHandlers(server, this.rpcUtils, rpcHandlers);
-      this.tools.setHandlers(server, this.rpcUtils, this.logger, rpcHandlers);
+      this.tools.setHandlers(
+        server,
+        this.rpcUtils,
+        this.logger,
+        rpcHandlers,
+
+        this.resources
+      );
     } catch (error) {
       this.logger.error("Error setting up tool handlers:", { error });
       throw error;

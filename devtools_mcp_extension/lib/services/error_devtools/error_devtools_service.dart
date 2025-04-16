@@ -12,6 +12,10 @@ final class ErrorDevtoolsService extends BaseDevtoolsService {
     await _flutterErrorMonitor.initialize();
   }
 
+  Future<void> dispose() async {
+    await _flutterErrorMonitor.dispose();
+  }
+
   /// Returns a list of visual errors in the Flutter application.
   ///
   /// Before calling this function, make sure it was launched before the error
@@ -39,7 +43,11 @@ final class ErrorDevtoolsService extends BaseDevtoolsService {
     }
 
     return RPCResponse.successMap({
-      'message': 'Errors found',
+      'message':
+          'Errors found. \n'
+          'Take a notice: the error message may have contain '
+          'a path to file and line number. \n'
+          'Use it to find the error in codebase.',
       'errors': errors.take(count).map((final e) => e.toJson()).toList(),
     });
   }
