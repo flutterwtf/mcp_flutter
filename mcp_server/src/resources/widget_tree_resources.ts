@@ -4,18 +4,20 @@ import { RpcUtilities } from "../servers/rpc_utilities.js";
 // TODO: properly write description for each resource - it should be clear for client what will be returned
 export const createTreeResources = (rpcUtils: RpcUtilities): Resource[] => {
   const resources = [
-    {
-      uri: "visual://localhost/tree/root",
-      name: "Widget Tree Root",
-      description: "Get the root widget of the Flutter application",
-      mimeType: "application/json",
-    },
-    {
-      uri: "visual://localhost/app/info",
-      name: "App Info",
-      description: "Get app information (size of screen, pixel ratio etc.)",
-      mimeType: "application/json",
-    },
+    // TODO:
+    // {
+    //   uri: "visual://localhost/tree/root",
+    //   name: "Widget Tree Root",
+    //   description: "Get the root widget of the Flutter application",
+    //   mimeType: "application/json",
+    // },
+    // TODO:
+    // {
+    //   uri: "visual://localhost/app/info",
+    //   name: "App Info",
+    //   description: "Get app information (size of screen, pixel ratio etc.)",
+    //   mimeType: "application/json",
+    // },
     {
       uri: "visual://localhost/app/errors/latest",
       name: "Latest Application Error",

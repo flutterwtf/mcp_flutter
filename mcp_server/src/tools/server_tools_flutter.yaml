@@ -49,16 +49,6 @@ tools:
           type: number
           description: "Port number where the Flutter app is running (defaults to 8181)"
       required: []
-  # TODO remove from public tools
-  - name: inspector_get_root_widget
-    description: "RPC: Get the root widget. WARNING: This is a very heavy operation and should be used sparingly."
-    inputSchema:
-      type: object
-      properties:
-        port:
-          type: number
-          description: "Optional: Custom port number if not using default Flutter debug port 8181"
-      required: []
   # TODO: test and enable
   # - name: dart_io_get_http_profile_request
   #   description: "RPC: Get details of a specific HTTP request from the profile"
@@ -180,6 +170,17 @@ tools:
   #     required: []
 
   # ~~~ THESE ARE DECIDED NOT TO BE USED ~~~
+  #
+  # Moved to resources
+  # - name: inspector_get_root_widget
+  #   description: "RPC: Get the root widget. WARNING: This is a very heavy operation and should be used sparingly."
+  #   inputSchema:
+  #     type: object
+  #     properties:
+  #       port:
+  #         type: number
+  #         description: "Optional: Custom port number if not using default Flutter debug port 8181"
+  #     required: []
   #
   # Moved to resources
   #
