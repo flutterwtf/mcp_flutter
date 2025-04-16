@@ -53,7 +53,10 @@ export class ToolsHandlers {
     ];
 
     const filteredToolSchemes = toolSchemes.filter((tool) => {
-      if (rpcUtils.args.env === Env.Production && !tool.name.includes("dump")) {
+      if (rpcUtils.args.env === Env.Production) {
+        if (tool.name.includes("dump") && !rpcUtils.args.areDumpSupported) {
+          return false;
+        }
         return true;
       }
       if (rpcUtils.args.env === Env.Development) {
