@@ -11,11 +11,11 @@ The whole server is now divided into two parts:
 
 These are helper methods that provide additional functionality beyond direct Flutter RPC calls:
 
-### VM finding
+### VM finding (useful for debugging)
 
 - `get_active_ports`: Lists all Flutter/Dart processes listening on ports
 - `get_supported_protocols`: Retrieves supported protocols from a Flutter app
-- `get_vm_info`: Gets detailed VM information from a running Flutter app
+- `get_vm`: Gets detailed VM information from a running Flutter app
 - `get_extension_rpcs`: Lists all available extension RPCs in the Flutter app
 
 ### DartIO Methods (ext.dart.io.\*)

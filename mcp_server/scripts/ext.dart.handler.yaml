@@ -1,11 +1,5 @@
 # server_tools_handler.yaml
 handlers:
-  - name: get_vm
-    description: Fetches VM information.
-    rpcMethod: "getVM"
-    needsDebugVerification: true
-    parameters: {}
-
   - name: dart_io_socket_profiling_enabled
     description: Enables or disables socket profiling.
     rpcMethod: "ext.dart.io.socketProfilingEnabled"
