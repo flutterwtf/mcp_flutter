@@ -26,6 +26,18 @@ export function createCustomRpcHandlerMap(
   ) => number
 ): CustomRpcHandlerMap {
   return {
+    get_vm: async (request: any) => {
+      const port = handlePortParam(request, "dart-vm");
+      const vm = await rpcUtils.getVmInfo(port);
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(vm, null, 2),
+          },
+        ],
+      };
+    },
     get_active_ports: async () => {
       const ports = await _getActivePorts(logger);
       return {
