@@ -12,6 +12,7 @@ export const defaultEnvConfig = {
   forwardingServerPort: 8143,
   forwardingServerHost: "localhost",
   resourcesSupported: true,
+  imagesSupported: false,
 };
 
 export enum Env {
@@ -31,6 +32,7 @@ export interface CommandLineConfig {
   forwardingServerPort: number;
   forwardingServerHost: string;
   areResourcesSupported: boolean;
+  areImagesSupported: boolean;
   env: Env;
 }
 
@@ -45,7 +47,7 @@ export class CommandLineArgs {
           description: "Port to run the server on",
           type: "number",
           default: parseInt(
-            process.env.PORT || `${defaultEnvConfig.mcpServerPort}`,
+            process.env.MCP_SERVER_PORT || `${defaultEnvConfig.mcpServerPort}`,
             10
           ),
         },
@@ -103,6 +105,15 @@ export class CommandLineArgs {
               ? defaultEnvConfig.resourcesSupported
               : boolFromJson(process.env.RESOURCES_SUPPORTED),
         },
+        images: {
+          alias: "images",
+          description: "Enable images support",
+          type: "boolean",
+          default:
+            process.env.IMAGES_SUPPORTED == undefined
+              ? defaultEnvConfig.imagesSupported
+              : boolFromJson(process.env.IMAGES_SUPPORTED),
+        },
         "log-level": {
           description: "Logging level",
           choices: [
@@ -139,6 +150,7 @@ export class CommandLineArgs {
       port: argv.port,
       host: argv.host,
       areResourcesSupported: argv.resources,
+      areImagesSupported: argv.images,
       env: argv.env as Env,
     });
   }

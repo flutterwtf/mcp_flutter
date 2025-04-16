@@ -405,8 +405,10 @@ export class RpcUtilities {
     try {
       const result = await promise;
       this.logger.debug(`Wrap response: ${JSON.stringify(result, null, 2)}`);
+      const text =
+        typeof result === "string" ? result : JSON.stringify(result, null, 2);
       return {
-        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        content: [{ type: "text", text }],
       };
     } catch (error: any) {
       return {

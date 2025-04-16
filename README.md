@@ -28,10 +28,20 @@ Debug methods, which may use huge amount of tokens and therefore overload contex
 
 - [Resource|Tool] **Analyse errors**: get precise and condensed errors of your app.
   Why it is better then console message: it contains precisely only what Agent need, not the whole list of traced widgets and duplicate information. This works best to give Agent understanding of the error.
-- [Resource|Tool] **App info**: size of screen, pixel ratio. Unlocks ability for an Agent to use widget selection.
-- [Resource|Tool] **Analyze Widget Trees**: Get detailed information about your Flutter app's structure based on logical pixel positions.
+- [Resource|Tool] **Screenshot**: get screenshot of the app. Works only with Claude (untested). Cursor and Cline doesn't support image type in the response.
 
-Not implemented - or in research:
+### Will be implemented:
+
+- [Resource|Tool] **App info**: size of screen, pixel ratio. Unlocks ability for an Agent to use widget selection.
+- **Hot reload & Hot restart**
+- [Resource|Tool] **Selection tool**:
+  Current idea:
+
+  1. Enable widget selection in Flutter Inspector.
+  2. Select widget by logical pixel position.
+  3. Get detailed information about your Flutter app's structure based on logical pixel position.
+
+### In research:
 
 - **Inspect Current Route**: See current navigation state
 - **Extensions: Flutter Provider/Riverpod states**: Get state of Provider/Riverpod instances.

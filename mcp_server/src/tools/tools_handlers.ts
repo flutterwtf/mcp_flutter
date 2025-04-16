@@ -78,7 +78,10 @@ export class ToolsHandlers {
       (request, connectionDestination) =>
         rpcUtils.handlePortParam(request, connectionDestination)
     );
-    const customResourceHandlerMap = resourcesHandlers.getTools(rpcUtils);
+    const customResourceHandlerMap = resourcesHandlers.getTools(
+      rpcUtils,
+      rpcHandlers
+    );
 
     server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
       const toolName = request.params.name;

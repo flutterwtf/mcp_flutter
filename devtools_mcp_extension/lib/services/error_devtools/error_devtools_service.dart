@@ -43,7 +43,11 @@ final class ErrorDevtoolsService extends BaseDevtoolsService {
     }
 
     return RPCResponse.successMap({
-      'message': 'Errors found',
+      'message':
+          'Errors found. \n'
+          'Take a notice: the error message may have contain '
+          'a path to file and line number. \n'
+          'Use it to find the error in codebase.',
       'errors': errors.take(count).map((final e) => e.toJson()).toList(),
     });
   }

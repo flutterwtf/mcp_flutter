@@ -15,11 +15,12 @@ import {
 } from "../tools/flutter_rpc_handlers.generated.js";
 import { CustomRpcHandlerMap } from "../tools/index.js";
 import {
-  TREE_RESOURCES,
+  createTreeResources,
   TREE_RESOURCES_TEMPLATES,
 } from "./widget_tree_resources.js";
 const ToolNames = {
   getAppErrors: "ext.mcpdevtools.getAppErrors",
+  getScreenshot: "ext.flutter.inspector.screenshot",
 } as const;
 type AppErrorsResponse = {
   message: string;
@@ -45,7 +46,7 @@ export class ResourcesHandlers {
     // List available resources when clients request them
     server.setRequestHandler(ListResourcesRequestSchema, async () => {
       return {
-        resources: [...TREE_RESOURCES],
+        resources: [...createTreeResources(rpcUtils)],
       };
     });
     // List available resource templates when clients request them
@@ -73,7 +74,7 @@ export class ResourcesHandlers {
     const appErrorsResult = await rpcUtils.callFlutterExtension(
       ToolNames.getAppErrors as RpcToolName,
       {
-        count: count ?? 10,
+        count: count ?? 4,
       }
     );
     const errorsListJson = appErrorsResult?.data as AppErrorsResponse;
@@ -246,15 +247,16 @@ export class ResourcesHandlers {
           };
 
         case "screenshot":
-          const screenshotResult = await rpcUtils.callFlutterExtension(
-            "ext.flutter.inspector.screenshot",
+          const screenshotResult = await rpcToolHandlers.handleToolRequest(
+            "inspector_screenshot",
             {}
           );
+          const screenshotData = screenshotResult.content[0].text;
           return {
             contents: [
               {
                 uri: uri,
-                blob: screenshotResult,
+                blob: screenshotData,
                 mimeType: "image/png",
               },
             ],
@@ -349,11 +351,14 @@ export class ResourcesHandlers {
    * @param rpcUtils - The RPC utilities.
    * @returns The tools.
    */
-  getTools(rpcUtils: RpcUtilities): CustomRpcHandlerMap {
+  getTools(
+    rpcUtils: RpcUtilities,
+    rpcToolHandlers: FlutterRpcHandlers
+  ): CustomRpcHandlerMap {
     if (rpcUtils.args.areResourcesSupported) {
       return {};
     }
-    return {
+    const tools = <CustomRpcHandlerMap>{
       [ToolNames.getAppErrors]: async (request) => {
         const count = request.params.arguments.count;
         const { errorsListJson, errorsList } = await this.#getErrorsList(
@@ -367,13 +372,31 @@ export class ResourcesHandlers {
               text: errorsListJson.message,
             },
             {
-              type: "json",
-              json: errorsList,
+              type: "text",
+              text: JSON.stringify(errorsList, null, 2),
             },
           ],
         };
       },
     };
+    if (rpcUtils.args.areImagesSupported) {
+      tools[ToolNames.getScreenshot] = async (request) => {
+        const screenshotResult = await rpcToolHandlers.handleToolRequest(
+          "inspector_screenshot",
+          {}
+        );
+        return {
+          content: [
+            {
+              type: "image",
+              data: screenshotResult.content[0].text,
+              mimeType: "image/png",
+            },
+          ],
+        };
+      };
+    }
+    return tools;
   }
 
   /**
@@ -382,10 +405,19 @@ export class ResourcesHandlers {
    * @returns The tool schemes.
    */
   getToolSchemes(rpcUtils: RpcUtilities): Tool[] {
+    const screenshot = {
+      name: ToolNames.getScreenshot,
+      description: "Get the screenshot of the app",
+      inputSchema: {
+        type: "object",
+        properties: {},
+        required: [],
+      },
+    };
     if (rpcUtils.args.areResourcesSupported) {
       return [];
     }
-    return <Tool>[
+    const tools = <Tool>[
       {
         name: ToolNames.getAppErrors,
         description: "Get the errors of the app",
@@ -394,12 +426,16 @@ export class ResourcesHandlers {
           properties: {
             count: {
               type: "number",
-              description: "The count of errors to get",
+              description: "The count of errors to get. Ask no more then 4.",
             },
           },
           required: [],
         },
       },
     ];
+    if (rpcUtils.args.areImagesSupported) {
+      tools.push(screenshot);
+    }
+    return tools;
   }
 }
