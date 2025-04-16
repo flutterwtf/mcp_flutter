@@ -45,3 +45,38 @@ Option to represent the widget tree as a json object
   }
 }
 ```
+
+```yaml
+metadata:
+  app_id: budget_planner
+  chunk_id: main_view
+  total_chunks: 12
+  timestamp: 2024-03-21T15:30:00.000Z
+
+chunk_map:
+  main_view:
+    - header
+    - content
+    - footer
+  content:
+    - budget_display
+    - transactions
+    - charts
+  transactions:
+    - list_1
+    - list_2
+    - list_3
+
+nodes:
+  # Only immediate children, with references
+  root:
+    type: scaffold
+    children:
+      - header
+      - content
+      - footer
+    chunk_refs:
+      header: chunk://header
+      content: chunk://content
+      footer: chunk://footer
+```

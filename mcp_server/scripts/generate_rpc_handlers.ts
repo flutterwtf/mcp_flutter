@@ -22,15 +22,8 @@ async function generateRpcHandlers() {
     __dirname,
     "..",
     "src",
-    "servers",
+    "tools",
     "flutter_rpc_handlers.generated.ts"
-  );
-  const handlerMapFilePath = path.resolve(
-    __dirname,
-    "..",
-    "src",
-    "servers",
-    "create_rpc_handler_map.generated.ts"
   );
 
   try {
@@ -72,7 +65,7 @@ export type RpcToolName = keyof typeof rpcToolConfigs;
 
     // Generate the handler class
     let handlerClassCode = `
-import { ConnectionDestination, RpcUtilities } from "./rpc_utilities.js";
+import { ConnectionDestination, RpcToolResponseType, RpcUtilities } from "../servers/rpc_utilities.js";
 
 /**
  * Generated class containing handlers for Flutter RPC tools.
@@ -86,12 +79,12 @@ export class FlutterRpcHandlers {
     private handlePortParam: (request: any, connectionDestination: ConnectionDestination) => number
   ) {}
 
-  async handleToolRequest(toolName: RpcToolName, request: any): Promise<unknown> {
+  async handleToolRequest(toolName: RpcToolName, request: any): Promise<RpcToolResponseType> {
     const config = rpcToolConfigs[toolName];
     if (!config) throw new Error(\`Invalid tool request: \${toolName}\`);
     
     const port = this.handlePortParam(request, config.needsDartProxy ? "dart-vm" : "flutter-extension");
-    const params = request.params?.arguments;
+    const params = request?.params?.arguments;
 
     if (config.needsDebugVerification) {
       await this.rpcUtils.verifyFlutterDebugMode(port);

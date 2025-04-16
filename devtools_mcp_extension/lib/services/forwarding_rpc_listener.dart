@@ -3,20 +3,25 @@
 import 'dart:convert';
 
 import 'package:devtools_mcp_extension/common_imports.dart';
+import 'package:devtools_mcp_extension/services/custom_devtools_service.dart';
 import 'package:devtools_mcp_extension/services/image_compressor.dart';
 import 'package:mcp_dart_forwarding_client/mcp_dart_forwarding_client.dart';
 
 const flutterInspectorName = 'ext.flutter.inspector';
+const mcpDevtoolsName = 'ext.mcpdevtools';
 
 class ForwardingRpcListener {
   ForwardingRpcListener({
     required this.forwardingClient,
     required this.devtoolsService,
+    required this.customDevtoolsService,
+    required this.errorDevtoolsService,
   });
 
   final ForwardingClient forwardingClient;
-  final DevtoolsService devtoolsService;
-
+  final DartVmDevtoolsService devtoolsService;
+  final CustomDevtoolsService customDevtoolsService;
+  final ErrorDevtoolsService errorDevtoolsService;
   void init() {
     print('Initializing ForwardingRpcListener');
 
@@ -39,12 +44,18 @@ class ForwardingRpcListener {
         print('getRootWidget result: ${jsonEncode(result).substring(0, 50)}');
         return result;
       })
+      ..registerMethod('$mcpDevtoolsName.getAppErrors', (final data) async {
+        print('Handler called: getAppErrors with data: $data');
+        final result = await errorDevtoolsService.getAppErrors(data);
+        print('getAppErrors result: ${jsonEncode(result).substring(0, 50)}');
+        return result;
+      })
       ..registerMethod('$flutterInspectorName.screenshot', (final data) async {
         print('Handler called: screenshot with data: $data');
         try {
           final screenshot = await devtoolsService.takeScreenshot(data);
           final base64Image = screenshot.data;
-          var compressedScreenshot = '';
+          var compressedScreenshot = base64Image is String ? base64Image : '';
           // Print response info without the full data
           if (base64Image != null) {
             compressedScreenshot = await ImageCompressor.compressBase64Image(
@@ -79,11 +90,7 @@ class ForwardingRpcListener {
     for (final extension in freelyForwardingExtensions) {
       forwardingClient.registerMethod(extension, (final data) async {
         print('Handler called: $extension with data: $data');
-        final result = await devtoolsService.callServiceExtension(
-          extension,
-          data,
-        );
-        return result;
+        await devtoolsService.callServiceExtensionRaw(extension, args: data);
       });
     }
 

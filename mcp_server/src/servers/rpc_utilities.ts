@@ -15,6 +15,17 @@ import { RpcClient } from "./rpc_client.js";
 export type ConnectionDestination = "dart-vm" | "flutter-extension";
 export const execAsync = promisify(exec);
 
+export type RpcToolResponseType = {
+  content: { type: string; text: string }[];
+  isError?: boolean;
+};
+
+export type FlutterExtensionResponse = {
+  success: boolean;
+  data: unknown;
+  error?: string;
+};
+
 /**
  * Utilities for handling RPC communication with Flutter applications
  */
@@ -25,7 +36,7 @@ export class RpcUtilities {
 
   constructor(
     private readonly logger: Logger,
-    private readonly args: CommandLineConfig
+    public readonly args: CommandLineConfig
   ) {
     this.dartVmClient = new RpcClient(logger);
     this.forwardingClient = new ForwardingClient(ClientType.INSPECTOR, logger);
@@ -250,7 +261,7 @@ export class RpcUtilities {
   async callFlutterExtension(
     method: string,
     params: Record<string, unknown> = {}
-  ): Promise<unknown> {
+  ): Promise<FlutterExtensionResponse> {
     try {
       const port = undefined;
       const requestId = `req_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
@@ -278,7 +289,10 @@ export class RpcUtilities {
       }
 
       // Override sendWebSocketRequest to directly use the forwardingClient for better tracking
-      if (method.includes("ext.flutter.inspector")) {
+      if (
+        method.startsWith("ext.flutter.inspector") ||
+        method.startsWith("ext.mcpdevtools")
+      ) {
         this.logger.debug(
           `[ForwardingClient][${requestId}] Using direct forwardingClient.callMethod for inspector method: ${method}`
         );
@@ -290,7 +304,7 @@ export class RpcUtilities {
           this.logger.debug(`[ForwardingClient][${requestId}] Result:`, {
             result,
           });
-          return result;
+          return result as FlutterExtensionResponse;
         } catch (error) {
           this.logger.error(
             `[ForwardingClient][${requestId}] Direct call failed for ${method}:`,
@@ -310,7 +324,7 @@ export class RpcUtilities {
           `[ForwardingClient][${requestId}] Method ${method} result:`,
           { result }
         );
-        return result;
+        return result as FlutterExtensionResponse;
       }
     } catch (error) {
       const errorId = `err_${Date.now()}`;
@@ -387,12 +401,14 @@ export class RpcUtilities {
   /**
    * Wrap a promise response for MCP
    */
-  async wrapResponse(promise: Promise<unknown>) {
+  async wrapResponse(promise: Promise<unknown>): Promise<RpcToolResponseType> {
     try {
       const result = await promise;
       this.logger.debug(`Wrap response: ${JSON.stringify(result, null, 2)}`);
+      const text =
+        typeof result === "string" ? result : JSON.stringify(result, null, 2);
       return {
-        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+        content: [{ type: "text", text }],
       };
     } catch (error: any) {
       return {
@@ -421,7 +437,7 @@ export class RpcUtilities {
     request: any,
     connectionDestination: ConnectionDestination
   ): number {
-    const port = request.params.arguments?.port as number | undefined;
+    const port = request?.params?.arguments?.port as number | undefined;
     return (
       port ||
       (connectionDestination === "dart-vm"
