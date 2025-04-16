@@ -68,13 +68,14 @@ For developers who want to contribute to the project or run the latest version d
           "flutter-inspector": {
             "command": "node",
             "args": [
-              "/path/to/your/cloned/flutter-inspector/mcp_server/build/index.js"
+              "/path/to/your/cloned/mcp_flutter/mcp_server/build/index.js"
             ],
             "env": {
               "PORT": "3334",
               "LOG_LEVEL": "critical"
             },
-            "disabled": false
+            "disabled": false,
+            "autoApprove": []
           }
         }
       }
@@ -97,13 +98,12 @@ For developers who want to contribute to the project or run the latest version d
           "flutter-inspector": {
             "command": "node",
             "args": [
-              "/path/to/your/cloned/flutter-inspector/mcp_server/build/index.js"
+              "/path/to/your/cloned/mcp_flutter/mcp_server/build/index.js"
             ],
             "env": {
               "RESOURCES_SUPPORTED": false
             },
-            "disabled": false,
-            "autoApprove": []
+            "disabled": false
           }
         }
       }
@@ -121,7 +121,7 @@ For developers who want to contribute to the project or run the latest version d
           "flutter-inspector": {
             "command": "node",
             "args": [
-              "/path/to/your/cloned/flutter-inspector/mcp_server/build/index.js"
+              "/path/to/your/cloned/mcp_flutter/mcp_server/build/index.js"
             ],
             "env": {
               "PORT": "3334",

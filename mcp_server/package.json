@@ -21,10 +21,10 @@
     "copy-yaml-files": "mkdir -p build/tools && cp src/tools/server_tools_flutter.yaml build/tools/ && cp src/tools/server_tools_custom.yaml build/tools/"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.8.0",
+    "@modelcontextprotocol/sdk": "^1.9.0",
     "@types/axios": "^0.14.4",
     "@types/js-yaml": "^4.0.9",
-    "@types/ws": "^8.18.0",
+    "@types/ws": "^8.18.1",
     "axios": "^1.8.4",
     "dotenv": "^16.4.7",
     "flutter_mcp_forwarding_server": "^0.1.2",
@@ -37,6 +37,6 @@
     "@types/node": "^22.13.14",
     "@types/yargs": "^17.0.33",
     "ts-node": "^10.9.2",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.3"
   }
 }

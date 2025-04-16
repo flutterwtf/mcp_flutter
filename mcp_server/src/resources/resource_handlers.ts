@@ -114,8 +114,8 @@ export class ResourcesHandlers {
             {}
           );
           return {
+            uri: uri,
             contents: rootResult.content.map((content) => ({
-              uri: uri,
               json: JSON.parse(content.text)?.data?.result,
               mimeType: "application/json",
             })),
@@ -132,9 +132,9 @@ export class ResourcesHandlers {
             }
           );
           return {
+            uri: uri,
             contents: [
               {
-                uri: uri,
                 json: nodeResult,
                 mimeType: "application/json",
               },
@@ -152,9 +152,9 @@ export class ResourcesHandlers {
             }
           );
           return {
+            uri: uri,
             contents: [
               {
-                uri: uri,
                 json: parentResult,
                 mimeType: "application/json",
               },
@@ -172,9 +172,9 @@ export class ResourcesHandlers {
             }
           );
           return {
+            uri: uri,
             contents: [
               {
-                uri: uri,
                 json: childrenResult,
                 mimeType: "application/json",
               },
@@ -188,18 +188,17 @@ export class ResourcesHandlers {
               rpcUtils
             );
             return {
+              uri: uri,
               contents:
                 errorsList.length == 0
                   ? [
                       {
-                        uri: uri,
                         text: errorsListJson.message,
                         mimeType: "text/plain",
                       },
                     ]
                   : [
                       {
-                        uri: uri,
                         text: errorsListJson.message,
                         json: errorsList,
                         mimeType: "application/json",
@@ -222,9 +221,9 @@ export class ResourcesHandlers {
             }
           );
           return {
+            uri: uri,
             contents: [
               {
-                uri: uri,
                 json: viewResult,
                 mimeType: "application/json",
               },
@@ -237,9 +236,9 @@ export class ResourcesHandlers {
             {}
           );
           return {
+            uri: uri,
             contents: [
               {
-                uri: uri,
                 json: infoResult,
                 mimeType: "application/json",
               },
@@ -253,15 +252,19 @@ export class ResourcesHandlers {
           );
           const screenshotData = screenshotResult.content[0].text;
           return {
+            uri: uri,
             contents: [
               {
-                uri: uri,
                 blob: screenshotData,
                 mimeType: "image/png",
               },
             ],
           };
       }
+      throw new McpError(
+        ErrorCode.InternalError,
+        `Failed to handle resource request for ${uri}`
+      );
     } catch (error) {
       if (error instanceof McpError) {
         throw error;
@@ -405,7 +408,7 @@ export class ResourcesHandlers {
    * @returns The tool schemes.
    */
   getToolSchemes(rpcUtils: RpcUtilities): Tool[] {
-    const screenshot = {
+    const screenshot = <Tool>{
       name: ToolNames.getScreenshot,
       description: "Get the screenshot of the app",
       inputSchema: {
@@ -417,7 +420,7 @@ export class ResourcesHandlers {
     if (rpcUtils.args.areResourcesSupported) {
       return [];
     }
-    const tools = <Tool>[
+    const tools = <Tool[]>[
       {
         name: ToolNames.getAppErrors,
         description: "Get the errors of the app",
