@@ -1,8 +1,8 @@
 all: build_extension
 
 build_extension:
-	cd web_app && flutter build web --release
-	flutter pub run devtools_extensions build_and_copy --source=web_app --dest=extension/build
+	flutter build web --release
+	flutter pub run devtools_extensions build_and_copy --source=build/web --dest=extension/devtools/build
 
 validate_extension:
 	flutter pub run devtools_extensions validate --package=.
