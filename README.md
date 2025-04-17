@@ -47,16 +47,17 @@ Should work, not tested yet, don't have access to OS: 🤔 Windows 🤔 Linux
 - [Resource|Tool] **Screenshot**: get screenshot of the app. Works only with Claude (untested). Cursor and Cline doesn't support image type in the response.
 - [Tool] **Hot reload**: hot reload app.
 
-### Will be implemented:
+### Will be implemented - work in progress:
 
-- [Resource|Tool] **App info**: size of screen, pixel ratio. Unlocks ability for an Agent to use widget selection.
-- **Hot reload & Hot restart**
-- [Resource|Tool] **Selection tool**:
+- [Resource|Tool] **App info**: size of screen, pixel ratio. Unlocks ability for an Agent to use widget selection. [WIP]
+- [Resource|Tool] **Selection tool**: [WIP]
   Current idea:
 
   1. Enable widget selection in Flutter Inspector.
   2. Select widget by logical pixel position.
   3. Get detailed information about your Flutter app's structure based on logical pixel position.
+
+- **Hot restart**
 
 ### In research:
 
