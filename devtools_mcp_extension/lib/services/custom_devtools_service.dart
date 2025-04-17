@@ -11,6 +11,11 @@ import 'package:devtools_mcp_extension/services/object_group_manager.dart';
 
 part 'error_devtools/error_devtools_service.dart';
 
+class _DebugKey {
+  const _DebugKey(this.name);
+  final String name;
+}
+
 base class BaseDevtoolsService {
   BaseDevtoolsService({required this.devtoolsService});
   final DartVmDevtoolsService devtoolsService;
@@ -21,13 +26,22 @@ base class BaseDevtoolsService {
   /// while maintaining memory safety.
   final Expando<ObjectGroupManager> _objectGroupManagers = Expando();
 
+  /// Map to keep debug keys alive while they're needed
+  final Map<String, _DebugKey> _debugKeys = {};
+
   ObjectGroupManager initObjectGroup({required final String debugName}) {
+    // Create or get existing debug key
+    final debugKey = _debugKeys.putIfAbsent(
+      debugName,
+      () => _DebugKey(debugName),
+    );
+
     final manager = ObjectGroupManager(
       debugName: debugName,
       vmService: devtoolsService.serviceManager.service!,
       isolate: devtoolsService.serviceManager.isolateManager.mainIsolate,
     );
-    _objectGroupManagers[debugName] = manager;
+    _objectGroupManagers[debugKey] = manager;
     return manager;
   }
 }
@@ -38,6 +52,29 @@ final class CustomDevtoolsService extends BaseDevtoolsService {
   CustomDevtoolsService({required super.devtoolsService});
 
   Future<void> init() async {}
+
+  String get isolateIdNumber =>
+      devtoolsService.serviceManager.isolateManager.mainIsolate.value?.id
+          ?.split('/')
+          .last ??
+      '';
+
+  Future<RPCResponse> hotReload(final Map<String, dynamic> params) async {
+    final forceJs = params['force'];
+    final force = forceJs is bool ? forceJs : bool.tryParse(forceJs) ?? false;
+    final serviceManager = devtoolsService.serviceManager;
+    if (!serviceManager.connectedState.value.connected) {
+      return RPCResponse.error('Not connected to VM service');
+    }
+
+    final response = await devtoolsService.serviceManager.callService(
+      'reloadSources',
+      isolateId: isolateIdNumber,
+      args: {'force': force},
+    );
+
+    return RPCResponse.successMap(response.json ?? {});
+  }
 
   /// This function is used as playground for testing.
   ///
@@ -65,14 +102,27 @@ final class CustomDevtoolsService extends BaseDevtoolsService {
     //   'RenderFlex#${errors.first.renderFlexId}', // The ID from RenderFlex#f8f6b
     // );
     final group = objectGroupManager.next;
-    final response = await devtoolsService.callServiceExtensionRaw(
-      'ext.flutter.inspector.'
-      '${WidgetInspectorServiceExtensions.widgetLocationIdMap.name}',
+    final response = await devtoolsService.serviceManager.callService(
+      // 'ext.flutter.inspector.'
+      // '${WidgetInspectorServiceExtensions.getRootWidget.name}',
+      'reloadSources',
+      isolateId:
+          devtoolsService.serviceManager.isolateManager.mainIsolate.value?.id
+              ?.split('/')
+              .last ??
+          '',
       args: {
-        'groupName': group.groupName,
-        'isSummaryTree': 'false',
-        'withPreviews': 'true',
-        'fullDetails': 'true',
+        // 'isolateId':
+        //     devtoolsService.serviceManager.isolateManager.mainIsolate.value?.id
+        //         ?.split('/')
+        //         .last ??
+        //     '',
+        // 'groupName': group.groupName,
+        // 'objectGroup': group.groupName,
+        // 'isSummaryTree': 'true',
+        // 'withPreviews': 'true',
+        // 'fullDetails': 'true',
+        'force': true,
       },
     );
 
@@ -160,61 +210,6 @@ final class CustomDevtoolsService extends BaseDevtoolsService {
     } catch (e, stackTrace) {
       return RPCResponse.error('Error getting visual errors: $e', stackTrace);
     }
-  }
-
-  Future<List<Map<String, dynamic>>> _findErrors(
-    final RemoteDiagnosticsNode node,
-  ) async {
-    final errors = <Map<String, dynamic>>[];
-
-    // Check if this node has an error
-    if (_isErrorNode(node)) {
-      errors.add({
-        'nodeId': node.valueRef.id,
-        'description': node.description ?? 'Unknown error',
-        'errorType': _determineErrorType(node),
-      });
-    }
-
-    // Recursively check children
-    final children = node.childrenNow;
-    for (final child in children) {
-      errors.addAll(await _findErrors(child));
-    }
-
-    return errors;
-  }
-
-  bool _isErrorNode(final RemoteDiagnosticsNode node) {
-    // Check for error level diagnostics
-    if (node.level == DiagnosticLevel.error) {
-      return true;
-    }
-
-    // Check for common error patterns in descriptions
-    final description = node.description?.toLowerCase() ?? '';
-    return description.contains('overflow') ||
-        description.contains('incorrect use') ||
-        description.contains('invalid') ||
-        description.contains('error') ||
-        description.contains('failed');
-  }
-
-  String _determineErrorType(final RemoteDiagnosticsNode node) {
-    final description = node.description?.toLowerCase() ?? '';
-    if (description.contains('overflow')) {
-      return 'Layout Overflow';
-    }
-    if (description.contains('incorrect use')) {
-      return 'Usage Error';
-    }
-    if (description.contains('invalid')) {
-      return 'Invalid State';
-    }
-    if (description.contains('failed')) {
-      return 'Operation Failed';
-    }
-    return 'General Error';
   }
 
   /// Gets the diagnostic tree for the current Flutter widget tree.

@@ -44,6 +44,12 @@ class ForwardingRpcListener {
         print('getRootWidget result: ${jsonEncode(result).substring(0, 50)}');
         return result;
       })
+      ..registerMethod('$mcpDevtoolsName.hotReload', (final data) async {
+        print('Handler called: hotReload with data: $data');
+        final result = await customDevtoolsService.hotReload(data);
+        print('hotReload result: ${jsonEncode(result).substring(0, 50)}');
+        return result;
+      })
       ..registerMethod('$mcpDevtoolsName.getAppErrors', (final data) async {
         print('Handler called: getAppErrors with data: $data');
         final result = await errorDevtoolsService.getAppErrors(data);

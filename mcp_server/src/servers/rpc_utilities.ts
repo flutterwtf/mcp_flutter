@@ -242,10 +242,12 @@ export class RpcUtilities {
   ): Promise<unknown> {
     try {
       const flutterIsolateId = await this.getFlutterIsolateId(dartVmPort);
+      const args = { ...params, isolateId: flutterIsolateId };
+
       const result = await this.sendWebSocketRequest(
         dartVmPort,
         method,
-        { ...params, isolateId: flutterIsolateId },
+        args,
         "dart-vm"
       );
       return result;

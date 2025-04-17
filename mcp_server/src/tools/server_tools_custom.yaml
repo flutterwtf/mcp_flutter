@@ -1,4 +1,13 @@
 tools:
+  - name: hot_reload_flutter
+    description: Hot reloads the Flutter app.
+    inputSchema:
+      type: object
+      properties:
+        force:
+          type: boolean
+          description: "If true, forces a hot reload even if there are no changes to the source code"
+      required: []
   - name: get_active_ports
     description: "Utility: Get list of ports where Flutter/Dart processes are listening. This is a local utility, not a Flutter RPC method."
     inputSchema:

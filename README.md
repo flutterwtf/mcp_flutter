@@ -29,7 +29,7 @@ What works:
 ✅ macOS, ✅ iOS (getting errors works, screenshots doesn't)
 
 Should work, in testing:
-🚧 Android
+🚧 Android (some methods works, some not, investigating)
 
 Should work, not tested yet, don't have access to OS: 🤔 Windows 🤔 Linux
 
@@ -45,6 +45,7 @@ Should work, not tested yet, don't have access to OS: 🤔 Windows 🤔 Linux
 - [Resource|Tool] **Analyse errors**: get precise and condensed errors of your app.
   Why it is better then console message: it contains precisely only what Agent need, not the whole list of traced widgets and duplicate information. This works best to give Agent understanding of the error.
 - [Resource|Tool] **Screenshot**: get screenshot of the app. Works only with Claude (untested). Cursor and Cline doesn't support image type in the response.
+- [Tool] **Hot reload**: hot reload app.
 
 ### Will be implemented:
 
