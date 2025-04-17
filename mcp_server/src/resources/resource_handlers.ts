@@ -1,5 +1,7 @@
 import { type Server } from "@modelcontextprotocol/sdk/server/index.js";
 import {
+  CallToolRequest,
+  CallToolResult,
   ErrorCode,
   ListResourcesRequestSchema,
   ListResourceTemplatesRequestSchema,
@@ -117,6 +119,7 @@ export class ResourcesHandlers {
             uri: uri,
             contents: rootResult.content.map((content) => ({
               json: JSON.parse(content.text)?.data?.result,
+              uri: uri,
               mimeType: "application/json",
             })),
           };
@@ -135,6 +138,7 @@ export class ResourcesHandlers {
             uri: uri,
             contents: [
               {
+                uri: uri,
                 json: nodeResult,
                 mimeType: "application/json",
               },
@@ -155,6 +159,7 @@ export class ResourcesHandlers {
             uri: uri,
             contents: [
               {
+                uri: uri,
                 json: parentResult,
                 mimeType: "application/json",
               },
@@ -175,6 +180,7 @@ export class ResourcesHandlers {
             uri: uri,
             contents: [
               {
+                uri: uri,
                 json: childrenResult,
                 mimeType: "application/json",
               },
@@ -193,12 +199,14 @@ export class ResourcesHandlers {
                 errorsList.length == 0
                   ? [
                       {
+                        uri: uri,
                         text: errorsListJson.message,
                         mimeType: "text/plain",
                       },
                     ]
                   : [
                       {
+                        uri: uri,
                         text: errorsListJson.message,
                         json: errorsList,
                         mimeType: "application/json",
@@ -224,6 +232,7 @@ export class ResourcesHandlers {
             uri: uri,
             contents: [
               {
+                uri: uri,
                 json: viewResult,
                 mimeType: "application/json",
               },
@@ -239,6 +248,7 @@ export class ResourcesHandlers {
             uri: uri,
             contents: [
               {
+                uri: uri,
                 json: infoResult,
                 mimeType: "application/json",
               },
@@ -255,6 +265,7 @@ export class ResourcesHandlers {
             uri: uri,
             contents: [
               {
+                uri: uri,
                 blob: screenshotData,
                 mimeType: "image/png",
               },
@@ -362,22 +373,25 @@ export class ResourcesHandlers {
       return {};
     }
     const tools = <CustomRpcHandlerMap>{
-      [ToolNames.getAppErrors]: async (request) => {
-        const count = request.params.arguments.count;
+      [ToolNames.getAppErrors]: async (
+        request: CallToolRequest
+      ): Promise<CallToolResult> => {
+        const count = request.params.arguments?.count;
         const { errorsListJson, errorsList } = await this.#getErrorsList(
-          count,
+          count as number,
           rpcUtils
         );
+        const uri = request.params.uri;
         return {
           content: [
             {
               type: "text",
               text: errorsListJson.message,
             },
-            {
-              type: "text",
-              text: JSON.stringify(errorsList, null, 2),
-            },
+            // {
+            //   type: "text",
+            //   text: JSON.stringify(errorsList, null, 2),
+            // },
           ],
         };
       },
@@ -388,6 +402,7 @@ export class ResourcesHandlers {
           "inspector_screenshot",
           {}
         );
+        const uri = request.params.uri;
         return {
           content: [
             {
