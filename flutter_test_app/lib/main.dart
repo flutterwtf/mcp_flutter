@@ -109,15 +109,13 @@ class _MyHomePageState extends State<MyHomePage> {
               '$_counter',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: List.generate(
-                  10,
-                  (index) => Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: Text("Flutter Inspector"),
-                  ),
+            Row(
+              /// this overflow left on purpose to test the error finding tool
+              children: List.generate(
+                10,
+                (index) => Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Text("Flutter Inspector"),
                 ),
               ),
             ),
