@@ -42,6 +42,23 @@ export function createCustomRpcHandlerMap(
         ],
       };
     },
+    hot_reload_flutter: async (request: CallToolRequest) => {
+      const result = await rpcUtils.callFlutterExtension(
+        "ext.mcpdevtools.hotReload",
+        {
+          force: request.params.arguments?.force ?? false,
+        }
+      );
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(result, null, 2),
+          },
+        ],
+      };
+    },
     get_active_ports: async () => {
       const ports = await _getActivePorts(logger);
       return {
