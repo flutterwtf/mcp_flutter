@@ -11,18 +11,21 @@ import {
   Tool,
 } from "@modelcontextprotocol/sdk/types.js";
 import { RpcUtilities } from "../servers/rpc_utilities.js";
-import {
-  FlutterRpcHandlers,
-  RpcToolName,
-} from "../tools/flutter_rpc_handlers.generated.js";
+import { FlutterRpcHandlers } from "../tools/flutter_rpc_handlers.generated.js";
 import { CustomRpcHandlerMap } from "../tools/index.js";
 import {
   createTreeResources,
   TREE_RESOURCES_TEMPLATES,
 } from "./widget_tree_resources.js";
 const ToolNames = {
-  getAppErrors: "ext.mcpdevtools.getAppErrors",
-  getScreenshot: "ext.flutter.inspector.screenshot",
+  getAppErrors: {
+    toolName: "get_app_errors",
+    rpcMethod: "ext.mcpdevtools.getAppErrors",
+  },
+  getScreenshot: {
+    toolName: "inspector_screenshot",
+    rpcMethod: "ext.flutter.inspector.screenshot",
+  },
 } as const;
 type AppErrorsResponse = {
   message: string;
@@ -74,7 +77,7 @@ export class ResourcesHandlers {
     errorsList: unknown[];
   }> {
     const appErrorsResult = await rpcUtils.callFlutterExtension(
-      ToolNames.getAppErrors as RpcToolName,
+      ToolNames.getAppErrors.rpcMethod,
       {
         count: count ?? 4,
       }
@@ -257,7 +260,7 @@ export class ResourcesHandlers {
 
         case "screenshot":
           const screenshotResult = await rpcToolHandlers.handleToolRequest(
-            "inspector_screenshot",
+            ToolNames.getScreenshot.toolName,
             {}
           );
           const screenshotData = screenshotResult.content[0].text;
@@ -373,7 +376,7 @@ export class ResourcesHandlers {
       return {};
     }
     const tools = <CustomRpcHandlerMap>{
-      [ToolNames.getAppErrors]: async (
+      [ToolNames.getAppErrors.toolName]: async (
         request: CallToolRequest
       ): Promise<CallToolResult> => {
         const count = request.params.arguments?.count;
@@ -381,25 +384,26 @@ export class ResourcesHandlers {
           count as number,
           rpcUtils
         );
-        const uri = request.params.uri;
         return {
           content: [
             {
               type: "text",
-              text: errorsListJson.message,
+              text:
+                errorsListJson.message ||
+                "MCP bridge is not active. Make sure devtools in browser is not disconnected and mcp bridge is running.",
             },
-            // {
-            //   type: "text",
-            //   text: JSON.stringify(errorsList, null, 2),
-            // },
+            {
+              type: "text",
+              text: JSON.stringify(errorsList, null, 2),
+            },
           ],
         };
       },
     };
     if (rpcUtils.args.areImagesSupported) {
-      tools[ToolNames.getScreenshot] = async (request) => {
+      tools[ToolNames.getScreenshot.toolName] = async (request) => {
         const screenshotResult = await rpcToolHandlers.handleToolRequest(
-          "inspector_screenshot",
+          ToolNames.getScreenshot.toolName,
           {}
         );
         const uri = request.params.uri;
@@ -424,7 +428,7 @@ export class ResourcesHandlers {
    */
   getToolSchemes(rpcUtils: RpcUtilities): Tool[] {
     const screenshot = <Tool>{
-      name: ToolNames.getScreenshot,
+      name: ToolNames.getScreenshot.toolName,
       description: "Get the screenshot of the app",
       inputSchema: {
         type: "object",
@@ -437,7 +441,7 @@ export class ResourcesHandlers {
     }
     const tools = <Tool[]>[
       {
-        name: ToolNames.getAppErrors,
+        name: ToolNames.getAppErrors.toolName,
         description: "Get the errors of the app",
         inputSchema: {
           type: "object",
@@ -454,6 +458,21 @@ export class ResourcesHandlers {
     if (rpcUtils.args.areImagesSupported) {
       tools.push(screenshot);
     }
-    return tools;
+    return tools.map((tool) => ({
+      ...tool,
+      name: toSnakeCase(tool.name),
+    }));
   }
+}
+
+/**
+ * Converts a camelCase or PascalCase string to snake_case.
+ * @param str - The input string.
+ * @returns The snake_case version of the string.
+ */
+function toSnakeCase(str: string): string {
+  return str
+    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+    .replace(/([A-Z])([A-Z][a-z])/g, "$1_$2")
+    .toLowerCase();
 }
