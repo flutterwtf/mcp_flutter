@@ -109,24 +109,17 @@ class _MyHomePageState extends State<MyHomePage> {
               '$_counter',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
-            Row(
-              children: [
-                Row(
-                  children: [
-                    Row(children: []),
-                    Row(children: [Text("Flutter Inspector")]),
-                    Row(children: [Text("Flutter Inspector")]),
-                    Row(children: [Text("Flutter Inspector")]),
-                    Row(children: [Text("Flutter Inspector")]),
-                    Row(children: [Text("Flutter Inspector")]),
-                    Row(children: [Text("Flutter Inspector")]),
-                    Row(children: [Text("Flutter Inspector")]),
-                    Row(children: [Text("Flutter Inspector")]),
-                    Row(children: [Text("Flutter Inspector")]),
-                    Row(children: [Text("Flutter Inspector")]),
-                  ],
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: List.generate(
+                  10,
+                  (index) => Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Text("Flutter Inspector"),
+                  ),
                 ),
-              ],
+              ),
             ),
           ],
         ),

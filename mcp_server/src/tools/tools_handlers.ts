@@ -4,6 +4,8 @@ import {
   ErrorCode,
   ListToolsRequestSchema,
   McpError,
+  Request,
+  Result,
   Tool,
 } from "@modelcontextprotocol/sdk/types.js";
 import { Logger } from "flutter_mcp_forwarding_server";
@@ -86,26 +88,34 @@ export class ToolsHandlers {
       rpcHandlers
     );
 
-    server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
-      const toolName = request.params.name;
-      const generatedHandler: ((request: any) => Promise<unknown>) | undefined =
-        handlerMap[toolName as RpcToolName];
-      // Check generated handlers first
-      if (generatedHandler) return generatedHandler(request);
+    server.setRequestHandler(
+      CallToolRequestSchema,
+      async (request: Request): Promise<Result> => {
+        const toolName = request.params?.name;
+        if (!toolName || typeof toolName !== "string") {
+          throw new McpError(
+            ErrorCode.MethodNotFound,
+            `Unknown tool: ${request.params?.name}`
+          );
+        }
+        const generatedHandler = handlerMap[toolName as RpcToolName];
+        // Check generated handlers first
+        if (generatedHandler) return generatedHandler(request);
 
-      // Then check custom handlers
-      if (customHandlerMap[toolName]) {
-        return customHandlerMap[toolName](request);
+        // Then check custom handlers
+        if (customHandlerMap[toolName]) {
+          return customHandlerMap[toolName](request);
+        }
+
+        if (customResourceHandlerMap[toolName]) {
+          return customResourceHandlerMap[toolName](request);
+        }
+
+        throw new McpError(
+          ErrorCode.MethodNotFound,
+          `Unregistered tool: ${toolName}`
+        );
       }
-
-      if (customResourceHandlerMap[toolName]) {
-        return customResourceHandlerMap[toolName](request);
-      }
-
-      throw new McpError(
-        ErrorCode.MethodNotFound,
-        `Unknown tool: ${request.params.name}`
-      );
-    });
+    );
   }
 }
