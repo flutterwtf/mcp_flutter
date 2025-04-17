@@ -23,11 +23,11 @@ See more details about environment variables in [.env.example](mcp_server/.env.e
 
 ## OS testing status:
 
-✅ macOS - works
+✅ macOS
+✅ iOS (getting errors works, screenshots doesn't)
 
-Should work, but not tested yet:
-iOS - should work,
-Android - should work, but not tested
+Should work, in testing:
+🚧 Android
 
 Should work, not tested yet, don't have access to OS:
 🤔 Windows
