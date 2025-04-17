@@ -1,5 +1,7 @@
 import { type Server } from "@modelcontextprotocol/sdk/server/index.js";
 import {
+  CallToolRequest,
+  CallToolResult,
   ErrorCode,
   ListResourcesRequestSchema,
   ListResourceTemplatesRequestSchema,
@@ -9,18 +11,21 @@ import {
   Tool,
 } from "@modelcontextprotocol/sdk/types.js";
 import { RpcUtilities } from "../servers/rpc_utilities.js";
-import {
-  FlutterRpcHandlers,
-  RpcToolName,
-} from "../tools/flutter_rpc_handlers.generated.js";
+import { FlutterRpcHandlers } from "../tools/flutter_rpc_handlers.generated.js";
 import { CustomRpcHandlerMap } from "../tools/index.js";
 import {
   createTreeResources,
   TREE_RESOURCES_TEMPLATES,
 } from "./widget_tree_resources.js";
 const ToolNames = {
-  getAppErrors: "ext.mcpdevtools.getAppErrors",
-  getScreenshot: "ext.flutter.inspector.screenshot",
+  getAppErrors: {
+    toolName: "get_app_errors",
+    rpcMethod: "ext.mcpdevtools.getAppErrors",
+  },
+  getScreenshot: {
+    toolName: "inspector_screenshot",
+    rpcMethod: "ext.flutter.inspector.screenshot",
+  },
 } as const;
 type AppErrorsResponse = {
   message: string;
@@ -72,7 +77,7 @@ export class ResourcesHandlers {
     errorsList: unknown[];
   }> {
     const appErrorsResult = await rpcUtils.callFlutterExtension(
-      ToolNames.getAppErrors as RpcToolName,
+      ToolNames.getAppErrors.rpcMethod,
       {
         count: count ?? 4,
       }
@@ -114,9 +119,10 @@ export class ResourcesHandlers {
             {}
           );
           return {
+            uri: uri,
             contents: rootResult.content.map((content) => ({
-              uri: uri,
               json: JSON.parse(content.text)?.data?.result,
+              uri: uri,
               mimeType: "application/json",
             })),
           };
@@ -132,6 +138,7 @@ export class ResourcesHandlers {
             }
           );
           return {
+            uri: uri,
             contents: [
               {
                 uri: uri,
@@ -152,6 +159,7 @@ export class ResourcesHandlers {
             }
           );
           return {
+            uri: uri,
             contents: [
               {
                 uri: uri,
@@ -172,6 +180,7 @@ export class ResourcesHandlers {
             }
           );
           return {
+            uri: uri,
             contents: [
               {
                 uri: uri,
@@ -188,6 +197,7 @@ export class ResourcesHandlers {
               rpcUtils
             );
             return {
+              uri: uri,
               contents:
                 errorsList.length == 0
                   ? [
@@ -222,6 +232,7 @@ export class ResourcesHandlers {
             }
           );
           return {
+            uri: uri,
             contents: [
               {
                 uri: uri,
@@ -237,6 +248,7 @@ export class ResourcesHandlers {
             {}
           );
           return {
+            uri: uri,
             contents: [
               {
                 uri: uri,
@@ -248,11 +260,12 @@ export class ResourcesHandlers {
 
         case "screenshot":
           const screenshotResult = await rpcToolHandlers.handleToolRequest(
-            "inspector_screenshot",
+            ToolNames.getScreenshot.toolName,
             {}
           );
           const screenshotData = screenshotResult.content[0].text;
           return {
+            uri: uri,
             contents: [
               {
                 uri: uri,
@@ -262,6 +275,10 @@ export class ResourcesHandlers {
             ],
           };
       }
+      throw new McpError(
+        ErrorCode.InternalError,
+        `Failed to handle resource request for ${uri}`
+      );
     } catch (error) {
       if (error instanceof McpError) {
         throw error;
@@ -359,17 +376,21 @@ export class ResourcesHandlers {
       return {};
     }
     const tools = <CustomRpcHandlerMap>{
-      [ToolNames.getAppErrors]: async (request) => {
-        const count = request.params.arguments.count;
+      [ToolNames.getAppErrors.toolName]: async (
+        request: CallToolRequest
+      ): Promise<CallToolResult> => {
+        const count = request.params.arguments?.count;
         const { errorsListJson, errorsList } = await this.#getErrorsList(
-          count,
+          count as number,
           rpcUtils
         );
         return {
           content: [
             {
               type: "text",
-              text: errorsListJson.message,
+              text:
+                errorsListJson.message ||
+                "MCP bridge is not active. Make sure devtools in browser is not disconnected and mcp bridge is running.",
             },
             {
               type: "text",
@@ -380,11 +401,12 @@ export class ResourcesHandlers {
       },
     };
     if (rpcUtils.args.areImagesSupported) {
-      tools[ToolNames.getScreenshot] = async (request) => {
+      tools[ToolNames.getScreenshot.toolName] = async (request) => {
         const screenshotResult = await rpcToolHandlers.handleToolRequest(
-          "inspector_screenshot",
+          ToolNames.getScreenshot.toolName,
           {}
         );
+        const uri = request.params.uri;
         return {
           content: [
             {
@@ -405,8 +427,8 @@ export class ResourcesHandlers {
    * @returns The tool schemes.
    */
   getToolSchemes(rpcUtils: RpcUtilities): Tool[] {
-    const screenshot = {
-      name: ToolNames.getScreenshot,
+    const screenshot = <Tool>{
+      name: ToolNames.getScreenshot.toolName,
       description: "Get the screenshot of the app",
       inputSchema: {
         type: "object",
@@ -417,9 +439,9 @@ export class ResourcesHandlers {
     if (rpcUtils.args.areResourcesSupported) {
       return [];
     }
-    const tools = <Tool>[
+    const tools = <Tool[]>[
       {
-        name: ToolNames.getAppErrors,
+        name: ToolNames.getAppErrors.toolName,
         description: "Get the errors of the app",
         inputSchema: {
           type: "object",
@@ -436,6 +458,21 @@ export class ResourcesHandlers {
     if (rpcUtils.args.areImagesSupported) {
       tools.push(screenshot);
     }
-    return tools;
+    return tools.map((tool) => ({
+      ...tool,
+      name: toSnakeCase(tool.name),
+    }));
   }
+}
+
+/**
+ * Converts a camelCase or PascalCase string to snake_case.
+ * @param str - The input string.
+ * @returns The snake_case version of the string.
+ */
+function toSnakeCase(str: string): string {
+  return str
+    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+    .replace(/([A-Z])([A-Z][a-z])/g, "$1_$2")
+    .toLowerCase();
 }

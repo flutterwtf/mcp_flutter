@@ -1,3 +1,7 @@
+import {
+  CallToolRequest,
+  CallToolResult,
+} from "@modelcontextprotocol/sdk/types.js";
 import { Logger } from "flutter_mcp_forwarding_server";
 import {
   ConnectionDestination,
@@ -7,7 +11,7 @@ import {
 import { FlutterPort, IsolateInfo } from "../types/types.js";
 
 // Define a type for the handler function
-export type RpcHandler = (request: any) => Promise<any>;
+export type RpcHandler = (request: any) => Promise<CallToolResult>;
 
 // Define a type for the handler map with an index signature
 export interface CustomRpcHandlerMap {
@@ -21,12 +25,12 @@ export function createCustomRpcHandlerMap(
   rpcUtils: RpcUtilities,
   logger: Logger,
   handlePortParam: (
-    request: any,
+    request: CallToolRequest,
     connectionDestination: ConnectionDestination
   ) => number
 ): CustomRpcHandlerMap {
   return {
-    get_vm: async (request: any) => {
+    get_vm: async (request: CallToolRequest) => {
       const port = handlePortParam(request, "dart-vm");
       const vm = await rpcUtils.getVmInfo(port);
       return {
@@ -49,7 +53,7 @@ export function createCustomRpcHandlerMap(
         ],
       };
     },
-    get_extension_rpcs: async (request: any) => {
+    get_extension_rpcs: async (request: CallToolRequest) => {
       const port = handlePortParam(request, "dart-vm");
       const { isolateId, isRawResponse = false } =
         (request.params.arguments as {

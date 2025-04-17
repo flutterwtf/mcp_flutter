@@ -1,3 +1,4 @@
+import { Request, Result } from "@modelcontextprotocol/sdk/types.js";
 import {
   FlutterRpcHandlers,
   rpcToolConfigs,
@@ -9,12 +10,12 @@ import {
  */
 export function createRpcHandlerMap(
   rpcHandlers: FlutterRpcHandlers
-): Record<RpcToolName, (request: any) => Promise<unknown>> {
+): Record<RpcToolName, ((request: Request) => Promise<Result>) | undefined> {
   return Object.fromEntries(
     Object.keys(rpcToolConfigs).map((toolName) => [
       toolName,
-      (request: any) =>
+      (request: Request) =>
         rpcHandlers.handleToolRequest(toolName as RpcToolName, request),
     ])
-  ) as Record<RpcToolName, (request: any) => Promise<unknown>>;
+  ) as unknown as Record<RpcToolName, (request: Request) => Promise<Result>>;
 }

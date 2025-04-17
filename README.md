@@ -21,6 +21,20 @@ Dump RPC methods (like `dump_render_tree`), may cause huge amount of tokens usag
 
 See more details about environment variables in [.env.example](mcp_server/.env.example).
 
+## OS testing statuses:
+
+- Open issue: https://github.com/Arenukvern/mcp_flutter/issues/23
+
+What works:
+✅ macOS, ✅ iOS (getting errors works, screenshots doesn't)
+
+Should work, in testing:
+🚧 Android
+
+Should work, not tested yet, don't have access to OS: 🤔 Windows 🤔 Linux
+
+❌ Web - doesn't work currently, not sure why.
+
 ## 🚀 Getting Started
 
 - Quick Start is available in [QUICK_START.md](QUICK_START.md)
