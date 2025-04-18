@@ -9,7 +9,9 @@
   <img width="380" height="200" src="https://glama.ai/mcp/servers/qnu3f0fa20/badge" alt="Flutter Inspector Server MCP server" />
 </a>
 
-⚠️ This project is a work in progress and not all methods (mostly Flutter Inspector related) are implemented yet.
+> [!WARNING]
+>
+> This library is under active development, expect breaking changes
 
 Currently Flutter works with MCP server via forwarding server. Please see [Architecture](https://github.com/Arenukvern/mcp_flutter/blob/main/ARCHITECTURE.md) for more details.
 
