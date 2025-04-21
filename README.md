@@ -3,19 +3,27 @@
 [GitHub Repository](https://github.com/Arenukvern/mcp_flutter)
 [![smithery badge](https://smithery.ai/badge/@Arenukvern/mcp_flutter)](https://smithery.ai/server/@Arenukvern/mcp_flutter)
 
-🔍 A powerful Model Context Protocol (MCP) server that connects your Flutter apps with AI coding assistants like Cursor, Claude, and Cline.
+🔍 Model Context Protocol (MCP) server that connects your Flutter apps with AI coding assistants like Cursor, Claude, Cline, Windsurf, RooCode or any other AI assistant that supports MCP server
+
+See small video tutorial how to setup mcp server on macOS with Cursor - https://www.youtube.com/watch?v=NBY2p7XIass
 
 <a href="https://glama.ai/mcp/servers/qnu3f0fa20">
   <img width="380" height="200" src="https://glama.ai/mcp/servers/qnu3f0fa20/badge" alt="Flutter Inspector Server MCP server" />
 </a>
 
-> [!WARNING]
+> [!NOTE]
+> Since there is a new [experimental package in development](https://github.com/dart-lang/ai/tree/main/pkgs/dart_tooling_mcp_server) which exposes Dart tooling development tool actions to clients, maybe in future this project may be not needed that much.
 >
-> This library is under active development, expect breaking changes
+> Therefore my current focus is
+>
+> 1. to stabilize and polish only these tools that will be useful in development (so it would be more plug & play) [see more in MCP_RPC_DESCRIPTION.md](MCP_RPC_DESCRIPTION.md)
+> 2. find workaround to not use forwarding server.
+>
+> Hope it will be useful for you,
+>
+> Have a nice day!
 
 Currently Flutter works with MCP server via forwarding server. Please see [Architecture](https://github.com/Arenukvern/mcp_flutter/blob/main/ARCHITECTURE.md) for more details.
-
-Some of other methods are not tested - they may work or not. Please use with caution. It is possible that the most methods will be removed from the MCP server later to focus solely on Flutter applications and maybe Jaspr.
 
 ## ⚠️ WARNING ⚠️
 
@@ -23,63 +31,56 @@ Dump RPC methods (like `dump_render_tree`), may cause huge amount of tokens usag
 
 See more details about environment variables in [.env.example](mcp_server/.env.example).
 
-## OS testing statuses:
-
-- Open issue: https://github.com/Arenukvern/mcp_flutter/issues/23
-
-What works:
-✅ macOS, ✅ iOS (getting errors works, screenshots doesn't)
-
-Should work, in testing:
-🚧 Android (some methods works, some not, investigating)
-
-Should work, not tested yet, don't have access to OS: 🤔 Windows 🤔 Linux
-
-❌ Web - doesn't work currently, not sure why.
-
 ## 🚀 Getting Started
 
 - Quick Start is available in [QUICK_START.md](QUICK_START.md)
 - Configuration options are available in [CONFIGURATION.md](CONFIGURATION.md)
 
-## 🎯 What Agent can call:
+## 🎯 Available tools for AI Agents
 
-- [Resource|Tool] **Analyse errors**: get precise and condensed errors of your app.
-  Why it is better then console message: it contains precisely only what Agent need, not the whole list of traced widgets and duplicate information. This works best to give Agent understanding of the error.
-- [Resource|Tool] **Screenshot**: get screenshot of the app. Works only with Claude (untested). Cursor and Cline doesn't support image type in the response.
-- [Tool] **Hot reload**: hot reload app.
+### Error Analysis
 
-### Will be implemented - work in progress:
+- `get_app_errors` [Resource|Tool] - Retrieves precise and condensed error information from your Flutter app
+  **Usage**:
 
-- [Resource|Tool] **App info**: size of screen, pixel ratio. Unlocks ability for an Agent to use widget selection. [WIP]
-- [Resource|Tool] **Selection tool**: [WIP]
-  Current idea:
+  - Uses only short description of the error. Should filter duplicate errors, to avoid flooding Agent context window with the same errors.
+  - Uses Error Monitor to capture Dart VM errors. Meaning: first, start mcp server, forwarding server, start app, open devtools and extension, and then reload app, to capture errors. All errors will be captured in the DevTools Extension (mcp_bridge).
 
-  1. Enable widget selection in Flutter Inspector.
-  2. Select widget by logical pixel position.
-  3. Get detailed information about your Flutter app's structure based on logical pixel position.
+  **Tested on**:
+  ✅ macOS, ✅ iOS
+  **Not tested on**:
+  🚧 Android, 🤔 Windows, 🤔 Linux, ❌ Web
+  [See issue](https://github.com/Arenukvern/mcp_flutter/issues/23)
 
-- **Hot restart**
+### Development Tools
 
-### In research:
+- `hot_reload` [Tool] - Performs hot reload of the Flutter application
+  **Tested on**:
+  ✅ macOS, ✅ iOS, ✅ Android
+  **Not tested on**:
+  🤔 Windows, 🤔 Linux, ❌ Web
+  [See issue](https://github.com/Arenukvern/mcp_flutter/issues/23)
+- `screenshot` [Resource|Tool] - Captures a screenshot of the running application.
+  **Configuration**:
 
-- **Inspect Current Route**: See current navigation state
-- **Extensions: Flutter Provider/Riverpod states**: Get state of Provider/Riverpod instances.
-- **Extensions: Jaspr**: ?
-- **Extensions: Jaspr Provider**: ?
-- **Extensions: Flame**: ?
+  - Enable with `--images` flag or `IMAGES_SUPPORTED=true` environment variable
+  - May use compression to optimize image size
 
-## 📚 Available Tools
+  **Tested on**:
+  ✅ macOS, ✅ iOS
+  **Not tested on**:
+  🚧 Android, 🤔 Windows, 🤔 Linux, ❌ Web
+  [See issue](https://github.com/Arenukvern/mcp_flutter/issues/23)
 
 All tools default to using port 8181 if no port is specified. You can override this by providing a specific port number.
 
-Most tools described in [MCP_RPC_DESCRIPTION](MCP_RPC_DESCRIPTION.md)
-
-todo: add more details about useful methods
+📚 Please see more in [MCP_RPC_DESCRIPTION](MCP_RPC_DESCRIPTION.md)
 
 ## 🔧 Troubleshooting
 
-Make sure you:
+`get_app_errors`- Since errors are captured in DevTools Extension, you need to make sure that, you have restarted or reloaded Flutter app after starting MCP server, forwarding server and DevTools mcp_bridge extension.
+
+Also make sure you:
 
 1. Verify that forwarding server is running.
 2. Opened Devtools in Browser.
