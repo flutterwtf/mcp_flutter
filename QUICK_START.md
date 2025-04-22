@@ -115,7 +115,8 @@ For developers who want to contribute to the project or run the latest version d
               "/path/to/your/cloned/mcp_flutter/mcp_server/build/index.js"
             ],
             "env": {
-              "RESOURCES_SUPPORTED": false
+              "RESOURCES_SUPPORTED": false,
+              "IMAGES_SUPPORTED": true
             },
             "disabled": false
           }

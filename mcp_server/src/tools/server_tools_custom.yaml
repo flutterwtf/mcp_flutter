@@ -1,4 +1,10 @@
 tools:
+  - name: test_custom_ext
+    description: "Utility: Test the custom extension. This is a helper tool for testing the custom extension."
+    inputSchema:
+      type: object
+      properties: {}
+      required: []
   - name: hot_reload_flutter
     description: Hot reloads the Flutter app.
     inputSchema:

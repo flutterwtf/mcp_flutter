@@ -30,6 +30,13 @@ export function createCustomRpcHandlerMap(
   ) => number
 ): CustomRpcHandlerMap {
   return {
+    test_custom_ext: async (request: CallToolRequest) => {
+      const port = handlePortParam(request, "dart-vm");
+      const result = await rpcUtils.callDartVm("ext.mcp.bridge.test", port, {});
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+      };
+    },
     get_vm: async (request: CallToolRequest) => {
       const port = handlePortParam(request, "dart-vm");
       const vm = await rpcUtils.getVmInfo(port);
