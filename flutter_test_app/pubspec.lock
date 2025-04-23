@@ -108,10 +108,9 @@ packages:
   devtools_mcp_extension:
     dependency: "direct dev"
     description:
-      name: devtools_mcp_extension
-      sha256: ae280b6add5bd5572ae1d940a8bd81f352116bd752af56e95087b18a7da16739
-      url: "https://pub.dev"
-    source: hosted
+      path: "../devtools_mcp_extension"
+      relative: true
+    source: path
     version: "0.2.0"
   devtools_shared:
     dependency: transitive

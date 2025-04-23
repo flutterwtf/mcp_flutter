@@ -6,6 +6,7 @@ export 'package:flutter/widgets.dart';
 export 'package:intl/intl.dart' hide TextDirection;
 export 'package:provider/provider.dart';
 
+export 'client_services/client_services.dart';
 export 'core/core.dart';
 export 'envs.dart';
 export 'services/services.dart';

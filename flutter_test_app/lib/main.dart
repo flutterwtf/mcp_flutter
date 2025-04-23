@@ -1,7 +1,19 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
 
-void main() {
-  runApp(const MyApp());
+import 'package:flutter/material.dart';
+import 'package:test_app/mcp_bridge_binding.dart';
+
+Future<void> main() async {
+  runZonedGuarded(
+    () async {
+      WidgetsFlutterBinding.ensureInitialized();
+      McpBridgeBinding.instance.initialize();
+      runApp(const MyApp());
+    },
+    (error, stack) {
+      McpBridgeBinding.instance.handleZoneError(error, stack);
+    },
+  );
 }
 
 class MyApp extends StatefulWidget {

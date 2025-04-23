@@ -32,7 +32,6 @@ export type FlutterExtensionResponse = {
 export class RpcUtilities {
   private dartVmClient: RpcClient;
   private forwardingClient: ForwardingClient;
-  private cachedFlutterIsolate: string | null = null;
 
   constructor(
     private readonly logger: Logger,
@@ -350,10 +349,6 @@ export class RpcUtilities {
    * Get the Flutter isolate ID from the VM
    */
   async getFlutterIsolateId(port: number): Promise<string> {
-    if (this.cachedFlutterIsolate) {
-      return this.cachedFlutterIsolate;
-    }
-
     const vmInfo = await this.getVmInfo(port);
     const isolates = vmInfo.isolates;
 
@@ -364,8 +359,7 @@ export class RpcUtilities {
       // Check if this isolate has Flutter extensions
       const extensionRPCs = isolate.extensionRPCs || [];
       if (extensionRPCs.some((ext: string) => ext.startsWith("ext.flutter"))) {
-        this.cachedFlutterIsolate = isolateRef.id;
-        return this.cachedFlutterIsolate;
+        return isolateRef.id;
       }
     }
 
