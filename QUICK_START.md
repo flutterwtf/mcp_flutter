@@ -54,7 +54,7 @@ For developers who want to contribute to the project or run the latest version d
    ! Current workaround for security reasons is to run with `--disable-service-auth-codes`. If you know how to fix this, please let me know!
 
    ```bash
-   flutter run --debug --observatory-port=8181 --enable-vm-service --disable-service-auth-codes
+   flutter run --debug --host-vmservice-port=8181 --enable-vm-service --disable-service-auth-codes
    ```
 
 6. **Open DevTools in Browser**

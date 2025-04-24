@@ -234,14 +234,19 @@ export class RpcUtilities {
    * Forwards a request to the Dart VM
    * @param dartVmPort - The port of the Dart VM, if undefined, the default port will be used
    */
-  async callDartVm(
-    method: string,
-    dartVmPort: number,
-    params: Record<string, unknown> = {}
-  ): Promise<unknown> {
+  async callDartVm(arg: {
+    method: string;
+    dartVmPort: number;
+    params?: Record<string, unknown>;
+    useIsolateIdNumber?: boolean;
+  }): Promise<unknown> {
+    const { method, dartVmPort, params = {}, useIsolateIdNumber = false } = arg;
     try {
       const flutterIsolateId = await this.getFlutterIsolateId(dartVmPort);
-      const args = { ...params, isolateId: flutterIsolateId };
+      const isolateId = useIsolateIdNumber
+        ? flutterIsolateId.isolateIdNumber
+        : flutterIsolateId.isolateId;
+      const args = { ...params, isolateId };
 
       const result = await this.sendWebSocketRequest(
         dartVmPort,
@@ -348,7 +353,10 @@ export class RpcUtilities {
   /**
    * Get the Flutter isolate ID from the VM
    */
-  async getFlutterIsolateId(port: number): Promise<string> {
+  async getFlutterIsolateId(port: number): Promise<{
+    isolateId: string;
+    isolateIdNumber: string;
+  }> {
     const vmInfo = await this.getVmInfo(port);
     const isolates = vmInfo.isolates;
 
@@ -359,7 +367,14 @@ export class RpcUtilities {
       // Check if this isolate has Flutter extensions
       const extensionRPCs = isolate.extensionRPCs || [];
       if (extensionRPCs.some((ext: string) => ext.startsWith("ext.flutter"))) {
-        return isolateRef.id;
+        return {
+          isolateId: isolateRef.id,
+          isolateIdNumber:
+            isolateRef.isolateGroupId?.split("/").pop() ??
+            isolateRef.number ??
+            "",
+          // isolateRef.number ?? isolateRef.id.split("/").pop() ?? "",
+        };
       }
     }
 

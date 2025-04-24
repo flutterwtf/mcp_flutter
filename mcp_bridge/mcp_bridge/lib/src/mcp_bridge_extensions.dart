@@ -1,4 +1,4 @@
-// ignore_for_file: prefer_asserts_with_message
+// ignore_for_file: prefer_asserts_with_message, lines_longer_than_80_chars
 
 import 'package:flutter/cupertino.dart';
 
@@ -39,10 +39,24 @@ mixin McpBridgeExtensions on McpBridgeBindingBase {
         callback: (final parameters) async {
           final count = int.tryParse(parameters['count'] ?? '') ?? 10;
           final reversedErrors = errorMonitor.errors.take(count).toList();
+          final errors = reversedErrors.map((final e) => e.toJson()).toList();
+          final message = () {
+            if (errors.isEmpty) {
+              return 'No errors found. Here are possible reasons: \n'
+                  '1) There were really no errors. \n'
+                  '2) Errors occurred before they were captured by MCP server. \n'
+                  'What you can do (choose wisely): \n'
+                  '1) Try to reproduce action, which expected to cause errors. \n'
+                  '2) If errors still not visible, try to navigate to another screen and back. \n'
+                  '3) If even then errors still not visible, try to restart app.';
+            }
 
-          return {
-            'errors': reversedErrors.map((final e) => e.toJson()).toList(),
-          };
+            return 'Errors found. \n'
+                'Take a notice: the error message may have contain '
+                'a path to file and line number. \n'
+                'Use it to find the error in codebase.';
+          }();
+          return {'message': message, 'errors': errors};
         },
       );
       return true;

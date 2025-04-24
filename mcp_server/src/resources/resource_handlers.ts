@@ -20,7 +20,10 @@ import {
 const ToolNames = {
   getAppErrors: {
     toolName: "get_app_errors",
-    rpcMethod: "ext.mcpdevtools.getAppErrors",
+    // old method for forwarding server
+    // rpcMethod: "ext.mcpdevtools.getAppErrors",
+    // new method for dart vm with McpBridge
+    rpcMethod: "ext.mcp.bridge.apperrors",
   },
   getScreenshot: {
     toolName: "inspector_screenshot",
@@ -76,13 +79,16 @@ export class ResourcesHandlers {
     errorsListJson: AppErrorsResponse;
     errorsList: unknown[];
   }> {
-    const appErrorsResult = await rpcUtils.callFlutterExtension(
-      ToolNames.getAppErrors.rpcMethod,
-      {
+    const dartVmPort = rpcUtils.args.dartVMPort;
+    const appErrorsResult = await rpcUtils.callDartVm({
+      method: ToolNames.getAppErrors.rpcMethod,
+      dartVmPort,
+      params: {
         count: count ?? 4,
-      }
-    );
-    const errorsListJson = appErrorsResult?.data as AppErrorsResponse;
+      },
+    });
+
+    const errorsListJson = appErrorsResult as AppErrorsResponse;
 
     const errorsList = errorsListJson?.errors ?? [];
 
