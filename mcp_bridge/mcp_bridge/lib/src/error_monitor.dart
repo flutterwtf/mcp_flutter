@@ -1,23 +1,23 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 
 /// Severity level of an error.
 enum ErrorSeverity { warning, error, fatal }
 
 /// Represents a Flutter error event.
-class FlutterErrorEvent {
+class FlutterErrorEvent with EquatableMixin {
+  FlutterErrorEvent({
+    required this.type,
+    required this.message,
+    this.stackTrace,
+    final DateTime? timestamp,
+    this.severity = ErrorSeverity.error,
+  }) : timestamp = timestamp ?? DateTime.now();
   final String type;
   final String message;
   final StackTrace? stackTrace;
   final DateTime timestamp;
   final ErrorSeverity severity;
-
-  FlutterErrorEvent({
-    required this.type,
-    required this.message,
-    this.stackTrace,
-    DateTime? timestamp,
-    this.severity = ErrorSeverity.error,
-  }) : timestamp = timestamp ?? DateTime.now();
 
   Map<String, dynamic> toJson() => {
     'type': type,
@@ -26,25 +26,32 @@ class FlutterErrorEvent {
     'timestamp': timestamp.toIso8601String(),
     'severity': severity.name,
   };
+
+  @override
+  List<Object?> get props => [type, message, stackTrace, severity];
 }
 
 /// A mixin that provides error monitoring capabilities.
 /// Can be used with any class to add error monitoring functionality.
 mixin ErrorMonitor {
-  static final errors = <FlutterErrorEvent>[];
+  /// List of errors, recorded by [attachToFlutterError] and [handleZoneError]
+  ///
+  /// Add limitation with configurable latest 10 errors
+  ///
+  /// Set uses [LinkedHashSet] to store errors
+  final errors = <FlutterErrorEvent>{};
 
   /// Initialize error monitoring
-  void attachToFlutterError({bool handleFlutterErrors = true}) {
+  void attachToFlutterError({final bool handleFlutterErrors = true}) {
     if (handleFlutterErrors) {
       final originalOnError = FlutterError.onError;
-      FlutterError.onError = (FlutterErrorDetails details) {
+      FlutterError.onError = (final details) {
         originalOnError?.call(details);
         _handleError(
           FlutterErrorEvent(
             type: 'FlutterError',
             message: details.exceptionAsString(),
             stackTrace: details.stack,
-            severity: ErrorSeverity.error,
           ),
         );
       };
@@ -64,7 +71,7 @@ mixin ErrorMonitor {
   ///   },
   /// );
   /// ```
-  void handleZoneError(Object error, StackTrace stack) {
+  void handleZoneError(final Object error, final StackTrace stack) {
     _handleError(
       FlutterErrorEvent(
         type: 'UncaughtException',
@@ -75,5 +82,5 @@ mixin ErrorMonitor {
     );
   }
 
-  void _handleError(FlutterErrorEvent event) => errors.add(event);
+  void _handleError(final FlutterErrorEvent event) => errors.add(event);
 }

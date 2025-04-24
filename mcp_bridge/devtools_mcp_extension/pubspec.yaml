@@ -15,7 +15,7 @@ repository: https://github.com/Arenukvern/mcp_flutter
 # https://developer.apple.com/library/mcp_dart_forwarding_client/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 0.2.0
+version: 0.3.0
 
 environment:
   sdk: ">=3.7.0 <4.0.0"

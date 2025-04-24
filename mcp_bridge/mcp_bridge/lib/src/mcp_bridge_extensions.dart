@@ -1,24 +1,26 @@
-part of 'mcp_bridge_binding.dart';
+import 'dart:convert';
+import 'dart:developer';
+
+import 'package:flutter/cupertino.dart';
+
+import 'error_monitor.dart';
 
 mixin McpBridgeExtensions {
-  void initializeServiceExtension() {
+  void initializeServiceExtension({required final ErrorMonitor errorMonitor}) {
+    WidgetsBinding.instance.reg;
     registerExtension('ext.devtools.mcp.extension.apperrors', (
-      method,
-      params,
+      final method,
+      final params,
     ) async {
       try {
         final count = int.tryParse(params['count'] ?? '') ?? 10;
-        final reversedErrors =
-            ErrorMonitor.errors.reversed.take(count).toList();
-        print(
-          'reversedErrorsCount. method: $method, count: $count ${ErrorMonitor.errors.reversed.length}',
-        );
+        final reversedErrors = errorMonitor.errors.take(count).toList();
 
         return ServiceExtensionResponse.result(
           jsonEncode({
             // 'type': '_extensionType',
             'method': method,
-            'data': reversedErrors.map((e) => e.toJson()).toList(),
+            'data': reversedErrors.map((final e) => e.toJson()).toList(),
           }),
         );
       } catch (e, stack) {
