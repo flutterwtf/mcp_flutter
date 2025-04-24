@@ -5,134 +5,19 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// ignore_for_file: prefer_asserts_with_message
+
 import 'dart:convert';
 import 'dart:developer' as developer;
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 
-///
+const _prefix = 'ext.mcp.bridge';
+
+/// Base class for MCP Bridge bindings.
 abstract class McpBridgeBindingBase {
-  /// Default abstract constructor for bindings.
-  ///
-  /// First calls [initInstances] to have bindings initialize their
-  /// instance pointers and other state, then calls
-  /// [initServiceExtensions] to have bindings initialize their
-  /// VM service extensions, if any.
-  McpBridgeBindingBase();
-
-  /// Called when the binding is initialized, to register service
-  /// extensions.
-  ///
-  /// Bindings that want to expose service extensions should overload
-  /// this method to register them using calls to
-  /// [registerSignalServiceExtension],
-  /// [registerBoolServiceExtension],
-  /// [registerNumericServiceExtension], and
-  /// [registerServiceExtension] (in increasing order of complexity).
-  ///
-  /// Implementations of this method must call their superclass
-  /// implementation.
-  ///
-  /// {@macro flutter.foundation.BindingBase.registerServiceExtension}
-  ///
-  /// See also:
-  ///
-  ///  * <https://github.com/dart-lang/sdk/blob/main/runtime/vm/service/service.md#rpcs-requests-and-responses>
-  @protected
-  @mustCallSuper
-  void initServiceExtensions() {
-    assert(!_debugServiceExtensionsRegistered);
-
-    assert(() {
-      registerSignalServiceExtension(
-        name: FoundationServiceExtensions.reassemble.name,
-        callback: reassembleApplication,
-      );
-      return true;
-    }());
-
-    if (!kReleaseMode) {
-      if (!kIsWeb) {
-        registerSignalServiceExtension(
-          name: FoundationServiceExtensions.exit.name,
-          callback: _exitApplication,
-        );
-      }
-      // These service extensions are used in profile mode applications.
-      registerStringServiceExtension(
-        name: FoundationServiceExtensions.connectedVmServiceUri.name,
-        getter: () async => connectedVmServiceUri ?? '',
-        setter: (final uri) async {
-          connectedVmServiceUri = uri;
-        },
-      );
-      registerStringServiceExtension(
-        name: FoundationServiceExtensions.activeDevToolsServerAddress.name,
-        getter: () async => activeDevToolsServerAddress ?? '',
-        setter: (final serverAddress) async {
-          activeDevToolsServerAddress = serverAddress;
-        },
-      );
-    }
-
-    assert(() {
-      registerServiceExtension(
-        name: FoundationServiceExtensions.platformOverride.name,
-        callback: (final parameters) async {
-          if (parameters.containsKey('value')) {
-            final String value = parameters['value']!;
-            debugDefaultTargetPlatformOverride = null;
-            for (final TargetPlatform candidate in TargetPlatform.values) {
-              if (candidate.name == value) {
-                debugDefaultTargetPlatformOverride = candidate;
-                break;
-              }
-            }
-            _postExtensionStateChangedEvent(
-              FoundationServiceExtensions.platformOverride.name,
-              defaultTargetPlatform.name,
-            );
-            await reassembleApplication();
-          }
-          return <String, dynamic>{'value': defaultTargetPlatform.name};
-        },
-      );
-
-      registerServiceExtension(
-        name: FoundationServiceExtensions.brightnessOverride.name,
-        callback: (final parameters) async {
-          if (parameters.containsKey('value')) {
-            debugBrightnessOverride = switch (parameters['value']) {
-              'Brightness.light' => ui.Brightness.light,
-              'Brightness.dark' => ui.Brightness.dark,
-              _ => null,
-            };
-            _postExtensionStateChangedEvent(
-              FoundationServiceExtensions.brightnessOverride.name,
-              (debugBrightnessOverride ?? platformDispatcher.platformBrightness)
-                  .toString(),
-            );
-            await reassembleApplication();
-          }
-          return <String, dynamic>{
-            'value':
-                (debugBrightnessOverride ??
-                        platformDispatcher.platformBrightness)
-                    .toString(),
-          };
-        },
-      );
-      return true;
-    }());
-    assert(() {
-      _debugServiceExtensionsRegistered = true;
-      return true;
-    }());
-  }
-
   /// Registers a service extension method with the given name (full
-  /// name "ext.flutter.name"), which takes no arguments and returns
+  /// name "ext.mcp.bridge.name"), which takes no arguments and returns
   /// no value.
   ///
   /// Calls the `callback` callback when the service extension is called.
@@ -153,7 +38,7 @@ abstract class McpBridgeBindingBase {
   }
 
   /// Registers a service extension method with the given name (full
-  /// name "ext.flutter.name"), which takes a single argument
+  /// name "ext.mcp.bridge.name"), which takes a single argument
   /// "enabled" which can have the value "true" or the value "false"
   /// or can be omitted to read the current value. (Any value other
   /// than "true" is considered equivalent to "false". Other arguments
@@ -188,7 +73,7 @@ abstract class McpBridgeBindingBase {
   }
 
   /// Registers a service extension method with the given name (full
-  /// name "ext.flutter.name"), which takes a single argument with the
+  /// name "ext.mcp.bridge.name"), which takes a single argument with the
   /// same name as the method which, if present, must have a value
   /// that can be parsed by [double.parse], and can be omitted to read
   /// the current value. (Other arguments are ignored.)
@@ -230,8 +115,8 @@ abstract class McpBridgeBindingBase {
   /// [registerBoolServiceExtension], [registerNumericServiceExtension], or
   /// [registerStringServiceExtension].
   void _postExtensionStateChangedEvent(final String name, final value) {
-    postEvent('Flutter.ServiceExtensionStateChanged', <String, dynamic>{
-      'extension': 'ext.flutter.$name',
+    postEvent('McpBridge.ServiceExtensionStateChanged', <String, dynamic>{
+      'extension': '$_prefix.$name',
       'value': value,
     });
   }
@@ -247,7 +132,7 @@ abstract class McpBridgeBindingBase {
   }
 
   /// Registers a service extension method with the given name (full name
-  /// "ext.flutter.name"), which optionally takes a single argument with the
+  /// "ext.mcp.bridge.name"), which optionally takes a single argument with the
   /// name "value". If the argument is omitted, the value is to be read,
   /// otherwise it is to be set. Returns the current value.
   ///
@@ -277,7 +162,7 @@ abstract class McpBridgeBindingBase {
   }
 
   /// Registers a service extension method with the given name (full name
-  /// "ext.flutter.name").
+  /// "ext.mcp.bridge.name").
   ///
   /// The given callback is called when the extension method is called. The
   /// callback must return a [Future] that either eventually completes to a
@@ -332,7 +217,7 @@ abstract class McpBridgeBindingBase {
     required final String name,
     required final ServiceExtensionCallback callback,
   }) {
-    final String methodName = 'ext.flutter.$name';
+    final String methodName = '$_prefix.$name';
     developer.registerExtension(methodName, (
       final method,
       final parameters,

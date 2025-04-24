@@ -1,39 +1,55 @@
-import 'dart:convert';
-import 'dart:developer';
+// ignore_for_file: prefer_asserts_with_message
 
 import 'package:flutter/cupertino.dart';
 
 import 'error_monitor.dart';
+import 'mcp_binding_base.dart';
 
-mixin McpBridgeExtensions {
+/// A mixin that adds MCP Bridge extensions to a binding.
+mixin McpBridgeExtensions on McpBridgeBindingBase {
+  var _debugServiceExtensionsRegistered = false;
+
+  /// Called when the binding is initialized, to register service
+  /// extensions.
+  ///
+  /// Bindings that want to expose service extensions should overload
+  /// this method to register them using calls to
+  /// [registerSignalServiceExtension],
+  /// [registerBoolServiceExtension],
+  /// [registerNumericServiceExtension], and
+  /// [registerServiceExtension] (in increasing order of complexity).
+  ///
+  /// Implementations of this method must call their superclass
+  /// implementation.
+  ///
+  /// {@macro flutter.foundation.BindingBase.registerServiceExtension}
+  ///
+  /// See also:
+  ///
+  ///  * <https://github.com/dart-lang/sdk/blob/main/runtime/vm/service/service.md#rpcs-requests-and-responses>
+
+  @protected
+  @mustCallSuper
   void initializeServiceExtension({required final ErrorMonitor errorMonitor}) {
-    WidgetsBinding.instance.reg;
-    registerExtension('ext.devtools.mcp.extension.apperrors', (
-      final method,
-      final params,
-    ) async {
-      try {
-        final count = int.tryParse(params['count'] ?? '') ?? 10;
-        final reversedErrors = errorMonitor.errors.take(count).toList();
+    assert(!_debugServiceExtensionsRegistered);
+    // if (!kReleaseMode) {}
+    assert(() {
+      registerServiceExtension(
+        name: 'apperrors',
+        callback: (final parameters) async {
+          final count = int.tryParse(parameters['count'] ?? '') ?? 10;
+          final reversedErrors = errorMonitor.errors.take(count).toList();
 
-        return ServiceExtensionResponse.result(
-          jsonEncode({
-            // 'type': '_extensionType',
-            'method': method,
-            'data': reversedErrors.map((final e) => e.toJson()).toList(),
-          }),
-        );
-      } catch (e, stack) {
-        return ServiceExtensionResponse.error(
-          ServiceExtensionResponse.extensionError,
-          jsonEncode({
-            // 'type': '_extensionType',
-            'method': method,
-            'error': e.toString(),
-            'stack': stack.toString(),
-          }),
-        );
-      }
-    });
+          return {
+            'errors': reversedErrors.map((final e) => e.toJson()).toList(),
+          };
+        },
+      );
+      return true;
+    }());
+    assert(() {
+      _debugServiceExtensionsRegistered = true;
+      return true;
+    }());
   }
 }

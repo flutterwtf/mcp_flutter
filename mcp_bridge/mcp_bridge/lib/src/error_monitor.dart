@@ -1,3 +1,5 @@
+// ignore_for_file: public_member_api_docs
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 
@@ -6,6 +8,7 @@ enum ErrorSeverity { warning, error, fatal }
 
 /// Represents a Flutter error event.
 class FlutterErrorEvent with EquatableMixin {
+  /// The type of the error.
   FlutterErrorEvent({
     required this.type,
     required this.message,
@@ -13,6 +16,7 @@ class FlutterErrorEvent with EquatableMixin {
     final DateTime? timestamp,
     this.severity = ErrorSeverity.error,
   }) : timestamp = timestamp ?? DateTime.now();
+
   final String type;
   final String message;
   final StackTrace? stackTrace;
