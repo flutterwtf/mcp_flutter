@@ -3,7 +3,7 @@
 import 'package:flutter/cupertino.dart';
 
 import 'error_monitor.dart';
-import 'mcp_binding_base.dart';
+import 'mcp_bridge_binding_base.dart';
 
 /// A mixin that adds MCP Bridge extensions to a binding.
 mixin McpBridgeExtensions on McpBridgeBindingBase {

@@ -1,5 +1,5 @@
 import 'error_monitor.dart';
-import 'mcp_binding_base.dart';
+import 'mcp_bridge_binding_base.dart';
 import 'mcp_bridge_extensions.dart';
 
 /// The binding for the MCP Bridge.
