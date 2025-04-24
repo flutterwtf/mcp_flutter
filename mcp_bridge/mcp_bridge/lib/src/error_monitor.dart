@@ -1,4 +1,4 @@
-// ignore_for_file: public_member_api_docs
+// ignore_for_file: public_member_api_docs, prefer_asserts_with_message
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
@@ -46,20 +46,19 @@ mixin ErrorMonitor {
   final errors = <FlutterErrorEvent>{};
 
   /// Initialize error monitoring
-  void attachToFlutterError({final bool handleFlutterErrors = true}) {
-    if (handleFlutterErrors) {
-      final originalOnError = FlutterError.onError;
-      FlutterError.onError = (final details) {
-        originalOnError?.call(details);
-        _handleError(
-          FlutterErrorEvent(
-            type: 'FlutterError',
-            message: details.exceptionAsString(),
-            stackTrace: details.stack,
-          ),
-        );
-      };
-    }
+  void attachToFlutterError() {
+    final originalOnError = FlutterError.onError;
+    FlutterError.onError = (final details) {
+      originalOnError?.call(details);
+      final error = FlutterErrorEvent(
+        type: 'FlutterError',
+        stackTrace: details.stack,
+        message: details.toDiagnosticsNode().toStringDeep(
+          minLevel: DiagnosticLevel.info,
+        ),
+      );
+      _handleError(error);
+    };
   }
 
   /// Handle uncaught error

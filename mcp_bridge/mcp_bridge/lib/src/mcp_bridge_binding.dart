@@ -1,3 +1,5 @@
+// ignore_for_file: prefer_asserts_with_message
+
 import 'error_monitor.dart';
 import 'mcp_bridge_binding_base.dart';
 import 'mcp_bridge_extensions.dart';
@@ -12,7 +14,10 @@ class McpBridgeBinding extends McpBridgeBindingBase
 
   /// Initializes the MCP Bridge binding.
   void initialize() {
-    attachToFlutterError();
-    initializeServiceExtension(errorMonitor: this);
+    assert(() {
+      attachToFlutterError();
+      initializeServiceExtension(errorMonitor: this);
+      return true;
+    }());
   }
 }

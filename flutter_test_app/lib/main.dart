@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:test_app/mcp_bridge_binding.dart';
+import 'package:mcp_bridge/mcp_bridge.dart';
 
 Future<void> main() async {
   runZonedGuarded(
