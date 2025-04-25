@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 
 import 'error_monitor.dart';
 import 'mcp_bridge_binding_base.dart';
+import 'screenshot_service.dart';
 
 /// A mixin that adds MCP Bridge extensions to a binding.
 mixin McpBridgeExtensions on McpBridgeBindingBase {
@@ -57,6 +58,14 @@ mixin McpBridgeExtensions on McpBridgeBindingBase {
                 'Use it to find the error in codebase.';
           }();
           return {'message': message, 'errors': errors};
+        },
+      );
+
+      registerServiceExtension(
+        name: 'view_screenshots',
+        callback: (final parameters) async {
+          final images = await const ScreenshotService().takeScreenshot();
+          return {'images': images};
         },
       );
       return true;

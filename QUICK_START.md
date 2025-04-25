@@ -86,7 +86,9 @@ For developers who want to contribute to the project or run the latest version d
             ],
             "env": {
               "PORT": "3334",
-              "LOG_LEVEL": "critical"
+              "LOG_LEVEL": "critical",
+              "RESOURCES_SUPPORTED": "true",
+              "IMAGES_SUPPORTED": "true"
             },
             "disabled": false,
             "autoApprove": []
@@ -115,8 +117,9 @@ For developers who want to contribute to the project or run the latest version d
               "/path/to/your/cloned/mcp_flutter/mcp_server/build/index.js"
             ],
             "env": {
-              "RESOURCES_SUPPORTED": false,
-              "IMAGES_SUPPORTED": true
+              "RESOURCES_SUPPORTED": "false",
+              "IMAGES_SUPPORTED": "true",
+              "LOG_LEVEL": "critical"
             },
             "disabled": false
           }

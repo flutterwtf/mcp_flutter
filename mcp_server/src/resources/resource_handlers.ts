@@ -17,19 +17,25 @@ import {
   createTreeResources,
   TREE_RESOURCES_TEMPLATES,
 } from "./widget_tree_resources.js";
+
+const _RPC_PREFIX = "ext.mcp.bridge.";
+
 const ToolNames = {
   getAppErrors: {
     toolName: "get_app_errors",
     // old method for forwarding server
     // rpcMethod: "ext.mcpdevtools.getAppErrors",
     // new method for dart vm with McpBridge
-    rpcMethod: "ext.mcp.bridge.apperrors",
+    rpcMethod: `${_RPC_PREFIX}apperrors`,
   },
-  getScreenshot: {
-    toolName: "inspector_screenshot",
-    rpcMethod: "ext.flutter.inspector.screenshot",
+  viewScreenshots: {
+    toolName: "view_screenshots",
+    rpcMethod: `${_RPC_PREFIX}view_screenshots`,
   },
 } as const;
+type ScreenshotResult = {
+  images: string[];
+};
 type AppErrorsResponse = {
   message: string;
   errors: unknown[];
@@ -265,20 +271,19 @@ export class ResourcesHandlers {
           };
 
         case "screenshot":
-          const screenshotResult = await rpcToolHandlers.handleToolRequest(
-            ToolNames.getScreenshot.toolName,
-            {}
-          );
-          const screenshotData = screenshotResult.content[0].text;
+          const screenshotResult = (await rpcUtils.callDartVm({
+            method: ToolNames.viewScreenshots.rpcMethod,
+            dartVmPort: rpcUtils.args.dartVMPort,
+            params: {},
+          })) as ScreenshotResult | undefined;
           return {
             uri: uri,
-            contents: [
-              {
+            contents:
+              screenshotResult?.images.map((image) => ({
                 uri: uri,
-                blob: screenshotData,
+                blob: image,
                 mimeType: "image/png",
-              },
-            ],
+              })) ?? [],
           };
       }
       throw new McpError(
@@ -349,16 +354,16 @@ export class ResourcesHandlers {
               type: "app_errors",
               count,
             };
-          } else if (action === "screenshot") {
-            return {
-              type: "screenshot",
-            };
           }
           break;
 
         case "view":
           if (action === "info") {
             return { type: "info" };
+          } else if (action === "screenshots") {
+            return {
+              type: "screenshot",
+            };
           }
           return { type: "view" };
       }
@@ -407,20 +412,19 @@ export class ResourcesHandlers {
       },
     };
     if (rpcUtils.args.areImagesSupported) {
-      tools[ToolNames.getScreenshot.toolName] = async (request) => {
-        const screenshotResult = await rpcToolHandlers.handleToolRequest(
-          ToolNames.getScreenshot.toolName,
-          {}
-        );
+      tools[ToolNames.viewScreenshots.toolName] = async (request) => {
+        const screenshotResult = (await rpcUtils.callDartVm({
+          method: ToolNames.viewScreenshots.rpcMethod,
+          dartVmPort: rpcUtils.args.dartVMPort,
+          params: {},
+        })) as ScreenshotResult;
         const uri = request.params.uri;
         return {
-          content: [
-            {
-              type: "image",
-              data: screenshotResult.content[0].text,
-              mimeType: "image/png",
-            },
-          ],
+          content: screenshotResult.images.map((image) => ({
+            type: "image",
+            data: image,
+            mimeType: "image/png",
+          })),
         };
       };
     }
@@ -434,7 +438,7 @@ export class ResourcesHandlers {
    */
   getToolSchemes(rpcUtils: RpcUtilities): Tool[] {
     const screenshot = <Tool>{
-      name: ToolNames.getScreenshot.toolName,
+      name: ToolNames.viewScreenshots.toolName,
       description: "Get the screenshot of the app",
       inputSchema: {
         type: "object",
