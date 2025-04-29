@@ -1,6 +1,7 @@
 // ignore_for_file: prefer_asserts_with_message, lines_longer_than_80_chars
 
 import 'package:flutter/cupertino.dart';
+import 'package:from_json_to_json/from_json_to_json.dart';
 
 import 'error_monitor.dart';
 import 'mcp_bridge_binding_base.dart';
@@ -57,6 +58,7 @@ mixin McpBridgeExtensions on McpBridgeBindingBase {
                 'a path to file and line number. \n'
                 'Use it to find the error in codebase.';
           }();
+
           return {'message': message, 'errors': errors};
         },
       );
@@ -64,7 +66,10 @@ mixin McpBridgeExtensions on McpBridgeBindingBase {
       registerServiceExtension(
         name: 'view_screenshots',
         callback: (final parameters) async {
-          final images = await const ScreenshotService().takeScreenshot();
+          final compress = jsonDecodeBool(parameters['compress']);
+          final images = await const ScreenshotService().takeScreenshots(
+            compress: compress,
+          );
           return {'images': images};
         },
       );

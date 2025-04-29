@@ -1,9 +1,13 @@
+// ignore_for_file: lines_longer_than_80_chars, avoid_catches_without_on_clauses
+
 import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
+
+import 'image_compressor.dart';
 
 /// Service for taking screenshots of the main app view using RenderView layers.
 class ScreenshotService {
@@ -16,7 +20,7 @@ class ScreenshotService {
   /// by rendering its layer tree into an image.
   ///
   /// Returns a base64 encoded PNG image string, or null if capture fails.
-  Future<List<String>> takeScreenshot() async {
+  Future<List<String>> takeScreenshots({final bool compress = true}) async {
     // Target the main RenderView and its corresponding FlutterView
     final renderViews = WidgetsBinding.instance.renderViews;
     final imageFutures = <Future<String?>>[]; // Prepare for async calls
@@ -25,7 +29,12 @@ class ScreenshotService {
       final flutterView = renderView.flutterView;
       // Call takeImage asynchronously for each view
       // Note: Ensure takeImage is marked async and returns Future<String?>
-      imageFutures.add(takeImage(flutterView: flutterView, view: renderView));
+      final imageFuture = takeImage(
+        flutterView: flutterView,
+        view: renderView,
+        compress: compress,
+      );
+      imageFutures.add(imageFuture);
     }
 
     // Wait for all screenshots to complete and filter out failures (nulls)
@@ -45,6 +54,7 @@ class ScreenshotService {
   Future<String?> takeImage({
     required final ui.FlutterView flutterView,
     required final RenderView view,
+    required final bool compress,
   }) async {
     // ignore: invalid_use_of_protected_member
     if (view.debugNeedsPaint || view.layer == null) {
@@ -57,6 +67,7 @@ class ScreenshotService {
       await Future.delayed(const Duration(milliseconds: 100));
     }
 
+    // ignore: invalid_use_of_protected_member
     final layer = view.layer;
     if (layer == null) {
       debugPrint(
@@ -108,9 +119,15 @@ class ScreenshotService {
       if (byteData != null) {
         final Uint8List pngBytes = byteData.buffer.asUint8List();
         debugPrint(
-          'ScreenshotService: Successfully captured screenshot for main view (${pngBytes.lengthInBytes} bytes).',
+          'ScreenshotService: Successfully captured screenshot for '
+          'main view (${pngBytes.lengthInBytes} bytes).',
         );
-        return base64Encode(pngBytes);
+        final effectiveImage =
+            compress
+                ? await ImageCompressor.compressImage(image: image)
+                : pngBytes;
+
+        return base64Encode(effectiveImage);
       } else {
         debugPrint(
           'ScreenshotService: Failed to get byte data for screenshot of main view.',

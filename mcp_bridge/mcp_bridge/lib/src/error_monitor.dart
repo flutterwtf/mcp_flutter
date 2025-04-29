@@ -86,5 +86,8 @@ mixin ErrorMonitor {
     );
   }
 
-  void _handleError(final FlutterErrorEvent event) => errors.add(event);
+  void _handleError(final FlutterErrorEvent event) {
+    // TODO(arenukvern): add security for sensitive data
+    errors.add(event);
+  }
 }

@@ -8,9 +8,9 @@
       "cwd": "./flutter_test_app",
       "flutterMode": "debug",
       "args": [
-        "--host-vmservice-port=8181",
-        "--enable-vm-service",
-        "--disable-service-auth-codes"
+        // "--host-vmservice-port=8181",
+        // "--enable-vm-service",
+        // "--disable-service-auth-codes"
       ]
     },
     {

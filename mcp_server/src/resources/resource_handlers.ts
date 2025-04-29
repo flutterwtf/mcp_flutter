@@ -274,7 +274,9 @@ export class ResourcesHandlers {
           const screenshotResult = (await rpcUtils.callDartVm({
             method: ToolNames.viewScreenshots.rpcMethod,
             dartVmPort: rpcUtils.args.dartVMPort,
-            params: {},
+            params: {
+              compress: true,
+            },
           })) as ScreenshotResult | undefined;
           return {
             uri: uri,
@@ -413,10 +415,13 @@ export class ResourcesHandlers {
     };
     if (rpcUtils.args.areImagesSupported) {
       tools[ToolNames.viewScreenshots.toolName] = async (request) => {
+        const compress = request.params.arguments?.compress;
         const screenshotResult = (await rpcUtils.callDartVm({
           method: ToolNames.viewScreenshots.rpcMethod,
           dartVmPort: rpcUtils.args.dartVMPort,
-          params: {},
+          params: {
+            compress: compress ?? true,
+          },
         })) as ScreenshotResult;
         const uri = request.params.uri;
         return {
