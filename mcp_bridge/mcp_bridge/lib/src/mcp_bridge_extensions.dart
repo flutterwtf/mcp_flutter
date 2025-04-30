@@ -3,9 +3,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:from_json_to_json/from_json_to_json.dart';
 
-import 'error_monitor.dart';
 import 'mcp_bridge_binding_base.dart';
-import 'screenshot_service.dart';
+import 'services/application_info.dart';
+import 'services/error_monitor.dart';
+import 'services/screenshot_service.dart';
 
 /// A mixin that adds MCP Bridge extensions to a binding.
 mixin McpBridgeExtensions on McpBridgeBindingBase {
@@ -67,12 +68,28 @@ mixin McpBridgeExtensions on McpBridgeBindingBase {
         name: 'view_screenshots',
         callback: (final parameters) async {
           final compress = jsonDecodeBool(parameters['compress']);
-          final images = await const ScreenshotService().takeScreenshots(
+          final images = await ScreenshotService.takeScreenshots(
             compress: compress,
           );
-          return {'images': images};
+          return {
+            'message':
+                'Screenshots taken for each view. '
+                'If you find visual errors, you can try to request errors '
+                'to get more information with stack trace',
+            'images': images,
+          };
         },
       );
+
+      registerServiceExtension(
+        name: 'view_details',
+        callback: (final parameters) async {
+          final details = ApplicationInfo.getViewsInformation();
+          final json = details.map((final e) => e.toJson()).toList();
+          return {'message': 'Information about each view. ', 'details': json};
+        },
+      );
+
       return true;
     }());
     assert(() {

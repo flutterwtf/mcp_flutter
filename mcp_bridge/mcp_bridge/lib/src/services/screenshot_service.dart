@@ -7,20 +7,19 @@ import 'dart:ui' as ui;
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
-import 'image_compressor.dart';
+import '../utils/image_compressor.dart';
 
 /// Service for taking screenshots of the main app view using RenderView layers.
-class ScreenshotService {
-  /// Creates a new [ScreenshotService].
-  const ScreenshotService();
-
+mixin ScreenshotService {
   /// Takes a screenshot of the main RenderView.
   ///
   /// This method attempts to capture the current state of the main view
   /// by rendering its layer tree into an image.
   ///
   /// Returns a base64 encoded PNG image string, or null if capture fails.
-  Future<List<String>> takeScreenshots({final bool compress = true}) async {
+  static Future<List<String>> takeScreenshots({
+    final bool compress = true,
+  }) async {
     // Target the main RenderView and its corresponding FlutterView
     final renderViews = WidgetsBinding.instance.renderViews;
     final imageFutures = <Future<String?>>[]; // Prepare for async calls
@@ -51,7 +50,7 @@ class ScreenshotService {
   /// by rendering its layer tree into an image.
   ///
   /// Returns a base64 encoded PNG image string, or null if capture fails.
-  Future<String?> takeImage({
+  static Future<String?> takeImage({
     required final ui.FlutterView flutterView,
     required final RenderView view,
     required final bool compress,
