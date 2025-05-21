@@ -2,6 +2,8 @@
 
 import 'mcp_bridge_binding_base.dart';
 import 'mcp_bridge_extensions.dart';
+import 'mcp_bridge_listeners.dart';
+import 'mcp_bridge_listeners_impl.dart';
 import 'services/error_monitor.dart';
 
 /// The binding for the MCP Bridge.
@@ -13,10 +15,17 @@ class McpBridgeBinding extends McpBridgeBindingBase
   static final instance = McpBridgeBinding._();
 
   /// Initializes the MCP Bridge binding.
-  void initialize() {
+  ///
+  /// If [listeners] is not provided, the [McpBridgeListenersImpl] will be used.
+  void initialize({final McpBridgeListeners? listeners}) {
     assert(() {
       attachToFlutterError();
-      initializeServiceExtension(errorMonitor: this);
+      initializeServiceExtension(
+        errorMonitor: this,
+        listeners:
+            listeners ?? McpBridgeListenersImpl()
+              ..attachErrorMonitor(this),
+      );
       return true;
     }());
   }
