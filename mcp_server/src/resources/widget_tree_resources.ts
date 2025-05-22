@@ -12,12 +12,7 @@ export const createTreeResources = (rpcUtils: RpcUtilities): Resource[] => {
     //   mimeType: "application/json",
     // },
     // TODO:
-    // {
-    //   uri: "visual://localhost/app/info",
-    //   name: "App Info",
-    //   description: "Get app information (size of screen, pixel ratio etc.)",
-    //   mimeType: "application/json",
-    // },
+
     {
       uri: "visual://localhost/app/errors/latest",
       name: "Latest Application Error",
@@ -29,6 +24,7 @@ export const createTreeResources = (rpcUtils: RpcUtilities): Resource[] => {
   if (!rpcUtils.args.areResourcesSupported) {
     return [];
   }
+  // View resources
   if (rpcUtils.args.areImagesSupported) {
     resources.push({
       uri: "visual://localhost/view/screenshots",
@@ -38,6 +34,13 @@ export const createTreeResources = (rpcUtils: RpcUtilities): Resource[] => {
       mimeType: "image/png",
     });
   }
+  resources.push({
+    uri: "visual://localhost/view/details",
+    name: "View Details",
+    description:
+      "Get details for all views in the application. View equals one window on desktop, or one running instance on mobile.",
+    mimeType: "application/json",
+  });
   return resources;
 };
 

@@ -28,6 +28,10 @@ const ToolNames = {
     // new method for dart vm with McpBridge
     rpcMethod: `${_RPC_PREFIX}apperrors`,
   },
+  getViewDetails: {
+    toolName: "get_view_details",
+    rpcMethod: `${_RPC_PREFIX}view_details`,
+  },
   viewScreenshots: {
     toolName: "view_screenshots",
     rpcMethod: `${_RPC_PREFIX}view_screenshots`,
@@ -40,6 +44,10 @@ type AppErrorsResponse = {
   message: string;
   errors: unknown[];
 };
+type ViewDetailsResponse = {
+  message: string;
+  details: unknown[];
+};
 type ResourceType =
   | "root"
   | "node"
@@ -47,8 +55,9 @@ type ResourceType =
   | "children"
   | "screenshot"
   | "app_errors"
-  | "view"
-  | "info"
+  | "view_details"
+  | "view_widget_tree"
+  | "is_widget_tree_ready"
   | "unknown";
 
 export class ResourcesHandlers {
@@ -101,6 +110,20 @@ export class ResourcesHandlers {
     return {
       errorsListJson,
       errorsList,
+    };
+  }
+
+  async #getViewDetails(rpcUtils: RpcUtilities): Promise<ViewDetailsResponse> {
+    const dartVmPort = rpcUtils.args.dartVMPort;
+    const viewDetailsResult = await rpcUtils.callDartVm({
+      method: ToolNames.getViewDetails.rpcMethod,
+      dartVmPort,
+    });
+    const viewDetailsResultJson = viewDetailsResult as ViewDetailsResponse;
+
+    return {
+      message: viewDetailsResultJson.message,
+      details: viewDetailsResultJson.details,
     };
   }
 
@@ -234,8 +257,21 @@ export class ResourcesHandlers {
               `Failed to get app errors: ${error}`
             );
           }
+        case "view_details":
+          const viewDetailsResult = await this.#getViewDetails(rpcUtils);
+          return {
+            uri: uri,
+            contents: [
+              {
+                uri: uri,
+                text: viewDetailsResult.message,
+                json: viewDetailsResult.details,
+                mimeType: "application/json",
+              },
+            ],
+          };
 
-        case "view":
+        case "view_widget_tree":
           const viewResult = await rpcUtils.callFlutterExtension(
             "ext.flutter.inspector.getRootWidgetSummaryTreeWithPreviews",
             {
@@ -254,7 +290,7 @@ export class ResourcesHandlers {
             ],
           };
 
-        case "info":
+        case "is_widget_tree_ready":
           const infoResult = await rpcUtils.callFlutterExtension(
             "ext.flutter.inspector.isWidgetTreeReady",
             {}
@@ -360,14 +396,16 @@ export class ResourcesHandlers {
           break;
 
         case "view":
-          if (action === "info") {
-            return { type: "info" };
+          if (action === "is_widget_tree_ready") {
+            return { type: "is_widget_tree_ready" };
           } else if (action === "screenshots") {
             return {
               type: "screenshot",
             };
+          } else if (action === "details") {
+            return { type: "view_details" };
           }
-          return { type: "view" };
+          return { type: "unknown" };
       }
 
       return { type: "unknown" };
@@ -389,6 +427,23 @@ export class ResourcesHandlers {
       return {};
     }
     const tools = <CustomRpcHandlerMap>{
+      [ToolNames.getViewDetails.toolName]: async (
+        request: CallToolRequest
+      ): Promise<CallToolResult> => {
+        const viewDetailsResult = await this.#getViewDetails(rpcUtils);
+        return {
+          content: [
+            {
+              type: "text",
+              text: viewDetailsResult.message,
+            },
+            {
+              type: "text",
+              text: JSON.stringify(viewDetailsResult.details, null, 2),
+            },
+          ],
+        };
+      },
       [ToolNames.getAppErrors.toolName]: async (
         request: CallToolRequest
       ): Promise<CallToolResult> => {
