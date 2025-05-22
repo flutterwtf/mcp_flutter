@@ -2,8 +2,8 @@
 
 ## Quick Start
 
-- [Installation Guide](README.md#quick-start)
-- [API Documentation](README.md#learn-more)
+- [Installation Guide](QUICK_START.md)
+- [API Documentation](MCP_RPC_DESCRIPTION.md)
 - [Contributing Guidelines](README.md#contributing)
 
 ## System Overview

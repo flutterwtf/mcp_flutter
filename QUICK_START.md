@@ -10,7 +10,7 @@ A small video tutorial how to setup mcp server on macOS with Cursor - https://ww
 - A Flutter app running in debug mode
 - One of: Cursor, Claude, Cline AI, Windsurf, RooCode, or any other AI assistant that supports MCP server
 
-## 📦 Installation via Smithery (WIP)
+## 📦 Installation via Smithery (🚧 WIP 🚧)
 
 To install Flutter Inspector for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@Arenukvern/mcp_flutter):
 
@@ -35,18 +35,53 @@ For developers who want to contribute to the project or run the latest version d
    make install
    ```
 
-   This command installs all necessary dependencies listed in `package.json` and then builds MCP server and forwarding server.
+   This command installs all necessary dependencies listed in `package.json` and then builds the MCP server.
 
-3. **Start forwarding server:**
+3. **Add `mcp_bridge` Package to Your Flutter App:**
+
+   The `mcp_bridge` package provides the necessary service extensions within your Flutter application. You need to add it to your app's `pubspec.yaml`.
+
+   Run this command in your Flutter app's directory to add the `mcp_bridge` package:
 
    ```bash
-   make forward
+   flutter pub add mcp_bridge
    ```
 
-4. **Add DevTools Flutter Extension to Flutter App:**
+   or add it to your `pubspec.yaml` manually:
 
-   ```bash
-   flutter pub add --dev devtools_mcp_extension
+   ```yaml
+   dev_dependencies:
+     flutter_test:
+       sdk: flutter
+     # ... other dev_dependencies
+     mcp_bridge: ^0.1.0
+   ```
+
+   Then run `flutter pub get` in your Flutter app's directory.
+
+4. **Initialize in Your App**:
+   In your Flutter application's `main.dart` file (or equivalent entry point), initialize the bridge binding:
+
+   ```dart
+   import 'package:flutter/material.dart';
+   import 'package:mcp_bridge/mcp_bridge.dart'; // Import the package
+   import 'dart:async';
+
+   Future<void> main() async {
+     runZonedGuarded(
+       () async {
+         WidgetsFlutterBinding.ensureInitialized();
+         McpBridgeBinding.instance.initialize(); // Initialize the bridge
+         runApp(const MyApp());
+       },
+       (error, stack) {
+         // You can place it in your error handling tool, or directly in the zone. The most important thing is to have it - otherwise the errors will not be captured and MCP server will not return error results.
+         McpBridgeBinding.instance.handleZoneError(error, stack);
+       },
+     );
+   }
+
+   // ... rest of your app code
    ```
 
 5. **Start your Flutter app in debug mode**
@@ -57,17 +92,7 @@ For developers who want to contribute to the project or run the latest version d
    flutter run --debug --host-vmservice-port=8181 --enable-vm-service --disable-service-auth-codes
    ```
 
-6. **Open DevTools in Browser**
-
-   Important part is to open DevTools in browser, and activate `mcp_bridge`.
-
-   - For VSCode, run `cmd+shift+p` and search for `Open DevTools in Browser`.
-   - Then go to `Devtools Extension` button (right corner of the window) and enable `mcp_bridge`.
-     ![DevTools Extension Settings](./docs/devtools_extension_settings.png)
-   - Then open `mcp_bridge` tab and make sure everything is connected.
-     ![MCP Bridge](./docs/devtools_mcp_bridge.png)
-
-7. **🛠️ Add Flutter Inspector to your AI tool**
+6. **🛠️ Add Flutter Inspector to your AI tool**
 
    **Note for Local Development (GitHub Install):**
 

@@ -97,19 +97,17 @@ Also make sure you:
    - Verify the configuration JSON syntax
    - Check the tool's logs for connection errors
 
-## 🚧 Smithery Integration 🚧 (work in progress)
-
 The Flutter Inspector is registered with Smithery's registry, making it discoverable and usable by other AI tools through a standardized interface.
 
 ### Integration Architecture
 
 ```
-┌─────────────────┐     ┌──────────────┐     ┌──────────────┐     ┌─────────────────┐     ┌─────────────┐
-│                 │     │              │     │              │     │                 │     │             │
-│  Flutter App    │<--->│  DevTools    │<--->│  Forwarding  │<--->│   MCP Server   │<--->│  Smithery   │
-│  (Debug Mode)   │     │  Extension   │     │  Server      │     │   (Registered) │     │  Registry   │
-│                 │     │              │     │              │     │                 │     │             │
-└─────────────────┘     └──────────────┘     └──────────────┘     └─────────────────┘     └─────────────┘
+┌─────────────────┐     ┌───────────────────────┐     ┌─────────────────┐
+│                 │     │  Flutter App with     │     │                 │
+│  Flutter App    │<--->│  mcp_bridge (VM Svc.  │<--->│   MCP Server   │
+│  (Debug Mode)   │     │  Extensions)          │     │                 │
+│                 │     │                       │     │                 │
+└─────────────────┘     └───────────────────────┘     └─────────────────┘
 ```
 
 ## 🤝 Contributing
@@ -128,7 +126,7 @@ Contributions are welcome! Please feel free to submit pull requests or report is
 
 ## 📄 License
 
-MIT - Feel free to use in your projects!
+[MIT](LICENSE) - Feel free to use in your projects!
 
 ---
 
