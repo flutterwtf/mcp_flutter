@@ -1,5 +1,5 @@
 // part of this code is from the Flutter framework and
-// modified for the MCP Bridge
+// modified for the MCP Toolkit
 //
 // Copyright 2014 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
@@ -12,12 +12,28 @@ import 'dart:developer' as developer;
 
 import 'package:flutter/foundation.dart';
 
-const _prefix = 'ext.mcp.bridge';
+/// The name of the MCP service extension.
+const kMCPServiceExtensionName = 'ext.mcp.toolkit';
 
-/// Base class for MCP Bridge bindings.
-abstract class McpBridgeBindingBase {
+/// Base class for MCP Toolkit bindings.
+abstract class MCPToolkitBindingBase {
+  var _initialized = false;
+
+  /// The name of the MCP service extension.
+  String _mcpServiceExtensionName = kMCPServiceExtensionName;
+
+  /// Initializes the MCP Toolkit binding.
+  @mustCallSuper
+  void initialize({
+    final String serviceExtensionName = kMCPServiceExtensionName,
+  }) {
+    assert(!_initialized);
+    _initialized = true;
+    _mcpServiceExtensionName = serviceExtensionName;
+  }
+
   /// Registers a service extension method with the given name (full
-  /// name "ext.mcp.bridge.name"), which takes no arguments and returns
+  /// name "ext.mcp.toolkit.name"), which takes no arguments and returns
   /// no value.
   ///
   /// Calls the `callback` callback when the service extension is called.
@@ -38,7 +54,7 @@ abstract class McpBridgeBindingBase {
   }
 
   /// Registers a service extension method with the given name (full
-  /// name "ext.mcp.bridge.name"), which takes a single argument
+  /// name "ext.mcp.toolkit.name"), which takes a single argument
   /// "enabled" which can have the value "true" or the value "false"
   /// or can be omitted to read the current value. (Any value other
   /// than "true" is considered equivalent to "false". Other arguments
@@ -73,7 +89,7 @@ abstract class McpBridgeBindingBase {
   }
 
   /// Registers a service extension method with the given name (full
-  /// name "ext.mcp.bridge.name"), which takes a single argument with the
+  /// name "ext.mcp.toolkit.name"), which takes a single argument with the
   /// same name as the method which, if present, must have a value
   /// that can be parsed by [double.parse], and can be omitted to read
   /// the current value. (Other arguments are ignored.)
@@ -115,8 +131,8 @@ abstract class McpBridgeBindingBase {
   /// [registerBoolServiceExtension], [registerNumericServiceExtension], or
   /// [registerStringServiceExtension].
   void _postExtensionStateChangedEvent(final String name, final value) {
-    postEvent('McpBridge.ServiceExtensionStateChanged', <String, dynamic>{
-      'extension': '$_prefix.$name',
+    postEvent('MCPToolkit.ServiceExtensionStateChanged', <String, dynamic>{
+      'extension': '$_mcpServiceExtensionName.$name',
       'value': value,
     });
   }
@@ -132,7 +148,7 @@ abstract class McpBridgeBindingBase {
   }
 
   /// Registers a service extension method with the given name (full name
-  /// "ext.mcp.bridge.name"), which optionally takes a single argument with the
+  /// "ext.mcp.toolkit.name"), which optionally takes a single argument with the
   /// name "value". If the argument is omitted, the value is to be read,
   /// otherwise it is to be set. Returns the current value.
   ///
@@ -162,7 +178,7 @@ abstract class McpBridgeBindingBase {
   }
 
   /// Registers a service extension method with the given name (full name
-  /// "ext.mcp.bridge.name").
+  /// "ext.mcp.toolkit.name").
   ///
   /// The given callback is called when the extension method is called. The
   /// callback must return a [Future] that either eventually completes to a
@@ -217,7 +233,7 @@ abstract class McpBridgeBindingBase {
     required final String name,
     required final ServiceExtensionCallback callback,
   }) {
-    final String methodName = '$_prefix.$name';
+    final String methodName = '$_mcpServiceExtensionName.$name';
     developer.registerExtension(methodName, (
       final method,
       final parameters,
@@ -274,5 +290,5 @@ abstract class McpBridgeBindingBase {
   }
 
   @override
-  String toString() => '<${objectRuntimeType(this, 'McpBridgeBindingBase')}>';
+  String toString() => '<${objectRuntimeType(this, 'MCPToolkitBindingBase')}>';
 }

@@ -37,14 +37,14 @@ For developers who want to contribute to the project or run the latest version d
 
    This command installs all necessary dependencies listed in `package.json` and then builds the MCP server.
 
-3. **Add `mcp_bridge` Package to Your Flutter App:**
+3. **Add `mcp_toolkit` Package to Your Flutter App:**
 
-   The `mcp_bridge` package provides the necessary service extensions within your Flutter application. You need to add it to your app's `pubspec.yaml`.
+   The `mcp_toolkit` package provides the necessary service extensions within your Flutter application. You need to add it to your app's `pubspec.yaml`.
 
-   Run this command in your Flutter app's directory to add the `mcp_bridge` package:
+   Run this command in your Flutter app's directory to add the `mcp_toolkit` package:
 
    ```bash
-   flutter pub add mcp_bridge
+   flutter pub add mcp_toolkit
    ```
 
    or add it to your `pubspec.yaml` manually:
@@ -54,7 +54,7 @@ For developers who want to contribute to the project or run the latest version d
      flutter_test:
        sdk: flutter
      # ... other dev_dependencies
-     mcp_bridge: ^0.1.0
+     mcp_toolkit: ^0.1.0
    ```
 
    Then run `flutter pub get` in your Flutter app's directory.
@@ -64,19 +64,19 @@ For developers who want to contribute to the project or run the latest version d
 
    ```dart
    import 'package:flutter/material.dart';
-   import 'package:mcp_bridge/mcp_bridge.dart'; // Import the package
+   import 'package:mcp_toolkit/mcp_toolkit.dart'; // Import the package
    import 'dart:async';
 
    Future<void> main() async {
      runZonedGuarded(
        () async {
          WidgetsFlutterBinding.ensureInitialized();
-         McpBridgeBinding.instance.initialize(); // Initialize the bridge
+         MCPToolkitBinding.instance.initialize(); // Initialize the bridge
          runApp(const MyApp());
        },
        (error, stack) {
          // You can place it in your error handling tool, or directly in the zone. The most important thing is to have it - otherwise the errors will not be captured and MCP server will not return error results.
-         McpBridgeBinding.instance.handleZoneError(error, stack);
+         MCPToolkitBinding.instance.handleZoneError(error, stack);
        },
      );
    }

@@ -1,17 +1,23 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:mcp_bridge/mcp_bridge.dart';
+import 'package:mcp_toolkit/mcp_toolkit.dart';
 
 Future<void> main() async {
   runZonedGuarded(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
-      McpBridgeBinding.instance.initialize();
+      MCPToolkitBinding.instance
+        ..initialize()
+        ..addEntries(
+          entries: getFlutterMcpToolkitEntries(
+            errorMonitor: MCPToolkitBinding.instance,
+          ),
+        );
       runApp(const MyApp());
     },
     (error, stack) {
-      McpBridgeBinding.instance.handleZoneError(error, stack);
+      MCPToolkitBinding.instance.handleZoneError(error, stack);
     },
   );
 }

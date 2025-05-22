@@ -1,5 +1,5 @@
-name: mcp_bridge
-description: "MCP Bridge"
+name: mcp_toolkit
+description: "MCP Toolkit"
 repository: https://github.com/Arenukvern/mcp_flutter
 version: 0.1.0
 

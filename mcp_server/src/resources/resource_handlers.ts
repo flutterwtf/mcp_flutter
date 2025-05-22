@@ -18,14 +18,14 @@ import {
   TREE_RESOURCES_TEMPLATES,
 } from "./widget_tree_resources.js";
 
-const _RPC_PREFIX = "ext.mcp.bridge.";
+const _RPC_PREFIX = "ext.mcp.toolkit.";
 
 const ToolNames = {
   getAppErrors: {
     toolName: "get_app_errors",
     // old method for forwarding server
     // rpcMethod: "ext.mcpdevtools.getAppErrors",
-    // new method for dart vm with McpBridge
+    // new method for dart vm with MCPToolkit
     rpcMethod: `${_RPC_PREFIX}apperrors`,
   },
   getViewDetails: {
@@ -458,7 +458,7 @@ export class ResourcesHandlers {
               type: "text",
               text:
                 errorsListJson.message ||
-                "MCP bridge is not active. Make sure devtools in browser is not disconnected and mcp bridge is running.",
+                "MCP Toolkit is not active. Make sure devtools in browser is not disconnected and MCP Toolkit is running.",
             },
             {
               type: "text",

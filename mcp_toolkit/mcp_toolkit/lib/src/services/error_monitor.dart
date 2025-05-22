@@ -71,7 +71,7 @@ mixin ErrorMonitor {
   ///     // External error handling (e.g. Crashlytics)
   ///     FirebaseCrashlytics.instance.recordError(error, stack);
   ///     // Monitor errors in this app
-  ///     McpBridge.instance.handleUncaughtError(error, stack);
+  ///     MCPToolkit.instance.handleUncaughtError(error, stack);
   ///   },
   /// );
   /// ```

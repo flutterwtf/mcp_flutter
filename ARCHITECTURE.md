@@ -28,7 +28,7 @@ Used for: Basic VM operations, general Dart runtime inspection
 ```
 ┌─────────────────┐     ┌───────────────────────┐     ┌─────────────────┐
 │                 │     │  Flutter App with     │     │                 │
-│  Flutter App    │<--->│  mcp_bridge (VM Svc.  │<--->│   MCP Server   │
+│  Flutter App    │<--->│  mcp_toolkit (VM Svc.  │<--->│   MCP Server   │
 │  (Debug Mode)   │     │  Extensions)          │     │                 │
 │                 │     │                       │     │                 │
 └─────────────────┘     └───────────────────────┘     └─────────────────┘
@@ -61,16 +61,16 @@ Used for: Flutter-specific operations (widget inspection, layout analysis, error
 **Requirements**:
 
 - Must run in debug mode
-- `mcp_bridge` package integrated, providing service extensions
+- `mcp_toolkit` package integrated, providing service extensions
 - Port 8181 available for VM Service
 
-### 2. MCP Bridge Layer (In-App Service Extensions)
+### 2. MCP Toolkit Layer (In-App Service Extensions)
 
-**Location**: `mcp_bridge/mcp_bridge/` (as a Dart package integrated into the Flutter Application)
+**Location**: `mcp_toolkit/mcp_toolkit/` (as a Dart package integrated into the Flutter Application)
 **Purpose**: Exposes Flutter-specific functionalities to external tools (like AI assistants via the MCP/Forwarding server) through custom Dart VM Service extensions.
 **Key Features**:
 
-- Registers custom Dart VM Service extensions (e.g., `ext.mcp.bridge.apperrors`, `ext.mcp.bridge.view_screenshots`).
+- Registers custom Dart VM Service extensions (e.g., `ext.mcp.toolkit.apperrors`, `ext.mcp.toolkit.view_screenshots`).
 - Captures and reports Flutter application errors.
 - Provides screenshot capabilities of the application's UI.
 - Enables retrieval of application view details.
@@ -109,12 +109,12 @@ Used for: Flutter-specific operations (widget inspection, layout analysis, error
 2. **Protocol Translation & Interaction**:
 
    ```
-   MCP Server -> Dart VM Service (invoking mcp_bridge extensions on Flutter App)
+   MCP Server -> Dart VM Service (invoking mcp_toolkit extensions on Flutter App)
    ```
 
 3. **Response Flow**:
    ```
-   mcp_bridge in Flutter App -> Dart VM Service -> MCP Server -> AI Assistant
+   mcp_toolkit in Flutter App -> Dart VM Service -> MCP Server -> AI Assistant
    ```
 
 ## Protocol Details

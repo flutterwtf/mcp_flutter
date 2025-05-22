@@ -2,12 +2,12 @@
 
 import 'package:flutter/cupertino.dart';
 
-import 'mcp_bridge_binding_base.dart';
-import 'mcp_bridge_listeners.dart';
+import 'mcp_models.dart';
+import 'mcp_toolkit_binding_base.dart';
 import 'services/error_monitor.dart';
 
-/// A mixin that adds MCP Bridge extensions to a binding.
-mixin McpBridgeExtensions on McpBridgeBindingBase {
+/// A mixin that adds MCP Toolkit extensions to a binding.
+mixin MCPToolkitExtensions on MCPToolkitBindingBase {
   var _debugServiceExtensionsRegistered = false;
 
   /// Called when the binding is initialized, to register service
@@ -31,21 +31,15 @@ mixin McpBridgeExtensions on McpBridgeBindingBase {
 
   @protected
   @mustCallSuper
-  void initializeServiceExtension({
+  void initializeServiceExtensions({
     required final ErrorMonitor errorMonitor,
-    required final McpBridgeListeners listeners,
+    required final Set<MCPCallEntry> entries,
   }) {
     assert(!_debugServiceExtensionsRegistered);
 
     // if (!kReleaseMode) {}
     assert(() {
-      final listenersMap = {
-        'apperrors': listeners.onAppErrors,
-        'view_screenshots': listeners.onViewScreenshots,
-        'view_details': listeners.onViewDetails,
-      };
-
-      for (final entry in listenersMap.entries) {
+      for (final entry in entries) {
         registerServiceExtension(
           name: entry.key,
           callback: (final parameters) async => entry.value(parameters),

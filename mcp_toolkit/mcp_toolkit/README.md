@@ -1,4 +1,4 @@
-# MCP Bridge for Flutter
+# MCP Toolkit for Flutter
 
 This package is a core component of the `mcp_flutter` project. It acts as the "client-side" library within your Flutter application, enabling the Model Context Protocol (MCP) `MCP Server` to perform Flutter-specific operations like retrieving application errors, capturing screenshots, and getting view details.
 
@@ -9,19 +9,19 @@ This package is a core component of the `mcp_flutter` project. It acts as the "c
 
 ## Data Transparency
 
-This package is designed to be transparent and easy to understand. It is built on top of the Dart VM Service Protocol, which is a public protocol for interacting with the Dart VM. You can override any method to protect sensitive data by writing your own implementation of the `McpBridgeListeners` class.
+This package is designed to be transparent and easy to understand. It is built on top of the Dart VM Service Protocol, which is a public protocol for interacting with the Dart VM. You can override any method to protect sensitive data by writing your own implementation of the `MCPToolkitListeners` class.
 
-That way, you need to pass your implementation of the `McpBridgeListeners` class to the `McpBridgeBinding.instance.initialize()` method:
+That way, you need to pass your implementation of the `MCPToolkitListeners` class to the `MCPToolkitBinding.instance.initialize()` method:
 
 ```dart
-McpBridgeBinding.instance.initialize(
-  listeners: MyMcpBridgeListeners(),
+MCPToolkitBinding.instance.initialize(
+  listeners: MyMCPToolkitListeners(),
 );
 ```
 
 ## Features
 
-- **VM Service Extensions**: Registers a set of custom VM service extensions (e.g., `ext.mcp.bridge.apperrors`, `ext.mcp.bridge.view_screenshots`, `ext.mcp.bridge.view_details`).
+- **VM Service Extensions**: Registers a set of custom VM service extensions (e.g., `ext.mcp.toolkit.apperrors`, `ext.mcp.toolkit.view_screenshots`, `ext.mcp.toolkit.view_details`).
 - **Error Reporting**: Captures and makes available runtime errors from the Flutter application.
 - **Screenshot Capability**: Allows external tools to request screenshots of the application's views.
 - **Application Details**: Provides a mechanism to fetch basic details about the application's views.
@@ -29,14 +29,14 @@ McpBridgeBinding.instance.initialize(
 ## Integration
 
 1.  **Add as a Dependency**:
-    Add `mcp_bridge` to your Flutter project's `pubspec.yaml` file.
+    Add `mcp_toolkit` to your Flutter project's `pubspec.yaml` file.
 
     If you have the `mcp_flutter` repository cloned locally, you can use a path dependency:
 
     ```yaml
     dev_dependencies:
       # ... other dev_dependencies
-      mcp_bridge: ^0.1.0
+      mcp_toolkit: ^0.1.0
     ```
 
     Then, run `flutter pub get` in your Flutter project's directory.
@@ -46,19 +46,19 @@ McpBridgeBinding.instance.initialize(
 
     ```dart
     import 'package:flutter/material.dart';
-    import 'package:mcp_bridge/mcp_bridge.dart'; // Import the package
+    import 'package:mcp_toolkit/mcp_toolkit.dart'; // Import the package
     import 'dart:async';
 
     Future<void> main() async {
       runZonedGuarded(
         () async {
           WidgetsFlutterBinding.ensureInitialized();
-          McpBridgeBinding.instance.initialize(); // Initialize the bridge
+          MCPToolkitBinding.instance.initialize(); // Initialize the bridge
           runApp(const MyApp());
         },
         (error, stack) {
           // Optionally, you can also use the bridge's error handling for zone errors
-          McpBridgeBinding.instance.handleZoneError(error, stack);
+          MCPToolkitBinding.instance.handleZoneError(error, stack);
         },
       );
     }

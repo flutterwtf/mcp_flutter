@@ -10,7 +10,7 @@ The whole server is now divided into two parts:
   **Usage**:
 
   - Uses only short description of the error. Should filter duplicate errors, to avoid flooding Agent context window with the same errors.
-  - Uses Error Monitor to capture Dart VM errors. Meaning: first, start mcp server, forwarding server, start app, open devtools and extension, and then reload app, to capture errors. All errors will be captured in the DevTools Extension (mcp_bridge).
+  - Uses Error Monitor to capture Dart VM errors. Meaning: first, start mcp server, forwarding server, start app, open devtools and extension, and then reload app, to capture errors. All errors will be captured in the DevTools Extension (mcp_toolkit).
 
   **Tested on**:
   ✅ macOS, ✅ iOS

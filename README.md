@@ -44,7 +44,7 @@ See more details about environment variables in [.env.example](mcp_server/.env.e
   **Usage**:
 
   - Uses only short description of the error. Should filter duplicate errors, to avoid flooding Agent context window with the same errors.
-  - Uses Error Monitor to capture Dart VM errors. Meaning: first, start mcp server, forwarding server, start app, open devtools and extension, and then reload app, to capture errors. All errors will be captured in the DevTools Extension (mcp_bridge).
+  - Uses Error Monitor to capture Dart VM errors. Meaning: first, start mcp server, forwarding server, start app, open devtools and extension, and then reload app, to capture errors. All errors will be captured in the DevTools Extension (mcp_toolkit).
 
   **Tested on**:
   ✅ macOS, ✅ iOS
@@ -78,7 +78,7 @@ All tools default to using port 8181 if no port is specified. You can override t
 
 ## 🔧 Troubleshooting
 
-`get_app_errors`- Since errors are captured in DevTools Extension, you need to make sure that, you have restarted or reloaded Flutter app after starting MCP server, forwarding server and DevTools mcp_bridge extension.
+`get_app_errors`- Since errors are captured in DevTools Extension, you need to make sure that, you have restarted or reloaded Flutter app after starting MCP server, forwarding server and DevTools mcp_toolkit extension.
 
 Also make sure you:
 
@@ -104,7 +104,7 @@ The Flutter Inspector is registered with Smithery's registry, making it discover
 ```
 ┌─────────────────┐     ┌───────────────────────┐     ┌─────────────────┐
 │                 │     │  Flutter App with     │     │                 │
-│  Flutter App    │<--->│  mcp_bridge (VM Svc.  │<--->│   MCP Server   │
+│  Flutter App    │<--->│  mcp_toolkit (VM Svc.  │<--->│   MCP Server   │
 │  (Debug Mode)   │     │  Extensions)          │     │                 │
 │                 │     │                       │     │                 │
 └─────────────────┘     └───────────────────────┘     └─────────────────┘
