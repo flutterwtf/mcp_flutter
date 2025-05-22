@@ -26,15 +26,15 @@ Used for: Basic VM operations, general Dart runtime inspection
 ### 2. Flutter-Specific Communication
 
 ```
-┌─────────────────┐     ┌───────────────────────┐     ┌──────────────┐     ┌─────────────────┐
-│                 │     │  Flutter App with     │     │              │     │                 │
-│  Flutter App    │<--->│  mcp_bridge (VM Svc.  │<--->│  Forwarding  │<--->│   MCP Server   │
-│  (Debug Mode)   │     │  Extensions)          │     │  Server      │     │                 │
-│                 │     │                       │     │              │     │                 │
-└─────────────────┘     └───────────────────────┘     └──────────────┘     └─────────────────┘
+┌─────────────────┐     ┌───────────────────────┐     ┌─────────────────┐
+│                 │     │  Flutter App with     │     │                 │
+│  Flutter App    │<--->│  mcp_bridge (VM Svc.  │<--->│   MCP Server   │
+│  (Debug Mode)   │     │  Extensions)          │     │                 │
+│                 │     │                       │     │                 │
+└─────────────────┘     └───────────────────────┘     └─────────────────┘
 ```
 
-Used for: Flutter-specific operations (widget inspection, layout analysis, error reporting, screenshots, etc.)
+Used for: Flutter-specific operations (widget inspection, layout analysis, error reporting, screenshots, etc.) via direct MCP Server to VM Service extension calls.
 
 ### When to Use This
 
@@ -45,7 +45,7 @@ Used for: Flutter-specific operations (widget inspection, layout analysis, error
    - Isolate management
    - General VM state queries
 
-2. **Flutter-Specific Operations** (via Forwarding Server):
+2. **Flutter-Specific Operations**:
    - Widget tree inspection
    - Layout debugging
    - State management analysis
@@ -106,21 +106,15 @@ Used for: Flutter-specific operations (widget inspection, layout analysis, error
    AI Assistant -> MCP JSON-RPC Request -> MCP Server
    ```
 
-2. **Protocol Translation**:
+2. **Protocol Translation & Interaction**:
 
    ```
-   MCP Server -> VM Service Protocol -> Forwarding Server -> Dart VM Service (on Flutter App)
+   MCP Server -> Dart VM Service (invoking mcp_bridge extensions on Flutter App)
    ```
 
-3. **Flutter Interaction**:
-
+3. **Response Flow**:
    ```
-   Forwarding Server -> Invokes mcp_bridge extensions via Dart VM Service -> mcp_bridge in Flutter App
-   ```
-
-4. **Response Flow**:
-   ```
-   mcp_bridge in Flutter App -> Dart VM Service -> Forwarding Server -> MCP Server -> AI Assistant
+   mcp_bridge in Flutter App -> Dart VM Service -> MCP Server -> AI Assistant
    ```
 
 ## Protocol Details
