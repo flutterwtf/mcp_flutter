@@ -9,11 +9,7 @@ Future<void> main() async {
       WidgetsFlutterBinding.ensureInitialized();
       MCPToolkitBinding.instance
         ..initialize()
-        ..addEntries(
-          entries: getFlutterMcpToolkitEntries(
-            errorMonitor: MCPToolkitBinding.instance,
-          ),
-        );
+        ..initializeFlutterToolkit();
       runApp(const MyApp());
     },
     (error, stack) {

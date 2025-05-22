@@ -23,6 +23,13 @@ Set<MCPCallEntry> getFlutterMcpToolkitEntries({
   OnViewDetailsEntry(),
 };
 
+/// Extension on [MCPToolkitBinding] to initialize the Flutter MCP Toolkit.
+extension MCPToolkitBindingExtension on MCPToolkitBinding {
+  /// Initializes the Flutter MCP Toolkit.
+  void initializeFlutterToolkit() =>
+      addEntries(entries: getFlutterMcpToolkitEntries(errorMonitor: this));
+}
+
 /// {@template on_app_errors_entry}
 /// MCPCallEntry for handling app errors.
 /// {@endtemplate}
