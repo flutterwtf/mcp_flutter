@@ -70,7 +70,7 @@ Used for: Flutter-specific operations (widget inspection, layout analysis, error
 **Purpose**: Exposes Flutter-specific functionalities to external tools (like AI assistants via the MCP/Forwarding server) through custom Dart VM Service extensions.
 **Key Features**:
 
-- Registers custom Dart VM Service extensions (e.g., `ext.mcp.toolkit.apperrors`, `ext.mcp.toolkit.view_screenshots`).
+- Registers custom Dart VM Service extensions (e.g., `ext.mcp.toolkit.app_errors`, `ext.mcp.toolkit.view_screenshots`).
 - Captures and reports Flutter application errors.
 - Provides screenshot capabilities of the application's UI.
 - Enables retrieval of application view details.

@@ -20,13 +20,14 @@ import {
 
 const _RPC_PREFIX = "ext.mcp.toolkit.";
 
+/**
+ * Tool configurations for resource-related operations
+ * All methods route through Dart VM backend
+ */
 const ToolNames = {
   getAppErrors: {
     toolName: "get_app_errors",
-    // old method for forwarding server
-    // rpcMethod: "ext.mcpdevtools.getAppErrors",
-    // new method for dart vm with MCPToolkit
-    rpcMethod: `${_RPC_PREFIX}apperrors`,
+    rpcMethod: `${_RPC_PREFIX}app_errors`,
   },
   getViewDetails: {
     toolName: "get_view_details",
@@ -37,17 +38,21 @@ const ToolNames = {
     rpcMethod: `${_RPC_PREFIX}view_screenshots`,
   },
 } as const;
+
 type ScreenshotResult = {
   images: string[];
 };
+
 type AppErrorsResponse = {
   message: string;
   errors: unknown[];
 };
+
 type ViewDetailsResponse = {
   message: string;
   details: unknown[];
 };
+
 type ResourceType =
   | "root"
   | "node"
@@ -60,6 +65,10 @@ type ResourceType =
   | "is_widget_tree_ready"
   | "unknown";
 
+/**
+ * Handles all resource-related operations for the Flutter Inspector
+ * All operations route through Dart VM backend for consistency
+ */
 export class ResourcesHandlers {
   public setHandlers(
     server: Server,
@@ -72,20 +81,23 @@ export class ResourcesHandlers {
         resources: [...createTreeResources(rpcUtils)],
       };
     });
+
     // List available resource templates when clients request them
     server.setRequestHandler(ListResourceTemplatesRequestSchema, async () => {
       return { resourceTemplates: [...TREE_RESOURCES_TEMPLATES] };
     });
+
     // Return resource content when clients request it
     server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
       return this.#handleRead(request.params.uri, rpcUtils, rpcToolHandlers);
     });
   }
+
   /**
-   * Get the flutter application errors list.
-   * @param count - The count of errors to get.
-   * @param rpcUtils - The RPC utilities.
-   * @returns The errors list.
+   * Get the flutter application errors list via Dart VM
+   * @param count - The count of errors to get
+   * @param rpcUtils - The RPC utilities
+   * @returns The errors list
    */
   async #getErrorsList(
     count: number | undefined,
@@ -104,7 +116,6 @@ export class ResourcesHandlers {
     });
 
     const errorsListJson = appErrorsResult as AppErrorsResponse;
-
     const errorsList = errorsListJson?.errors ?? [];
 
     return {
@@ -113,6 +124,11 @@ export class ResourcesHandlers {
     };
   }
 
+  /**
+   * Get view details via Dart VM
+   * @param rpcUtils - The RPC utilities
+   * @returns View details response
+   */
   async #getViewDetails(rpcUtils: RpcUtilities): Promise<ViewDetailsResponse> {
     const dartVmPort = rpcUtils.args.dartVMPort;
     const viewDetailsResult = await rpcUtils.callDartVm({
@@ -127,25 +143,17 @@ export class ResourcesHandlers {
     };
   }
 
+  /**
+   * Handle resource read requests
+   * All operations route through Dart VM backend
+   */
   async #handleRead(
     uri: string,
     rpcUtils: RpcUtilities,
     rpcToolHandlers: FlutterRpcHandlers
   ): Promise<ResourceContents> {
     const parsedUri = this.#parseUri(uri);
-    // if (this._test) {
-    //   return {
-    //     contents: [
-    //       {
-    //         uri: uri,
-    //         text: "HOHOHO",
-    //         json: {
-    //           test: "test",
-    //         },
-    //       },
-    //     ],
-    //   };
-    // }
+
     try {
       switch (parsedUri.type) {
         case "root":
@@ -166,6 +174,7 @@ export class ResourcesHandlers {
           if (!parsedUri.nodeId) {
             throw new McpError(ErrorCode.InvalidParams, "Node ID is required");
           }
+          // Route through Dart VM (via callFlutterExtension which now uses Dart VM)
           const nodeResult = await rpcUtils.callFlutterExtension(
             "ext.flutter.inspector.getProperties",
             {
@@ -187,6 +196,7 @@ export class ResourcesHandlers {
           if (!parsedUri.nodeId) {
             throw new McpError(ErrorCode.InvalidParams, "Node ID is required");
           }
+          // Route through Dart VM (via callFlutterExtension which now uses Dart VM)
           const parentResult = await rpcUtils.callFlutterExtension(
             "ext.flutter.inspector.getParentChain",
             {
@@ -208,6 +218,7 @@ export class ResourcesHandlers {
           if (!parsedUri.nodeId) {
             throw new McpError(ErrorCode.InvalidParams, "Node ID is required");
           }
+          // Route through Dart VM (via callFlutterExtension which now uses Dart VM)
           const childrenResult = await rpcUtils.callFlutterExtension(
             "ext.flutter.inspector.getChildrenDetailsSubtree",
             {
@@ -257,6 +268,7 @@ export class ResourcesHandlers {
               `Failed to get app errors: ${error}`
             );
           }
+
         case "view_details":
           const viewDetailsResult = await this.#getViewDetails(rpcUtils);
           return {
@@ -272,6 +284,7 @@ export class ResourcesHandlers {
           };
 
         case "view_widget_tree":
+          // Route through Dart VM (via callFlutterExtension which now uses Dart VM)
           const viewResult = await rpcUtils.callFlutterExtension(
             "ext.flutter.inspector.getRootWidgetSummaryTreeWithPreviews",
             {
@@ -291,6 +304,7 @@ export class ResourcesHandlers {
           };
 
         case "is_widget_tree_ready":
+          // Route through Dart VM (via callFlutterExtension which now uses Dart VM)
           const infoResult = await rpcUtils.callFlutterExtension(
             "ext.flutter.inspector.isWidgetTreeReady",
             {}
@@ -307,6 +321,7 @@ export class ResourcesHandlers {
           };
 
         case "screenshot":
+          // Route through Dart VM
           const screenshotResult = (await rpcUtils.callDartVm({
             method: ToolNames.viewScreenshots.rpcMethod,
             dartVmPort: rpcUtils.args.dartVMPort,
@@ -338,6 +353,7 @@ export class ResourcesHandlers {
       );
     }
   }
+
   /**
    * Parse the URI to get the resource type and parameters.
    * @param uri - The URI to parse.

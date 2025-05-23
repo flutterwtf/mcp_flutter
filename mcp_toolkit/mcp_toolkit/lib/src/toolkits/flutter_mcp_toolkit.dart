@@ -36,7 +36,7 @@ extension MCPToolkitBindingExtension on MCPToolkitBinding {
 extension type OnAppErrorsEntry._(MCPCallEntry entry) implements MCPCallEntry {
   /// {@macro on_app_errors_entry}
   factory OnAppErrorsEntry({required final ErrorMonitor errorMonitor}) {
-    final entry = MCPCallEntry(const MCPMethodName('onAppErrors'), (
+    final entry = MCPCallEntry(const MCPMethodName('app_errors'), (
       final parameters,
     ) {
       final count = jsonDecodeInt(parameters['count'] ?? '').whenZeroUse(10);
@@ -73,7 +73,7 @@ extension type OnViewScreenshotsEntry._(MCPCallEntry entry)
     implements MCPCallEntry {
   /// {@macro on_view_screenshots_entry}
   factory OnViewScreenshotsEntry() {
-    final entry = MCPCallEntry(const MCPMethodName('onViewScreenshots'), (
+    final entry = MCPCallEntry(const MCPMethodName('view_screenshots'), (
       final parameters,
     ) async {
       final compress = jsonDecodeBool(parameters['compress']);
@@ -99,7 +99,7 @@ extension type const OnViewDetailsEntry._(MCPCallEntry entry)
     implements MCPCallEntry {
   /// {@macro on_view_details_entry}
   factory OnViewDetailsEntry() {
-    final entry = MCPCallEntry(const MCPMethodName('onViewDetails'), (
+    final entry = MCPCallEntry(const MCPMethodName('view_details'), (
       final parameters,
     ) {
       final details = ApplicationInfo.getViewsInformation();

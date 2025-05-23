@@ -98,7 +98,7 @@ final class CustomDevtoolsService extends BaseDevtoolsService {
     final objectGroupManager = initObjectGroup(debugName: 'playground');
     final responsed = await devtoolsService.serviceManager
         .callServiceExtensionOnMainIsolate(
-          'ext.mcp.toolkit.apperrors',
+          'ext.mcp.toolkit.app_errors',
           // args: {'count': 10},
         );
     print(responsed.json);

@@ -21,7 +21,7 @@ MCPToolkitBinding.instance.initialize(
 
 ## Features
 
-- **VM Service Extensions**: Registers a set of custom VM service extensions (e.g., `ext.mcp.toolkit.apperrors`, `ext.mcp.toolkit.view_screenshots`, `ext.mcp.toolkit.view_details`).
+- **VM Service Extensions**: Registers a set of custom VM service extensions (e.g., `ext.mcp.toolkit.app_errors`, `ext.mcp.toolkit.view_screenshots`, `ext.mcp.toolkit.view_details`).
 - **Error Reporting**: Captures and makes available runtime errors from the Flutter application.
 - **Screenshot Capability**: Allows external tools to request screenshots of the application's views.
 - **Application Details**: Provides a mechanism to fetch basic details about the application's views.
