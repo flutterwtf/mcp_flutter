@@ -15,13 +15,24 @@ class MCPToolkitBinding extends MCPToolkitBindingBase
   /// The singleton instance of the MCP Toolkit binding.
   static final instance = MCPToolkitBinding._();
 
+  @override
+  void initialize({
+    final String serviceExtensionName = kMCPServiceExtensionName,
+  }) {
+    assert(() {
+      attachToFlutterError();
+      return true;
+    }());
+
+    super.initialize(serviceExtensionName: serviceExtensionName);
+  }
+
   /// Initializes the MCP Toolkit binding.
   ///
   /// If [listeners] is not provided, the [MCPToolkitListenersImpl]
   /// will be used.
   void addEntries({required final Set<MCPCallEntry> entries}) {
     assert(() {
-      attachToFlutterError();
       initializeServiceExtensions(errorMonitor: this, entries: entries);
       return true;
     }());
