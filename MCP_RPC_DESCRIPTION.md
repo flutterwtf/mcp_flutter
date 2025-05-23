@@ -10,7 +10,7 @@ The whole server is now divided into two parts:
   **Usage**:
 
   - Uses only short description of the error. Should filter duplicate errors, to avoid flooding Agent context window with the same errors.
-  - Uses Error Monitor to capture Dart VM errors. Meaning: first, start mcp server, forwarding server, start app, open devtools and extension, and then reload app, to capture errors. All errors will be captured in the DevTools Extension (mcp_toolkit).
+  - Uses Error Monitor to capture Dart VM errors. All errors captured in Flutter app, and then available by request from MCP server.
 
   **Tested on**:
   ✅ macOS, ✅ iOS
@@ -39,9 +39,10 @@ The whole server is now divided into two parts:
   🚧 Android, 🤔 Windows, 🤔 Linux, ❌ Web
   [See issue](https://github.com/Arenukvern/mcp_flutter/issues/23)
 
+- `get_view_info` [Resource|Tool] - size of screen, pixel ratio. May unlock ability for an Agent to use widget selection.
+
 ### Work in progress
 
-- `get_app_info` [Resource|Tool] - size of screen, pixel ratio. May unlock ability for an Agent to use widget selection.
 - [Resource|Tool] **Selection tool**:
   Current idea:
 

@@ -3,27 +3,32 @@
 [GitHub Repository](https://github.com/Arenukvern/mcp_flutter)
 [![smithery badge](https://smithery.ai/badge/@Arenukvern/mcp_flutter)](https://smithery.ai/server/@Arenukvern/mcp_flutter)
 
-🔍 Model Context Protocol (MCP) server that connects your Flutter apps with AI coding assistants like Cursor, Claude, Cline, Windsurf, RooCode or any other AI assistant that supports MCP server
-
-See small video tutorial how to setup mcp server on macOS with Cursor - https://www.youtube.com/watch?v=NBY2p7XIass
-
 <a href="https://glama.ai/mcp/servers/qnu3f0fa20">
   <img width="380" height="200" src="https://glama.ai/mcp/servers/qnu3f0fa20/badge" alt="Flutter Inspector Server MCP server" />
 </a>
 
+🔍 Model Context Protocol (MCP) server that connects your Flutter apps with AI coding assistants like Cursor, Claude, Cline, Windsurf, RooCode or any other AI assistant that supports MCP server
+
+![View Screenshots](docs/view_screenshots.gif)
+
+### Video tutorial how to setup mcp server on macOS:
+
+- with Cursor:
+- with VSCode + Cline:
+
 > [!NOTE]
-> Since there is a new [experimental package in development](https://github.com/dart-lang/ai/tree/main/pkgs/dart_tooling_mcp_server) which exposes Dart tooling development tool actions to clients, maybe in future this project may be not needed that much.
+> There is a new [experimental package in development from Flutter team](https://github.com/dart-lang/ai/tree/main/pkgs/dart_tooling_mcp_server) which exposes Dart tooling development.
 >
 > Therefore my current focus is
 >
-> 1. to stabilize and polish only these tools that will be useful in development (so it would be more plug & play) [see more in MCP_RPC_DESCRIPTION.md](MCP_RPC_DESCRIPTION.md)
-> 2. find workaround to not use forwarding server.
+> 1. to stabilize and polish tools which are useful in development (so it would be more plug & play, for example: it will return not only the errors, but prompt for AI how to work with that error) [see more in MCP_RPC_DESCRIPTION.md](MCP_RPC_DESCRIPTION.md)
+> 2. fine-tune process of MCP server tools creation by making it customizable.
 >
 > Hope it will be useful for you,
 >
 > Have a nice day!
 
-Currently Flutter works with MCP server via forwarding server. Please see [Architecture](https://github.com/Arenukvern/mcp_flutter/blob/main/ARCHITECTURE.md) for more details.
+Now Flutter MCP server works without forwarding server. Please see [Architecture](https://github.com/Arenukvern/mcp_flutter/blob/main/ARCHITECTURE.md) for more details.
 
 ## ⚠️ WARNING ⚠️
 
@@ -77,14 +82,6 @@ All tools default to using port 8181 if no port is specified. You can override t
 📚 Please see more in [MCP_RPC_DESCRIPTION](MCP_RPC_DESCRIPTION.md)
 
 ## 🔧 Troubleshooting
-
-`get_app_errors`- Since errors are captured in DevTools Extension, you need to make sure that, you have restarted or reloaded Flutter app after starting MCP server, forwarding server and DevTools mcp_toolkit extension.
-
-Also make sure you:
-
-1. Verify that forwarding server is running.
-2. Opened Devtools in Browser.
-3. Have added MCP extension to your Flutter app dev dependencies and enabled it in Devtools.
 
 4. **Connection Issues**
 
