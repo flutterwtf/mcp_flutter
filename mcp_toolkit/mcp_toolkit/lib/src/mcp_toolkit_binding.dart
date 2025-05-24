@@ -8,6 +8,32 @@ import 'services/error_monitor.dart';
 /// The binding for the MCP Toolkit.
 ///
 /// Run init, before calling [addEntries].
+///
+/// To add Flutter tools, call [initializeFlutterToolkit] method.
+///
+/// Usually, you may use the following setup:
+///
+/// ```dart
+/// import 'package:flutter/material.dart';
+/// import 'package:mcp_toolkit/mcp_toolkit.dart'; // Import the package
+/// import 'dart:async';
+///
+/// Future<void> main() async {
+///   runZonedGuarded(
+///     () async {
+///       WidgetsFlutterBinding.ensureInitialized();
+///       MCPToolkitBinding.instance
+///         ..initialize() // Initializes the Toolkit
+///         ..initializeFlutterToolkit(); // Adds Flutter related methods to the MCP server
+///       runApp(const MyApp());
+///     },
+///     (error, stack) {
+///       // Optionally, you can also use the bridge's error handling for zone errors
+///       MCPToolkitBinding.instance.handleZoneError(error, stack);
+///     },
+///   );
+/// }
+/// ```
 class MCPToolkitBinding extends MCPToolkitBindingBase
     with ErrorMonitor, MCPToolkitExtensions {
   MCPToolkitBinding._();

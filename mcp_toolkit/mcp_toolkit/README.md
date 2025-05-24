@@ -1,6 +1,11 @@
 # MCP Toolkit for Flutter
 
-This package is a core component of the `mcp_flutter` project. It acts as the "client-side" library within your Flutter application, enabling the Model Context Protocol (MCP) `MCP Server` to perform Flutter-specific operations like retrieving application errors, capturing screenshots, and getting view details.
+> [!NOTE]
+> This is not official package - it's a personal project.
+>
+> For official package - please see [ai repository](https://github.com/dart-lang/ai/tree/main/pkgs/dart_tooling_mcp_server)
+
+This package is a core component of the [mcp_flutter](https://github.com/Arenukvern/mcp_flutter) project. It acts as the "client-side" library within your Flutter application, enabling the Model Context Protocol (MCP) `MCP Server` to perform Flutter-specific operations like retrieving application errors, capturing screenshots, and getting view details.
 
 > [!NOTE]
 > Please notice:
@@ -9,14 +14,20 @@ This package is a core component of the `mcp_flutter` project. It acts as the "c
 
 ## Data Transparency
 
-This package is designed to be transparent and easy to understand. It is built on top of the Dart VM Service Protocol, which is a public protocol for interacting with the Dart VM. You can override any method to protect sensitive data by writing your own implementation of the `MCPToolkitListeners` class.
+This package is designed to be transparent and easy to understand. It is built on top of the Dart VM Service Protocol, which is a public protocol for interacting with the Dart VM.
 
-That way, you need to pass your implementation of the `MCPToolkitListeners` class to the `MCPToolkitBinding.instance.initialize()` method:
+To make it simple and customizable - it divided into groups of methods which acts as method handlers.
+
+For example, to add Flutter tools, you can use `initializeFlutterToolkit()` method like one below.
+
+All methods are available only in debug mode and wrapped in assert statements.
 
 ```dart
-MCPToolkitBinding.instance.initialize(
-  listeners: MyMCPToolkitListeners(),
-);
+MCPToolkitBinding.instance
+  // Initializes the Toolkit
+  ..initialize()
+  // Adds Flutter related methods to the MCP server
+  ..initializeFlutterToolkit();
 ```
 
 ## Features
