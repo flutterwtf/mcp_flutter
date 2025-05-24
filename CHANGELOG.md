@@ -20,10 +20,18 @@ MCPToolkitBinding.instance
   ..initializeFlutterToolkit();
 ```
 
+## Poem
+
+Thanks Code Rabbit for poem:
+
+> A hop, a leap, the server's gone,  
+> Now all through Dart VM, requests are drawn.  
+> No more forwarding, no more relay,  
+> Errors and screenshots come straight our way!  
+> Toolkit in the app, so neat and spry,  
+> Flutter views and details—oh my!  
+> 🐇✨
+
 ## 1.0.0
 
 Stable release with forwarding server and devtools extension.
-
-```
-
-```
