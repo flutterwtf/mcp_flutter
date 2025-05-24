@@ -10,14 +10,6 @@ A small video tutorial how to setup mcp server on macOS with Cursor - https://ww
 - A Flutter app running in debug mode
 - One of: Cursor, Claude, Cline AI, Windsurf, RooCode, or any other AI assistant that supports MCP server
 
-## 📦 Installation via Smithery (🚧 WIP 🚧)
-
-To install Flutter Inspector for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@Arenukvern/mcp_flutter):
-
-```bash
-npx -y @smithery/cli install @Arenukvern/mcp_flutter --client claude
-```
-
 ## 📦 Installation from GitHub (Currently Recommended)
 
 For developers who want to contribute to the project or run the latest version directly from source, follow these steps:
@@ -179,3 +171,11 @@ For developers who want to contribute to the project or run the latest version d
       ```
    2. Restart Claude
    3. The Flutter inspector tools will be automatically available
+
+## 📦 Installation via Smithery (🚧 WIP 🚧)
+
+To install Flutter Inspector for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@Arenukvern/mcp_flutter):
+
+```bash
+npx -y @smithery/cli install @Arenukvern/mcp_flutter --client claude
+```
