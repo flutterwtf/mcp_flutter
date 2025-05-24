@@ -78,11 +78,11 @@ See more details about environment variables in [.env.example](mcp_server/.env.e
 
 ### Development Tools
 
-- `screenshot` [Resource|Tool] - Captures a screenshot of the running application.
+- `view_screenshot` [Resource|Tool] - Captures a screenshots of the running application.
   **Configuration**:
 
   - Enable with `--images` flag or `IMAGES_SUPPORTED=true` environment variable
-  - May use compression to optimize image size
+  - Will use PNG compression to optimize image size.
 
 <!-- - `hot_reload` [Tool] - Performs hot reload of the Flutter application
   **Tested on**:
@@ -97,7 +97,7 @@ See more details about environment variables in [.env.example](mcp_server/.env.e
   🚧 Android, 🤔 Windows, 🤔 Linux, ❌ Web
   [See issue](https://github.com/Arenukvern/mcp_flutter/issues/23) -->
 
-- `get_view_info` [Resource|Tool] - size of screen, pixel ratio. May unlock ability for an Agent to use widget selection.
+- `get_view_details` [Resource|Tool] - size of screen, pixel ratio. May unlock ability for an Agent to use widget selection.
 
 All tools default to using port 8181 if no port is specified. You can override this by providing a specific port number.
 

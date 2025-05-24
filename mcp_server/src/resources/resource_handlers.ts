@@ -540,6 +540,15 @@ export class ResourcesHandlers {
           required: [],
         },
       },
+      {
+        name: ToolNames.getViewDetails.toolName,
+        description: "Get the details of the views in the app.",
+        inputSchema: {
+          type: "object",
+          properties: {},
+          required: [],
+        },
+      },
     ];
     if (rpcUtils.args.areImagesSupported) {
       tools.push(screenshot);

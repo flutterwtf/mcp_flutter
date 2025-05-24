@@ -20,18 +20,17 @@ The whole server is now divided into two parts:
 
 ### Development Tools
 
-- `screenshot` [Resource|Tool] - Captures a screenshot of the running application.
+- `view_screenshot` [Resource|Tool] - Captures a screenshots of the running application.
   **Configuration**:
 
   - Enable with `--images` flag or `IMAGES_SUPPORTED=true` environment variable
-  - May use compression to optimize image size
-
-<!-- - `hot_reload` [Tool] - Performs hot reload of the Flutter application
-  **Tested on**:
-  ✅ macOS, ✅ iOS, ✅ Android
-  **Not tested on**:
-  🤔 Windows, 🤔 Linux, ❌ Web
-  [See issue](https://github.com/Arenukvern/mcp_flutter/issues/23)
+  - Will use PNG compression to optimize image size.
+  <!-- - `hot_reload` [Tool] - Performs hot reload of the Flutter application
+    **Tested on**:
+    ✅ macOS, ✅ iOS, ✅ Android
+    **Not tested on**:
+    🤔 Windows, 🤔 Linux, ❌ Web
+    [See issue](https://github.com/Arenukvern/mcp_flutter/issues/23)
 
   **Tested on**:
   ✅ macOS, ✅ iOS
@@ -39,7 +38,7 @@ The whole server is now divided into two parts:
   🚧 Android, 🤔 Windows, 🤔 Linux, ❌ Web
   [See issue](https://github.com/Arenukvern/mcp_flutter/issues/23) -->
 
-- `get_view_info` [Resource|Tool] - size of screen, pixel ratio. May unlock ability for an Agent to use widget selection.
+- `get_view_details` [Resource|Tool] - size of screen, pixel ratio. May unlock ability for an Agent to use widget selection.
 
 ### Work in progress
 
