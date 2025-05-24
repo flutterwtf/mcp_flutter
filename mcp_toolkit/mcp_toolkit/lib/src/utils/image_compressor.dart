@@ -12,7 +12,7 @@ class ImageCompressor {
   /// Returns a new base64 string with reduced size
   /// [imageBytes] - The original image bytes
   /// [maxWidth] - Maximum width to scale down to (maintains aspect ratio)
-  /// [quality] - JPEG quality (1-100), lower means more compression
+  /// [quality] - Compression quality (1-100), currently uses PNG format
   static Future<Uint8List> compressImage({
     required final Image image,
     final int maxWidth = 1024,
@@ -45,7 +45,6 @@ class ImageCompressor {
 
       // Clean up
       scaledImage.dispose();
-      image.dispose();
 
       return uint8List;
     } catch (e, stackTrace) {

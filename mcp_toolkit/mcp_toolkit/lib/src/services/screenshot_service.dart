@@ -87,6 +87,7 @@ mixin ScreenshotService {
     // Create a SceneBuilder and add the view's layer tree to it.
     final builder = ui.SceneBuilder();
     ui.Scene? scene;
+    ui.Image? image;
     try {
       // The offset is zero because we want to capture the entire view from its origin.
       layer.addToScene(builder);
@@ -105,15 +106,12 @@ mixin ScreenshotService {
         return null; // scene will be disposed in finally
       }
 
-      final ui.Image image = await scene.toImage(width, height);
+      image = await scene.toImage(width, height);
 
       // Convert to PNG byte data.
       final ByteData? byteData = await image.toByteData(
         format: ui.ImageByteFormat.png,
       );
-
-      // Dispose image immediately after use.
-      image.dispose();
 
       if (byteData != null) {
         final Uint8List pngBytes = byteData.buffer.asUint8List();
@@ -140,6 +138,8 @@ mixin ScreenshotService {
       debugPrintStack(stackTrace: stackTrace);
       return null;
     } finally {
+      // Dispose image immediately after use.
+      image?.dispose();
       // Ensure scene is always disposed.
       scene?.dispose();
     }

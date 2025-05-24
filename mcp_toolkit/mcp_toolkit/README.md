@@ -47,9 +47,11 @@ MCPToolkitBinding.instance
     If you have the `mcp_flutter` repository cloned locally, you can use a path dependency:
 
     ```yaml
-    dev_dependencies:
-      # ... other dev_dependencies
-      mcp_toolkit: ^0.1.1
+    dependencies:
+      flutter:
+        sdk: flutter
+      # ... other dependencies
+      mcp_toolkit: ^0.1.2
     ```
 
     Then, run `flutter pub get` in your Flutter project's directory.

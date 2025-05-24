@@ -1,5 +1,7 @@
 // ignore_for_file: public_member_api_docs, prefer_asserts_with_message
 
+import 'dart:collection';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
@@ -36,18 +38,27 @@ class FlutterErrorEvent with EquatableMixin {
   List<Object?> get props => [type, message, stackTrace, severity];
 }
 
+/// Default maximum number of errors to store in [ErrorMonitor]
+const kDefaultMaxErrors = 10;
+
 /// A mixin that provides error monitoring capabilities.
 /// Can be used with any class to add error monitoring functionality.
 mixin ErrorMonitor {
+  int get maxErrors => _maxErrors;
+
+  /// Maximum number of errors to store
+  int _maxErrors = kDefaultMaxErrors;
+
   /// List of errors, recorded by [attachToFlutterError] and [handleZoneError]
   ///
-  /// Add limitation with configurable latest 10 errors
+  /// Add limitation with configurable latest [maxErrors] errors
   ///
   /// Set uses [LinkedHashSet] to store errors
   final errors = <FlutterErrorEvent>{};
 
   /// Initialize error monitoring
-  void attachToFlutterError() {
+  void attachToFlutterError({final int maxErrors = kDefaultMaxErrors}) {
+    _maxErrors = maxErrors;
     final originalOnError = FlutterError.onError;
     FlutterError.onError = (final details) {
       originalOnError?.call(details);
@@ -89,5 +100,8 @@ mixin ErrorMonitor {
   void _handleError(final FlutterErrorEvent event) {
     // TODO(arenukvern): add security for sensitive data
     errors.add(event);
+    if (errors.isNotEmpty && errors.length > maxErrors) {
+      errors.remove(errors.first);
+    }
   }
 }

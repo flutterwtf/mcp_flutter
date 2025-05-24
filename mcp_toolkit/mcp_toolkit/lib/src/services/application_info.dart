@@ -54,21 +54,19 @@ extension type ViewMetrics.fromMap(Map<String, Object?> _value) {
 
   /// The physical size of the view in pixels
   Size get physicalSize {
-    final size = _value['physicalSize']! as Map<String, Object?>;
+    final size = _value['physicalSize'] as Map<String, Object?>?;
     return Size(
-      jsonDecodeDouble(size['width']),
-      jsonDecodeDouble(size['height']),
+      jsonDecodeDouble(size?['width']),
+      jsonDecodeDouble(size?['height']),
     );
   }
 
   /// The logical size of the view in logical pixels
   Size get logicalSize {
-    final size =
-        jsonDecodeMap(jsonDecodeString(_value['logicalSize']))
-            as Map<String, Object?>;
+    final size = _value['logicalSize'] as Map<String, Object?>?;
     return Size(
-      jsonDecodeDouble(size['width']),
-      jsonDecodeDouble(size['height']),
+      jsonDecodeDouble(size?['width']),
+      jsonDecodeDouble(size?['height']),
     );
   }
 
@@ -80,45 +78,45 @@ extension type ViewMetrics.fromMap(Map<String, Object?> _value) {
 
   /// The padding that the operating system applies to the view
   EdgeInsets get viewPadding {
-    final padding = _value['viewPadding']! as Map<String, Object?>;
+    final padding = _value['viewPadding'] as Map<String, Object?>?;
     return EdgeInsets.only(
-      left: jsonDecodeDouble(padding['left']),
-      top: jsonDecodeDouble(padding['top']),
-      right: jsonDecodeDouble(padding['right']),
-      bottom: jsonDecodeDouble(padding['bottom']),
+      left: jsonDecodeDouble(padding?['left']),
+      top: jsonDecodeDouble(padding?['top']),
+      right: jsonDecodeDouble(padding?['right']),
+      bottom: jsonDecodeDouble(padding?['bottom']),
     );
   }
 
   /// The insets that the operating system applies to the view
   EdgeInsets get viewInsets {
-    final insets = _value['viewInsets']! as Map<String, Object?>;
+    final insets = _value['viewInsets'] as Map<String, Object?>?;
     return EdgeInsets.only(
-      left: jsonDecodeDouble(insets['left']),
-      top: jsonDecodeDouble(insets['top']),
-      right: jsonDecodeDouble(insets['right']),
-      bottom: jsonDecodeDouble(insets['bottom']),
+      left: jsonDecodeDouble(insets?['left']),
+      top: jsonDecodeDouble(insets?['top']),
+      right: jsonDecodeDouble(insets?['right']),
+      bottom: jsonDecodeDouble(insets?['bottom']),
     );
   }
 
   /// The system gesture insets that the operating system applies to the view
   EdgeInsets get systemGestureInsets {
-    final insets = _value['systemGestureInsets']! as Map<String, Object?>;
+    final insets = _value['systemGestureInsets'] as Map<String, Object?>?;
     return EdgeInsets.only(
-      left: jsonDecodeDouble(insets['left']),
-      top: jsonDecodeDouble(insets['top']),
-      right: jsonDecodeDouble(insets['right']),
-      bottom: jsonDecodeDouble(insets['bottom']),
+      left: jsonDecodeDouble(insets?['left']),
+      top: jsonDecodeDouble(insets?['top']),
+      right: jsonDecodeDouble(insets?['right']),
+      bottom: jsonDecodeDouble(insets?['bottom']),
     );
   }
 
   /// The padding that the operating system applies to the view
   EdgeInsets get padding {
-    final padding = _value['padding']! as Map<String, Object?>;
+    final padding = _value['padding'] as Map<String, Object?>?;
     return EdgeInsets.only(
-      left: jsonDecodeDouble(padding['left']),
-      top: jsonDecodeDouble(padding['top']),
-      right: jsonDecodeDouble(padding['right']),
-      bottom: jsonDecodeDouble(padding['bottom']),
+      left: jsonDecodeDouble(padding?['left']),
+      top: jsonDecodeDouble(padding?['top']),
+      right: jsonDecodeDouble(padding?['right']),
+      bottom: jsonDecodeDouble(padding?['bottom']),
     );
   }
 

@@ -50,11 +50,11 @@ For developers who want to contribute to the project or run the latest version d
    or add it to your `pubspec.yaml` manually:
 
    ```yaml
-   dev_dependencies:
-     flutter_test:
+   dependencies:
+     flutter:
        sdk: flutter
-     # ... other dev_dependencies
-     mcp_toolkit: ^0.1.1
+     # ... other dependencies
+     mcp_toolkit: ^0.1.2
    ```
 
    Then run `flutter pub get` in your Flutter app's directory.

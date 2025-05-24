@@ -1,6 +1,6 @@
 // ignore_for_file: prefer_asserts_with_message, lines_longer_than_80_chars
 
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 
 import 'mcp_models.dart';
 import 'mcp_toolkit_binding_base.dart';
@@ -28,7 +28,6 @@ mixin MCPToolkitExtensions on MCPToolkitBindingBase {
   /// See also:
   ///
   ///  * <https://github.com/dart-lang/sdk/blob/main/runtime/vm/service/service.md#rpcs-requests-and-responses>
-
   @protected
   @mustCallSuper
   void initializeServiceExtensions({
@@ -36,8 +35,11 @@ mixin MCPToolkitExtensions on MCPToolkitBindingBase {
     required final Set<MCPCallEntry> entries,
   }) {
     assert(!_debugServiceExtensionsRegistered);
-
-    // if (!kReleaseMode) {}
+    if (kReleaseMode) {
+      throw UnsupportedError(
+        'MCP Toolkit entries should only be added in debug mode',
+      );
+    }
     assert(() {
       for (final entry in entries) {
         registerServiceExtension(

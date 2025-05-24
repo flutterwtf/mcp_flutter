@@ -1,5 +1,7 @@
 // ignore_for_file: prefer_asserts_with_message
 
+import 'package:flutter/foundation.dart';
+
 import 'mcp_models.dart';
 import 'mcp_toolkit_binding_base.dart';
 import 'mcp_toolkit_extensions.dart';
@@ -44,8 +46,13 @@ class MCPToolkitBinding extends MCPToolkitBindingBase
   @override
   void initialize({
     final String serviceExtensionName = kMCPServiceExtensionName,
+    final int maxErrors = kDefaultMaxErrors,
   }) {
     assert(() {
+      assert(
+        kDebugMode,
+        'MCP Toolkit should only be initialized in debug mode',
+      );
       attachToFlutterError();
       return true;
     }());

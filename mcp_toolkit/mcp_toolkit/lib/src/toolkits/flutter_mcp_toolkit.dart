@@ -12,13 +12,11 @@ import '../services/screenshot_service.dart';
 /// The toolkit provides functionality for handling app errors,
 /// view screenshots, and view details.
 ///
-/// [errorMonitor] is required to monitor app errors.
-///
-/// Returns a set of MCPCallEntry objects for the Flutter MCP Toolkit.
+/// [binding] is the MCP toolkit binding instance.
 Set<MCPCallEntry> getFlutterMcpToolkitEntries({
-  required final MCPToolkitBinding errorMonitor,
+  required final MCPToolkitBinding binding,
 }) => {
-  OnAppErrorsEntry(errorMonitor: errorMonitor),
+  OnAppErrorsEntry(errorMonitor: binding),
   OnViewScreenshotsEntry(),
   OnViewDetailsEntry(),
 };
@@ -27,7 +25,7 @@ Set<MCPCallEntry> getFlutterMcpToolkitEntries({
 extension MCPToolkitBindingExtension on MCPToolkitBinding {
   /// Initializes the Flutter MCP Toolkit.
   void initializeFlutterToolkit() =>
-      addEntries(entries: getFlutterMcpToolkitEntries(errorMonitor: this));
+      addEntries(entries: getFlutterMcpToolkitEntries(binding: this));
 }
 
 /// {@template on_app_errors_entry}
