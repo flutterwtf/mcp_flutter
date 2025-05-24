@@ -1,17 +1,34 @@
-# Flutter Inspector MCP Server for AI-Powered Development
+<div align="center">
 
-[GitHub Repository](https://github.com/Arenukvern/mcp_flutter)
+# MCP Server + Flutter MCP Toolkit
+
+_For AI-Powered Development_
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Flutter](https://img.shields.io/badge/Flutter-3.x-blue.svg)](https://flutter.dev)
 [![smithery badge](https://smithery.ai/badge/@Arenukvern/mcp_flutter)](https://smithery.ai/server/@Arenukvern/mcp_flutter)
+[![Pub Version](https://img.shields.io/badge/version-0.1.1-blue)](https://github.com/Arenukvern/mcp_flutter)
+
+</div>
 
 <a href="https://glama.ai/mcp/servers/qnu3f0fa20">
-  <img width="380" height="200" src="https://glama.ai/mcp/servers/qnu3f0fa20/badge" alt="Flutter Inspector Server MCP server" />
+<img width="380" height="200" src="https://glama.ai/mcp/servers/qnu3f0fa20/badge" alt="Flutter Inspector Server MCP server" />
 </a>
 
 🔍 Model Context Protocol (MCP) server that connects your Flutter apps with AI coding assistants like Cursor, Claude, Cline, Windsurf, RooCode or any other AI assistant that supports MCP server
 
+<!-- Media -->
+
 ![View Screenshots](docs/view_screenshots.gif)
 
-### Video tutorial how to setup mcp server on macOS:
+<!-- End of Media -->
+
+## 📖 Documentation
+
+- [Quick Start](QUICK_START.md)
+- [Configuration](CONFIGURATION.md)
+
+### Video tutorial how to setup mcp server on macOS (Soon):
 
 - with Cursor:
 - with VSCode + Cline:
@@ -28,7 +45,7 @@
 >
 > Have a nice day!
 
-Now Flutter MCP server works without forwarding server. Please see [Architecture](https://github.com/Arenukvern/mcp_flutter/blob/main/ARCHITECTURE.md) for more details.
+v2 released! Now Flutter MCP server works without forwarding server. Please see [Architecture](https://github.com/Arenukvern/mcp_flutter/blob/main/ARCHITECTURE.md) for more details.
 
 ## ⚠️ WARNING ⚠️
 
