@@ -54,7 +54,7 @@ For developers who want to contribute to the project or run the latest version d
      flutter_test:
        sdk: flutter
      # ... other dev_dependencies
-     mcp_toolkit: ^0.1.0
+     mcp_toolkit: ^0.1.1
    ```
 
    Then run `flutter pub get` in your Flutter app's directory.

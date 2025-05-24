@@ -49,7 +49,7 @@ MCPToolkitBinding.instance
     ```yaml
     dev_dependencies:
       # ... other dev_dependencies
-      mcp_toolkit: ^0.1.0
+      mcp_toolkit: ^0.1.1
     ```
 
     Then, run `flutter pub get` in your Flutter project's directory.
