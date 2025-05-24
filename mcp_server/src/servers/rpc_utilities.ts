@@ -1,10 +1,10 @@
 import { ErrorCode, McpError } from "@modelcontextprotocol/sdk/types.js";
 import { exec } from "child_process";
-import { Logger } from "flutter_mcp_forwarding_server";
 import fs from "fs";
 import yaml from "js-yaml";
 import { promisify } from "util";
 import { CommandLineConfig } from "../index.js";
+import { Logger } from "../logger.js";
 import { IsolateResponse, VMInfo } from "../types/types.js";
 import { RpcClient } from "./rpc_client.js";
 
@@ -121,7 +121,6 @@ export class RpcUtilities {
 
   /**
    * Call Flutter extension methods via the Dart VM
-   * This replaces the previous forwarding server approach
    */
   async callFlutterExtension(
     method: string,
@@ -252,7 +251,6 @@ export class RpcUtilities {
 
   /**
    * Helper to extract port parameter from a request
-   * Always returns Dart VM port since forwarding server is removed
    */
   handlePortParam(request: any): number {
     const port = request?.params?.arguments?.port as number | undefined;

@@ -2,7 +2,7 @@ import {
   CallToolRequest,
   CallToolResult,
 } from "@modelcontextprotocol/sdk/types.js";
-import { Logger } from "flutter_mcp_forwarding_server";
+import { Logger } from "../logger.js";
 import { execAsync, RpcUtilities } from "../servers/rpc_utilities.js";
 import { FlutterPort, IsolateInfo } from "../types/types.js";
 

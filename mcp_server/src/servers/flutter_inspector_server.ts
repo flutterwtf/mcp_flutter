@@ -1,7 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { Logger } from "flutter_mcp_forwarding_server";
 import { CommandLineConfig } from "../index.js";
+import { Logger } from "../logger.js";
 import { ResourcesHandlers } from "../resources/resource_handlers.js";
 import { FlutterRpcHandlers } from "../tools/index.js";
 import { ToolsHandlers } from "../tools/tools_handlers.js";

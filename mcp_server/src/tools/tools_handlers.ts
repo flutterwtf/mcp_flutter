@@ -8,10 +8,10 @@ import {
   Result,
   Tool,
 } from "@modelcontextprotocol/sdk/types.js";
-import { Logger } from "flutter_mcp_forwarding_server";
 import path from "path";
 import { fileURLToPath } from "url";
 import { Env } from "../index.js";
+import { Logger } from "../logger.js";
 import { ResourcesHandlers } from "../resources/resource_handlers.js";
 import { RpcUtilities } from "../servers/rpc_utilities.js";
 import { createCustomRpcHandlerMap } from "./create_custom_rpc_handler_map.js";
