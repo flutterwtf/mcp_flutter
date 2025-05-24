@@ -26,7 +26,7 @@ The whole server is now divided into two parts:
   - Enable with `--images` flag or `IMAGES_SUPPORTED=true` environment variable
   - May use compression to optimize image size
 
-- `hot_reload` [Tool] - Performs hot reload of the Flutter application
+<!-- - `hot_reload` [Tool] - Performs hot reload of the Flutter application
   **Tested on**:
   ✅ macOS, ✅ iOS, ✅ Android
   **Not tested on**:
@@ -37,7 +37,7 @@ The whole server is now divided into two parts:
   ✅ macOS, ✅ iOS
   **Not tested on**:
   🚧 Android, 🤔 Windows, 🤔 Linux, ❌ Web
-  [See issue](https://github.com/Arenukvern/mcp_flutter/issues/23)
+  [See issue](https://github.com/Arenukvern/mcp_flutter/issues/23) -->
 
 - `get_view_info` [Resource|Tool] - size of screen, pixel ratio. May unlock ability for an Agent to use widget selection.
 

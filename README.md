@@ -7,7 +7,6 @@ _For AI-Powered Development_
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Flutter](https://img.shields.io/badge/Flutter-3.x-blue.svg)](https://flutter.dev)
 [![smithery badge](https://smithery.ai/badge/@Arenukvern/mcp_flutter)](https://smithery.ai/server/@Arenukvern/mcp_flutter)
-[![Pub Version](https://img.shields.io/badge/version-0.1.1-blue)](https://github.com/Arenukvern/mcp_flutter)
 
 </div>
 
@@ -45,9 +44,11 @@ _For AI-Powered Development_
 >
 > Have a nice day!
 
-v2 released! Now Flutter MCP server works without forwarding server. Please see [Architecture](https://github.com/Arenukvern/mcp_flutter/blob/main/ARCHITECTURE.md) for more details.
+## 🎉 v2 released! 🎉
 
-## ⚠️ WARNING ⚠️
+Now Flutter MCP server works without forwarding server and devtools extension. See more in [CHANGELOG.md](CHANGELOG.md).
+
+## ⚠️ WARNING
 
 Dump RPC methods (like `dump_render_tree`), may cause huge amount of tokens usage or overload context. Therefore now they are disabled by default, but can be enabled via environment variable `DUMPS_SUPPORTED=true`.
 
@@ -58,7 +59,7 @@ See more details about environment variables in [.env.example](mcp_server/.env.e
 - Quick Start is available in [QUICK_START.md](QUICK_START.md)
 - Configuration options are available in [CONFIGURATION.md](CONFIGURATION.md)
 
-## 🎯 Available tools for AI Agents
+## 🎯 AI Agent Tools
 
 ### Error Analysis
 
@@ -66,7 +67,7 @@ See more details about environment variables in [.env.example](mcp_server/.env.e
   **Usage**:
 
   - Uses only short description of the error. Should filter duplicate errors, to avoid flooding Agent context window with the same errors.
-  - Uses Error Monitor to capture Dart VM errors. Meaning: first, start mcp server, forwarding server, start app, open devtools and extension, and then reload app, to capture errors. All errors will be captured in the DevTools Extension (mcp_toolkit).
+  - Uses Error Monitor to capture Dart VM errors. All errors captured in Flutter app, and then available by request from MCP server.
 
   **Tested on**:
   ✅ macOS, ✅ iOS
@@ -76,23 +77,26 @@ See more details about environment variables in [.env.example](mcp_server/.env.e
 
 ### Development Tools
 
-- `hot_reload` [Tool] - Performs hot reload of the Flutter application
-  **Tested on**:
-  ✅ macOS, ✅ iOS, ✅ Android
-  **Not tested on**:
-  🤔 Windows, 🤔 Linux, ❌ Web
-  [See issue](https://github.com/Arenukvern/mcp_flutter/issues/23)
 - `screenshot` [Resource|Tool] - Captures a screenshot of the running application.
   **Configuration**:
 
   - Enable with `--images` flag or `IMAGES_SUPPORTED=true` environment variable
   - May use compression to optimize image size
 
+<!-- - `hot_reload` [Tool] - Performs hot reload of the Flutter application
+  **Tested on**:
+  ✅ macOS, ✅ iOS, ✅ Android
+  **Not tested on**:
+  🤔 Windows, 🤔 Linux, ❌ Web
+  [See issue](https://github.com/Arenukvern/mcp_flutter/issues/23)
+
   **Tested on**:
   ✅ macOS, ✅ iOS
   **Not tested on**:
   🚧 Android, 🤔 Windows, 🤔 Linux, ❌ Web
-  [See issue](https://github.com/Arenukvern/mcp_flutter/issues/23)
+  [See issue](https://github.com/Arenukvern/mcp_flutter/issues/23) -->
+
+- `get_view_info` [Resource|Tool] - size of screen, pixel ratio. May unlock ability for an Agent to use widget selection.
 
 All tools default to using port 8181 if no port is specified. You can override this by providing a specific port number.
 
@@ -100,18 +104,18 @@ All tools default to using port 8181 if no port is specified. You can override t
 
 ## 🔧 Troubleshooting
 
-4. **Connection Issues**
+1. **Connection Issues**
 
    - Ensure your Flutter app is running in debug mode
-   - Verify the port matches in both Flutter app and inspector
+   - Verify the port matches in both Flutter app and MCP server
    - Check if the port is not being used by another process
 
-5. **AI Tool Not Detecting Inspector**
+2. **AI Tool Not Detecting Inspector**
    - Restart the AI tool after configuration changes
    - Verify the configuration JSON syntax
    - Check the tool's logs for connection errors
 
-The Flutter Inspector is registered with Smithery's registry, making it discoverable and usable by other AI tools through a standardized interface.
+The Flutter MCP Server is registered with Smithery's registry, making it discoverable and usable by other AI tools through a standardized interface.
 
 ### Integration Architecture
 
