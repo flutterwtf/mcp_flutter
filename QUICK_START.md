@@ -2,7 +2,7 @@
 
 ## 📺 Video Tutorial
 
-A small video tutorial how to setup mcp server on macOS with Cursor - https://www.youtube.com/watch?v=NBY2p7XIass
+A small video tutorial how to setup mcp server on macOS with Cursor - https://www.youtube.com/watch?v=pyDHaI81uts
 
 ## 📦 Prerequisites
 

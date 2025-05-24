@@ -30,7 +30,7 @@ _For AI-Powered Development_
 
 ### Video tutorial how to setup mcp server on macOS (Soon):
 
-- with Cursor:
+- with Cursor: https://www.youtube.com/watch?v=pyDHaI81uts
 - with VSCode + Cline:
 
 > [!NOTE]
