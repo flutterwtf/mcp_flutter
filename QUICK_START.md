@@ -71,7 +71,9 @@ For developers who want to contribute to the project or run the latest version d
      runZonedGuarded(
        () async {
          WidgetsFlutterBinding.ensureInitialized();
-         MCPToolkitBinding.instance.initialize(); // Initialize the bridge
+         MCPToolkitBinding.instance
+            ..initialize() // Initializes the Toolkit
+            ..initializeFlutterToolkit(); // Adds Flutter related methods to the MCP server
          runApp(const MyApp());
        },
        (error, stack) {
