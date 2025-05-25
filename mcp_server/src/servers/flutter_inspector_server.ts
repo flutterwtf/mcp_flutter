@@ -18,7 +18,7 @@ export class FlutterInspectorServer {
   private rpcUtils: RpcUtilities;
   private logger: Logger;
   private resources = new ResourcesHandlers();
-  private tools = new ToolsHandlers();
+  private tools: ToolsHandlers;
 
   constructor(private readonly args: CommandLineConfig) {
     this.port = args.port;
@@ -42,6 +42,7 @@ export class FlutterInspectorServer {
       this.server.server
     );
     this.rpcUtils = new RpcUtilities(this.logger, this.args);
+    this.tools = new ToolsHandlers(this.logger);
 
     this.setHandlers();
     this.setupErrorHandling();

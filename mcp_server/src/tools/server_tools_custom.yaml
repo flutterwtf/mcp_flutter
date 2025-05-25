@@ -60,3 +60,71 @@ tools:
           description: "If true, returns the raw response from the VM service without processing"
           default: false
       required: []
+  - name: installTool
+    description: "Install a new tool dynamically from a Flutter application. The tool will be available for use immediately and persist until the application disconnects or the server restarts."
+    inputSchema:
+      type: object
+      properties:
+        tool:
+          type: object
+          description: "Tool definition following MCP Tool schema"
+          properties:
+            name:
+              type: string
+              description: "Unique name for the tool"
+            description:
+              type: string
+              description: "Description of what the tool does"
+            inputSchema:
+              type: object
+              description: "JSON schema for tool input parameters"
+          required: ["name", "description"]
+        sourceApp:
+          type: string
+          description: "Identifier for the source Flutter application"
+        dartVmPort:
+          type: number
+          description: "Dart VM port for the source application"
+          default: 8181
+      required: ["tool", "sourceApp"]
+  - name: installResource
+    description: "Install a new resource dynamically from a Flutter application. The resource will be available for use immediately and persist until the application disconnects or the server restarts."
+    inputSchema:
+      type: object
+      properties:
+        resource:
+          type: object
+          description: "Resource definition following MCP Resource schema"
+          properties:
+            uri:
+              type: string
+              description: "Unique URI for the resource"
+            name:
+              type: string
+              description: "Human-readable name for the resource"
+            description:
+              type: string
+              description: "Description of the resource"
+            mimeType:
+              type: string
+              description: "MIME type of the resource content"
+          required: ["uri", "name"]
+        sourceApp:
+          type: string
+          description: "Identifier for the source Flutter application"
+        dartVmPort:
+          type: number
+          description: "Dart VM port for the source application"
+          default: 8181
+      required: ["resource", "sourceApp"]
+  - name: listDynamicRegistrations
+    description: "List all dynamically registered tools and resources with their source applications and registration details."
+    inputSchema:
+      type: object
+      properties:
+        type:
+          type: string
+          description: "Filter by registration type"
+          enum: ["tools", "resources", "all"]
+          default: "all"
+      required: []

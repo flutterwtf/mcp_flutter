@@ -1,9 +1,12 @@
 import {
   CallToolRequest,
   CallToolResult,
+  ErrorCode,
+  McpError,
 } from "@modelcontextprotocol/sdk/types.js";
 import { Logger } from "../logger.js";
 import { execAsync, RpcUtilities } from "../servers/rpc_utilities.js";
+import { DynamicToolRegistry } from "../services/dynamic_registry/dynamic_tool_registry.js";
 import { FlutterPort, IsolateInfo } from "../types/types.js";
 
 // Define a type for the handler function
@@ -21,7 +24,8 @@ export interface CustomRpcHandlerMap {
 export function createCustomRpcHandlerMap(
   rpcUtils: RpcUtilities,
   logger: Logger,
-  handlePortParam: (request: CallToolRequest) => number
+  handlePortParam: (request: CallToolRequest) => number,
+  dynamicRegistry?: DynamicToolRegistry
 ): CustomRpcHandlerMap {
   return {
     test_custom_ext: async (request: CallToolRequest) => {
@@ -150,6 +154,199 @@ export function createCustomRpcHandlerMap(
           },
         ],
       };
+    },
+
+    installTool: async (request: CallToolRequest): Promise<CallToolResult> => {
+      if (!dynamicRegistry) {
+        throw new McpError(
+          ErrorCode.InternalError,
+          "Dynamic registry not available"
+        );
+      }
+
+      const {
+        tool,
+        sourceApp,
+        dartVmPort = 8181,
+      } = (request.params.arguments || {}) as {
+        tool: any;
+        sourceApp: string;
+        dartVmPort?: number;
+      };
+
+      try {
+        // Validate tool schema
+        if (!tool.name || !tool.description) {
+          throw new McpError(
+            ErrorCode.InvalidParams,
+            "Tool must have name and description"
+          );
+        }
+
+        // Handle port changes
+        dynamicRegistry.handlePortChange(sourceApp, dartVmPort);
+
+        // Register the tool
+        dynamicRegistry.registerTool(tool, sourceApp, dartVmPort);
+
+        logger.info(
+          `[InstallTool] Successfully registered tool: ${tool.name} from ${sourceApp}:${dartVmPort}`
+        );
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  success: true,
+                  message: `Tool '${tool.name}' installed successfully`,
+                  toolName: tool.name,
+                  sourceApp,
+                  dartVmPort,
+                  registeredAt: new Date().toISOString(),
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      } catch (error) {
+        logger.error(`[InstallTool] Failed to install tool:`, { error });
+        throw new McpError(
+          ErrorCode.InternalError,
+          `Failed to install tool: ${error}`
+        );
+      }
+    },
+
+    installResource: async (
+      request: CallToolRequest
+    ): Promise<CallToolResult> => {
+      if (!dynamicRegistry) {
+        throw new McpError(
+          ErrorCode.InternalError,
+          "Dynamic registry not available"
+        );
+      }
+
+      const {
+        resource,
+        sourceApp,
+        dartVmPort = 8181,
+      } = (request.params.arguments || {}) as {
+        resource: any;
+        sourceApp: string;
+        dartVmPort?: number;
+      };
+
+      try {
+        // Validate resource schema
+        if (!resource.uri || !resource.name) {
+          throw new McpError(
+            ErrorCode.InvalidParams,
+            "Resource must have uri and name"
+          );
+        }
+
+        // Handle port changes
+        dynamicRegistry.handlePortChange(sourceApp, dartVmPort);
+
+        // Register the resource
+        dynamicRegistry.registerResource(resource, sourceApp, dartVmPort);
+
+        logger.info(
+          `[InstallResource] Successfully registered resource: ${resource.uri} from ${sourceApp}:${dartVmPort}`
+        );
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  success: true,
+                  message: `Resource '${resource.name}' installed successfully`,
+                  resourceUri: resource.uri,
+                  sourceApp,
+                  dartVmPort,
+                  registeredAt: new Date().toISOString(),
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      } catch (error) {
+        logger.error(`[InstallResource] Failed to install resource:`, {
+          error,
+        });
+        throw new McpError(
+          ErrorCode.InternalError,
+          `Failed to install resource: ${error}`
+        );
+      }
+    },
+
+    listDynamicRegistrations: async (
+      request: CallToolRequest
+    ): Promise<CallToolResult> => {
+      if (!dynamicRegistry) {
+        throw new McpError(
+          ErrorCode.InternalError,
+          "Dynamic registry not available"
+        );
+      }
+
+      const { type = "all" } = (request.params.arguments || {}) as {
+        type?: "tools" | "resources" | "all";
+      };
+
+      try {
+        const stats = dynamicRegistry.getStats();
+        const tools =
+          type === "resources" ? [] : dynamicRegistry.getDynamicTools();
+        const resources =
+          type === "tools" ? [] : dynamicRegistry.getDynamicResources();
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  success: true,
+                  statistics: stats,
+                  tools: tools.map((tool) => ({
+                    name: tool.name,
+                    description: tool.description,
+                    entry: dynamicRegistry.getToolEntry(tool.name),
+                  })),
+                  resources: resources.map((resource) => ({
+                    uri: resource.uri,
+                    name: resource.name,
+                    description: resource.description,
+                    entry: dynamicRegistry.getResourceEntry(resource.uri),
+                  })),
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      } catch (error) {
+        logger.error(
+          `[ListDynamicRegistrations] Failed to list registrations:`,
+          { error }
+        );
+        throw new McpError(
+          ErrorCode.InternalError,
+          `Failed to list registrations: ${error}`
+        );
+      }
     },
   };
 }

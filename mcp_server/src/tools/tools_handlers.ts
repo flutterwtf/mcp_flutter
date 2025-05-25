@@ -14,6 +14,7 @@ import { Env } from "../index.js";
 import { Logger } from "../logger.js";
 import { ResourcesHandlers } from "../resources/resource_handlers.js";
 import { RpcUtilities } from "../servers/rpc_utilities.js";
+import { DynamicToolRegistry } from "../services/dynamic_registry/dynamic_tool_registry.js";
 import { createCustomRpcHandlerMap } from "./create_custom_rpc_handler_map.js";
 import { createRpcHandlerMap } from "./create_rpc_handler_map.js";
 import {
@@ -30,6 +31,12 @@ const __dirname = path.dirname(__filename);
  * All tools route through Dart VM backend
  */
 export class ToolsHandlers {
+  private dynamicRegistry: DynamicToolRegistry;
+
+  constructor(logger: Logger) {
+    this.dynamicRegistry = new DynamicToolRegistry(logger);
+  }
+
   public setHandlers(
     server: Server,
     rpcUtils: RpcUtilities,
@@ -54,11 +61,12 @@ export class ToolsHandlers {
       serverToolsCustomPath
     );
 
-    // Combine all tool schemes
+    // Combine all tool schemes (static + dynamic)
     const toolSchemes: Tool[] = [
       ...serverToolsFlutter.tools,
       ...serverToolsCustom.tools,
       ...resourcesHandlers.getToolSchemes(rpcUtils),
+      ...this.dynamicRegistry.getDynamicTools(),
     ];
 
     // Filter tools based on environment and capabilities
@@ -89,7 +97,8 @@ export class ToolsHandlers {
     const customHandlerMap = createCustomRpcHandlerMap(
       rpcUtils,
       logger,
-      (request) => rpcUtils.handlePortParam(request) // Simplified since only Dart VM supported
+      (request) => rpcUtils.handlePortParam(request), // Simplified since only Dart VM supported
+      this.dynamicRegistry
     );
 
     // Get resource-based tool handlers
@@ -120,6 +129,11 @@ export class ToolsHandlers {
           return customHandlerMap[toolName](request);
         }
 
+        // Check dynamic tools
+        if (this.dynamicRegistry.isDynamicTool(toolName)) {
+          return this.handleDynamicTool(toolName, request, rpcUtils);
+        }
+
         // Finally check resource-based handlers
         if (customResourceHandlerMap[toolName]) {
           return customResourceHandlerMap[toolName](request);
@@ -131,5 +145,45 @@ export class ToolsHandlers {
         );
       }
     );
+  }
+
+  /**
+   * Handle dynamic tool execution by routing to the appropriate Flutter app
+   */
+  private async handleDynamicTool(
+    toolName: string,
+    request: Request,
+    rpcUtils: RpcUtilities
+  ): Promise<Result> {
+    const toolEntry = this.dynamicRegistry.getToolEntry(toolName);
+    if (!toolEntry) {
+      throw new McpError(
+        ErrorCode.MethodNotFound,
+        `Dynamic tool not found: ${toolName}`
+      );
+    }
+
+    try {
+      // Route the call to the Flutter app that registered this tool
+      const result = await rpcUtils.callDartVm({
+        method: `ext.mcp.toolkit.${toolName}`,
+        dartVmPort: toolEntry.dartVmPort,
+        params: (request.params?.arguments as Record<string, unknown>) || {},
+      });
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(result, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      throw new McpError(
+        ErrorCode.InternalError,
+        `Failed to execute dynamic tool ${toolName}: ${error}`
+      );
+    }
   }
 }
