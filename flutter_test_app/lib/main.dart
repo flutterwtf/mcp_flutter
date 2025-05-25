@@ -38,51 +38,57 @@ Future<void> _registerCustomTools() async {
   await Future.delayed(const Duration(seconds: 1));
 
   // Register a custom calculation tool
-  final fibonacciRegistered = await binding.registerCustomTool(
-    const MCPToolDefinition(
-      name: 'calculate_fibonacci',
-      description: 'Calculate the nth Fibonacci number',
-      inputSchema: {
-        'type': 'object',
-        'properties': {
-          'n': {
-            'type': 'integer',
-            'description': 'The position in the Fibonacci sequence',
-            'minimum': 0,
-            'maximum': 100,
+  final fibonacciRegistered = await binding.addEntries(
+    entries: [
+      MCPToolDefinition(
+        name: 'calculate_fibonacci',
+        description: 'Calculate the nth Fibonacci number',
+        inputSchema: {
+          'type': 'object',
+          'properties': {
+            'n': {
+              'type': 'integer',
+              'description': 'The position in the Fibonacci sequence',
+              'minimum': 0,
+              'maximum': 100,
+            },
           },
+          'required': ['n'],
         },
-        'required': ['n'],
-      },
-    ),
+      ),
+    ],
   );
 
   // Register a custom app state resource
-  final resourceRegistered = await binding.registerCustomResource(
-    const MCPResourceDefinition(
-      uri: 'flutter://app/state',
-      name: 'App State',
-      description: 'Current application state and configuration',
-      mimeType: 'application/json',
-    ),
+  final resourceRegistered = await binding.addEntries(
+    entries: [
+      MCPResourceDefinition(
+        uri: 'flutter://app/state',
+        name: 'App State',
+        description: 'Current application state and configuration',
+        mimeType: 'application/json',
+      ),
+    ],
   );
 
   // Register a custom user preferences tool
-  final preferencesRegistered = await binding.registerCustomTool(
-    const MCPToolDefinition(
-      name: 'get_user_preferences',
-      description: 'Get user preferences and settings',
-      inputSchema: {
-        'type': 'object',
-        'properties': {
-          'category': {
-            'type': 'string',
-            'description': 'Preference category to retrieve',
-            'enum': ['theme', 'notifications', 'privacy', 'all'],
+  final preferencesRegistered = await binding.addEntries(
+    entries: [
+      MCPToolDefinition(
+        name: 'get_user_preferences',
+        description: 'Get user preferences and settings',
+        inputSchema: {
+          'type': 'object',
+          'properties': {
+            'category': {
+              'type': 'string',
+              'description': 'Preference category to retrieve',
+              'enum': ['theme', 'notifications', 'privacy', 'all'],
+            },
           },
         },
-      },
-    ),
+      ),
+    ],
   );
 
   print('Custom tools and resources registration results:');

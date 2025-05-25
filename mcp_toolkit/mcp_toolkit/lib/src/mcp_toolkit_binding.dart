@@ -76,10 +76,10 @@ class MCPToolkitBinding extends MCPToolkitBindingBase
   ///
   /// If [listeners] is not provided, the [MCPToolkitListenersImpl]
   /// will be used.
-  void addEntries({
+  Future<void> addEntries({
     required final Set<MCPCallEntry> entries,
     final bool autoRegisterWithServer = true,
-  }) {
+  }) async {
     assert(() {
       initializeServiceExtensions(errorMonitor: this, entries: entries);
       return true;
@@ -87,7 +87,7 @@ class MCPToolkitBinding extends MCPToolkitBindingBase
 
     // Auto-register with MCP server if enabled
     if (autoRegisterWithServer && isConnectedToMCPServer) {
-      unawaited(autoRegisterEntries(entries));
+      await autoRegisterEntries(entries);
     }
   }
 

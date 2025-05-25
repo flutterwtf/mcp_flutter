@@ -185,7 +185,13 @@ class MCPClientService {
   Future<bool> registerTool(final MCPToolDefinition tool) async {
     if (!isConnected) {
       developer.log('Cannot register tool: not connected to MCP server');
-      return false;
+      developer.log('Attempting to connect to MCP server');
+      if (await connect()) {
+        developer.log('Successfully connected to MCP server');
+      } else {
+        developer.log('Failed to connect to MCP server');
+        return false;
+      }
     }
 
     try {
@@ -214,7 +220,13 @@ class MCPClientService {
   Future<bool> registerResource(final MCPResourceDefinition resource) async {
     if (!isConnected) {
       developer.log('Cannot register resource: not connected to MCP server');
-      return false;
+      developer.log('Attempting to connect to MCP server');
+      if (await connect()) {
+        developer.log('Successfully connected to MCP server');
+      } else {
+        developer.log('Failed to connect to MCP server');
+        return false;
+      }
     }
 
     try {
@@ -243,7 +255,13 @@ class MCPClientService {
   Future<bool> registerTools(final List<MCPToolDefinition> tools) async {
     if (!isConnected) {
       developer.log('Cannot register tools: not connected to MCP server');
-      return false;
+      developer.log('Attempting to connect to MCP server');
+      if (await connect()) {
+        developer.log('Successfully connected to MCP server');
+      } else {
+        developer.log('Failed to connect to MCP server');
+        return false;
+      }
     }
 
     try {
@@ -276,7 +294,13 @@ class MCPClientService {
   ) async {
     if (!isConnected) {
       developer.log('Cannot register resources: not connected to MCP server');
-      return false;
+      developer.log('Attempting to connect to MCP server');
+      if (await connect()) {
+        developer.log('Successfully connected to MCP server');
+      } else {
+        developer.log('Failed to connect to MCP server');
+        return false;
+      }
     }
 
     try {

@@ -75,44 +75,8 @@ extension type const MCPDefinition._(Map<String, dynamic> _value)
   String get description => _value['description'] as String;
 }
 
+/// {@template mcp_tool_definition}
 /// Tool definition for MCP registration
-extension type const MCPToolDefinition._(MCPDefinition _definition)
-    implements MCPDefinition {
-  /// The [name], [description] and [inputSchema] will be merged into json.
-  factory MCPToolDefinition({
-    required final String name,
-    required final String description,
-    final Map<String, dynamic> inputSchema = const {},
-  }) => MCPToolDefinition._(
-    MCPDefinition(
-      name: name,
-      description: description,
-      params: {'inputSchema': inputSchema},
-    ),
-  );
-}
-
-/// Resource definition for MCP registration
-extension type const MCPResourceDefinition._(MCPDefinition _definition)
-    implements MCPDefinition {
-  /// The [name], [description] and [mimeType] will be merged into json.
-  factory MCPResourceDefinition({
-    required final String name,
-    required final String description,
-    final String mimeType = 'text/plain',
-  }) => MCPResourceDefinition._(
-    MCPDefinition(
-      name: name,
-      description: description,
-      params: {'mimeType': mimeType},
-    ),
-  );
-}
-
-/// {@template mcp_call_entry}
-/// A MCP call entry.
-/// Contains a method name and a handler for the call, with optional
-/// tool and resource definitions for automatic MCP server registration.
 ///
 /// Example with tool definition:
 /// ```dart
@@ -143,13 +107,85 @@ extension type const MCPResourceDefinition._(MCPDefinition _definition)
 ///   }
 /// }
 /// ```
-///
 /// To call from MCP server, use
 /// `ext.{MCPBridgeConfiguration.domainName}.{methodName}`.
 ///
 /// By default it will be constructed as
-/// `ext.mcp_toolkit.app_errors`.
+/// `ext.mcp_toolkit.app_errors`
+///
 /// {@endtemplate}
+extension type const MCPToolDefinition._(MCPDefinition _definition)
+    implements MCPDefinition {
+  /// The [name], [description] and [inputSchema] will be merged into json.
+  factory MCPToolDefinition({
+    required final String name,
+    required final String description,
+    final Map<String, dynamic> inputSchema = const {},
+  }) => MCPToolDefinition._(
+    MCPDefinition(
+      name: name,
+      description: description,
+      params: {'inputSchema': inputSchema},
+    ),
+  );
+}
+
+/// {@template mcp_resource_definition}
+/// Resource definition for MCP registration
+///
+/// ```dart
+/// extension type OnAppStateEntry._(MCPCallEntry entry) implements MCPCallEntry {
+///   factory OnAppStateEntry({required final AppState appState}) {
+///     final entry = MCPCallEntry(
+///       methodName: const MCPMethodName('view_details'),
+///       handler: (final request) => MCPCallResult(
+///         message: 'Returns view details',
+///         parameters: {'details': details},
+///       ),
+///       resourceDefinition: MCPResourceDefinition(
+///         name: 'view_details',
+///         description: 'Get view details',
+///         mimeType: 'application/json',
+///       ),
+///     );
+///     return OnAppStateEntry._(entry);
+///   }
+/// }
+/// ```
+/// this should be constructed as
+/// `visual://localhost/view/details`
+///
+/// {@endtemplate}
+extension type const MCPResourceDefinition._(MCPDefinition _definition)
+    implements MCPDefinition {
+  /// The [name], [description] and [mimeType] will be merged into json.
+  factory MCPResourceDefinition({
+    required final String name,
+    required final String description,
+    final String mimeType = 'text/plain',
+  }) => MCPResourceDefinition._(
+    MCPDefinition(
+      name: name,
+      description: description,
+      params: {'mimeType': mimeType},
+    ),
+  );
+}
+
+/// {@template mcp_call_entry}
+/// A MCP call entry.
+/// Contains a method name and a handler for the call, with optional
+/// tool and resource definitions for automatic MCP server registration.
+///
+/// {@endtemplate}
+///
+/// {@macro mcp_tool_definition}
+///
+/// or with resource definition:
+///
+/// {@macro mcp_resource_definition}
+///
+///
 extension type const MCPCallEntry._(_MCPCallEntryRecord entry)
     implements _MCPCallEntryRecord {
   /// {@macro mcp_call_entry}
