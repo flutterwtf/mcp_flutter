@@ -37,66 +37,115 @@ Future<void> _registerCustomTools() async {
   // Wait a bit for the connection to establish
   await Future.delayed(const Duration(seconds: 1));
 
-  // Register a custom calculation tool
-  final fibonacciRegistered = await binding.addEntries(
-    entries: [
-      MCPToolDefinition(
-        name: 'calculate_fibonacci',
-        description: 'Calculate the nth Fibonacci number',
-        inputSchema: {
-          'type': 'object',
-          'properties': {
-            'n': {
-              'type': 'integer',
-              'description': 'The position in the Fibonacci sequence',
-              'minimum': 0,
-              'maximum': 100,
-            },
-          },
-          'required': ['n'],
-        },
-      ),
-    ],
-  );
-
-  // Register a custom app state resource
-  final resourceRegistered = await binding.addEntries(
-    entries: [
-      MCPResourceDefinition(
-        uri: 'flutter://app/state',
-        name: 'App State',
-        description: 'Current application state and configuration',
-        mimeType: 'application/json',
-      ),
-    ],
-  );
-
-  // Register a custom user preferences tool
-  final preferencesRegistered = await binding.addEntries(
-    entries: [
-      MCPToolDefinition(
-        name: 'get_user_preferences',
-        description: 'Get user preferences and settings',
-        inputSchema: {
-          'type': 'object',
-          'properties': {
-            'category': {
-              'type': 'string',
-              'description': 'Preference category to retrieve',
-              'enum': ['theme', 'notifications', 'privacy', 'all'],
-            },
+  // Create MCPCallEntry objects with proper handlers
+  final fibonacciEntry = MCPCallEntry(
+    methodName: const MCPMethodName('calculate_fibonacci'),
+    handler: (request) {
+      final n = int.tryParse(request['n'] ?? '0') ?? 0;
+      final result = _calculateFibonacci(n);
+      return MCPCallResult(
+        message: 'Calculated Fibonacci number for position $n',
+        parameters: {'result': result, 'position': n},
+      );
+    },
+    toolDefinition: MCPToolDefinition(
+      name: 'calculate_fibonacci',
+      description: 'Calculate the nth Fibonacci number',
+      inputSchema: {
+        'type': 'object',
+        'properties': {
+          'n': {
+            'type': 'integer',
+            'description': 'The position in the Fibonacci sequence',
+            'minimum': 0,
+            'maximum': 100,
           },
         },
-      ),
-    ],
+        'required': ['n'],
+      },
+    ),
   );
 
-  print('Custom tools and resources registration results:');
-  print('  - Fibonacci tool: ${fibonacciRegistered ? 'SUCCESS' : 'FAILED'}');
-  print('  - App state resource: ${resourceRegistered ? 'SUCCESS' : 'FAILED'}');
-  print(
-    '  - Preferences tool: ${preferencesRegistered ? 'SUCCESS' : 'FAILED'}',
+  // Create app state resource entry
+  final appStateEntry = MCPCallEntry(
+    methodName: const MCPMethodName('app_state'),
+    handler: (request) {
+      return MCPCallResult(
+        message: 'Current application state and configuration',
+        parameters: {
+          'appName': 'MCP Toolkit Demo',
+          'isConnected': binding.isConnectedToMCPServer,
+          'timestamp': DateTime.now().toIso8601String(),
+        },
+      );
+    },
+    resourceDefinition: MCPResourceDefinition(
+      name: 'App State',
+      description: 'Current application state and configuration',
+      mimeType: 'application/json',
+    ),
   );
+
+  // Create user preferences tool entry
+  final preferencesEntry = MCPCallEntry(
+    methodName: const MCPMethodName('get_user_preferences'),
+    handler: (request) {
+      final category = request['category'] ?? 'all';
+      final preferences = _getUserPreferences(category);
+      return MCPCallResult(
+        message: 'User preferences for category: $category',
+        parameters: {'preferences': preferences, 'category': category},
+      );
+    },
+    toolDefinition: MCPToolDefinition(
+      name: 'get_user_preferences',
+      description: 'Get user preferences and settings',
+      inputSchema: {
+        'type': 'object',
+        'properties': {
+          'category': {
+            'type': 'string',
+            'description': 'Preference category to retrieve',
+            'enum': ['theme', 'notifications', 'privacy', 'all'],
+          },
+        },
+      },
+    ),
+  );
+
+  // Register all entries
+  await binding.addEntries(
+    entries: {fibonacciEntry, appStateEntry, preferencesEntry},
+  );
+
+  print('Custom tools and resources registration completed');
+}
+
+/// Calculate Fibonacci number
+int _calculateFibonacci(int n) {
+  if (n <= 1) return n;
+  int a = 0, b = 1;
+  for (int i = 2; i <= n; i++) {
+    final temp = a + b;
+    a = b;
+    b = temp;
+  }
+  return b;
+}
+
+/// Get user preferences based on category
+Map<String, dynamic> _getUserPreferences(String category) {
+  final allPreferences = {
+    'theme': {'mode': 'dark', 'primaryColor': 'deepPurple'},
+    'notifications': {'enabled': true, 'sound': true},
+    'privacy': {'analytics': false, 'crashReporting': true},
+  };
+
+  if (category == 'all') {
+    return allPreferences;
+  }
+
+  return {category: allPreferences[category] ?? {}};
 }
 
 class MyApp extends StatelessWidget {
@@ -156,25 +205,45 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> _registerNewTool() async {
     final binding = MCPToolkitBinding.instance;
 
-    final success = await binding.registerCustomTool(
-      MCPToolDefinition(
-        name: 'counter_value_${DateTime.now().millisecondsSinceEpoch}',
-        description: 'Get the current counter value from the Flutter app',
-        inputSchema: const {'type': 'object', 'properties': {}},
-      ),
-    );
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            success
-                ? 'Successfully registered new tool!'
-                : 'Failed to register tool. Check connection.',
-          ),
-          backgroundColor: success ? Colors.green : Colors.red,
+    try {
+      final toolName = 'counter_value_${DateTime.now().millisecondsSinceEpoch}';
+      final counterEntry = MCPCallEntry(
+        methodName: MCPMethodName(toolName),
+        handler: (request) {
+          return MCPCallResult(
+            message: 'Current counter value from Flutter app',
+            parameters: {
+              'counter': _counter,
+              'timestamp': DateTime.now().toIso8601String(),
+            },
+          );
+        },
+        toolDefinition: MCPToolDefinition(
+          name: toolName,
+          description: 'Get the current counter value from the Flutter app',
+          inputSchema: const {'type': 'object', 'properties': {}},
         ),
       );
+
+      await binding.addEntries(entries: {counterEntry});
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Successfully registered new tool!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to register tool: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
 
     _checkConnectionStatus();
