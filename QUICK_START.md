@@ -10,6 +10,8 @@ A small video tutorial how to setup mcp server on macOS with Cursor - https://ww
 - A Flutter app running in debug mode
 - One of: Cursor, Claude, Cline AI, Windsurf, RooCode, or any other AI assistant that supports MCP server
 
+- (Experimental) You can try to install MCP server and configure it using your AI Agent. Use the following prompt: `Please install MCP server using this link: https://github.com/Arenukvern/mcp_flutter/blob/main/llm_install.md`
+
 ## 📦 Installation from GitHub (Currently Recommended)
 
 For developers who want to contribute to the project or run the latest version directly from source, follow these steps:

@@ -57,7 +57,7 @@ See more details about environment variables in [.env.example](mcp_server/.env.e
 
 ## 🚀 Getting Started
 
-- AI Agent or LLM installation is available in [llm_install.md](llm_install.md)
+- (Experimental) You can try to install MCP server and configure it using your AI Agent. Use the following prompt: `Please install MCP server using this link: https://github.com/Arenukvern/mcp_flutter/blob/main/llm_install.md`
 - Quick Start is available in [QUICK_START.md](QUICK_START.md)
 - Configuration options are available in [CONFIGURATION.md](CONFIGURATION.md)
 
