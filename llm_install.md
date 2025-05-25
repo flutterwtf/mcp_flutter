@@ -131,7 +131,10 @@ AI Agent: Ask the USER which AI assistant they are using (Cursor, Cline AI, Clau
 
 #### For Cline AI
 
-1.  AI Agent: Instruct the USER to create or update `.cline/config.json` in their **Flutter project root** (`[FLUTTER_APP_PATH]/.cline/config.json`):
+1.  AI Agent: Instruct the USER that the configuration for MCP servers with Cline AI is typically managed in a file named `cline_mcp_servers.json` located in a specific user configuration directory.
+    The exact path might be `~/Library/Application Support/[Cursor | VSCode or other IDE]/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json` on macOS (as per the USER's OS). The USER should verify the correct path for their Cline AI installation or consult more detailed Cline documentation.
+
+    The settings file may have other MCP servers already configured, so you would read it first and then add your new server to the existing `mcpServers` object.
 
 ```json
 {
@@ -159,9 +162,9 @@ AI Agent: Ask the USER which AI assistant they are using (Cursor, Cline AI, Clau
 
 **⚠️ Important (Relay to USER):** Cursor doesn't support resources, so `RESOURCES_SUPPORTED` must be `false`.
 
-1.  AI Agent: Instruct the USER to open Cursor settings.
-2.  Navigate to Features → Model Context Protocol.
-3.  Add the server configuration:
+1.  AI Agent: Instruct the USER that the configuration for MCP servers with Cursor AI is typically managed in a file named `~/.cursor/mcp.json`.
+
+    The settings file may have other MCP servers already configured, so you would read it first and then add your new server to the existing `mcpServers` object.
 
 ```json
 {
@@ -182,7 +185,7 @@ AI Agent: Ask the USER which AI assistant they are using (Cursor, Cline AI, Clau
 
 4.  AI Agent: Instruct the USER to restart Cursor.
 5.  Open Agent Panel (Cmd+L on macOS).
-6.  Test with commands like "analyze my Flutter app's widget tree".
+6.  Test with commands like "call view_screenshots".
 
 #### For Claude Desktop
 
