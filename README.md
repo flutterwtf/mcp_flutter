@@ -28,11 +28,6 @@ _For AI-Powered Development_
 - [Quick Start](QUICK_START.md)
 - [Configuration](CONFIGURATION.md)
 
-### Video tutorial how to setup mcp server on macOS (Soon):
-
-- with Cursor: https://www.youtube.com/watch?v=pyDHaI81uts
-- with VSCode + Cline:
-
 > [!NOTE]
 > There is a new [experimental package in development from Flutter team](https://github.com/dart-lang/ai/tree/main/pkgs/dart_tooling_mcp_server) which exposes Dart tooling development.
 >
@@ -58,6 +53,10 @@ See more details about environment variables in [.env.example](mcp_server/.env.e
 ## 🚀 Getting Started
 
 - (Experimental) You can try to install MCP server and configure it using your AI Agent. Use the following prompt: `Please install MCP server using this link: https://github.com/Arenukvern/mcp_flutter/blob/main/llm_install.md`
+
+- with Cursor: https://www.youtube.com/watch?v=pyDHaI81uts
+- with VSCode + Cline: use prompt `Please install MCP server using this link: https://github.com/Arenukvern/mcp_flutter/blob/main/llm_install.md`
+
 - Quick Start is available in [QUICK_START.md](QUICK_START.md)
 - Configuration options are available in [CONFIGURATION.md](CONFIGURATION.md)
 
