@@ -46,27 +46,92 @@ extension type const MCPMethodName(String _value) implements String {}
 /// Use [MCPCallEntry] to create a new entry.
 ///
 /// This typedef made private to avoid using it instead of [MCPCallEntry].
-typedef _MCPCallEntryRecord = MapEntry<MCPMethodName, MCPCallHandler>;
+typedef _MCPCallEntryRecord = MapEntry<MCPMethodName, _MCPCallEntryRecordValue>;
+
+/// A record value for the MCP call entry for type safety.
+typedef _MCPCallEntryRecordValue =
+    ({
+      MCPCallHandler handler,
+      MCPToolDefinition? toolDefinition,
+      MCPResourceDefinition? resourceDefinition,
+    });
+
+/// A base definition for MCP definitions.
+extension type const MCPDefinition._(Map<String, dynamic> _value)
+    implements Map<String, dynamic> {
+  /// The [name], [description] and [params] will be merged into json.
+  factory MCPDefinition({
+    required final String name,
+    required final String description,
+    final Map<String, dynamic>? params,
+  }) => MCPDefinition._({'name': name, 'description': description, ...?params});
+}
+
+/// Tool definition for MCP registration
+extension type const MCPToolDefinition._(MCPDefinition _definition)
+    implements MCPDefinition {
+  /// The [name], [description] and [inputSchema] will be merged into json.
+  factory MCPToolDefinition({
+    required final String name,
+    required final String description,
+    final Map<String, dynamic> inputSchema = const {},
+  }) => MCPToolDefinition._(
+    MCPDefinition(
+      name: name,
+      description: description,
+      params: {'inputSchema': inputSchema},
+    ),
+  );
+}
+
+/// Resource definition for MCP registration
+extension type const MCPResourceDefinition._(MCPDefinition _definition)
+    implements MCPDefinition {
+  /// The [name], [description] and [mimeType] will be merged into json.
+  factory MCPResourceDefinition({
+    required final String name,
+    required final String description,
+    final String mimeType = 'text/plain',
+  }) => MCPResourceDefinition._(
+    MCPDefinition(
+      name: name,
+      description: description,
+      params: {'mimeType': mimeType},
+    ),
+  );
+}
 
 /// {@template mcp_call_entry}
 /// A MCP call entry.
-/// Contains a method name and a handler for the call.
+/// Contains a method name and a handler for the call, with optional
+/// tool and resource definitions for automatic MCP server registration.
 ///
-/// Example:
+/// Example with tool definition:
 /// ```dart
-/// extension type MCPFlameModuleEntry._(MCPModuleEntryRecord entry)
-///     implements MCPModuleEntry {
-///   factory MCPFlameModuleEntry({required final Game game}) {
-///     final entry = MCPModuleEntryRecord(
-///       'game_person_info',
-///       (final request) => OnViewDetailsResult(
-///         message: 'Returns person info for the game',
-///         details: [
-///           {'name': game.name},
-///         ],
+/// extension type OnAppErrorsEntry._(MCPCallEntry entry) implements MCPCallEntry {
+///   factory OnAppErrorsEntry({required final ErrorMonitor errorMonitor}) {
+///     final entry = MCPCallEntry(
+///       methodName: const MCPMethodName('app_errors'),
+///       handler: (final request) => MCPCallResult(
+///         message: 'Returns app errors',
+///         parameters: {'errors': []},
+///       ),
+///       toolDefinition: MCPToolDefinition(
+///         name: 'app_errors',
+///         description: 'Get application errors and diagnostics',
+///         inputSchema: {
+///           'type': 'object',
+///           'properties': {
+///             'count': {
+///               'type': 'integer',
+///               'description': 'Number of errors to retrieve',
+///               'default': 10,
+///             },
+///           },
+///         },
 ///       ),
 ///     );
-///     return MCPFlameModuleEntry._(entry);
+///     return OnAppErrorsEntry._(entry);
 ///   }
 /// }
 /// ```
@@ -75,13 +140,27 @@ typedef _MCPCallEntryRecord = MapEntry<MCPMethodName, MCPCallHandler>;
 /// `ext.{MCPBridgeConfiguration.domainName}.{methodName}`.
 ///
 /// By default it will be constructed as
-/// `ext.mcp_toolkit.game_person_info`.
+/// `ext.mcp_toolkit.app_errors`.
 /// {@endtemplate}
 extension type const MCPCallEntry._(_MCPCallEntryRecord entry)
     implements _MCPCallEntryRecord {
   /// {@macro mcp_call_entry}
-  factory MCPCallEntry(
-    final MCPMethodName methodName,
-    final MCPCallHandler handler,
-  ) => MCPCallEntry._(_MCPCallEntryRecord(methodName, handler));
+  factory MCPCallEntry({
+    required final MCPMethodName methodName,
+    required final MCPCallHandler handler,
+    final MCPToolDefinition? toolDefinition,
+    final MCPResourceDefinition? resourceDefinition,
+  }) => MCPCallEntry._(
+    _MCPCallEntryRecord(methodName, (
+      handler: handler,
+      toolDefinition: toolDefinition,
+      resourceDefinition: resourceDefinition,
+    )),
+  );
+
+  /// Check if this entry has a tool definition
+  bool get hasTool => value.toolDefinition != null;
+
+  /// Check if this entry has a resource definition
+  bool get hasResource => value.resourceDefinition != null;
 }

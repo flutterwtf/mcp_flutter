@@ -44,7 +44,7 @@ mixin MCPToolkitExtensions on MCPToolkitBindingBase {
       for (final entry in entries) {
         registerServiceExtension(
           name: entry.key,
-          callback: (final parameters) async => entry.value(parameters),
+          callback: (final parameters) async => entry.value.handler(parameters),
         );
       }
 

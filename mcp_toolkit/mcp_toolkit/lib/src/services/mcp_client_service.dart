@@ -6,6 +6,8 @@ import 'dart:io';
 import 'package:dart_mcp/client.dart';
 import 'package:stream_channel/stream_channel.dart';
 
+import '../mcp_models.dart';
+
 /// Configuration for MCP server connection
 class MCPServerConfig {
   const MCPServerConfig({
@@ -19,47 +21,6 @@ class MCPServerConfig {
   final String protocol;
 
   String get baseUrl => '$protocol://$host:$port';
-}
-
-/// Tool definition for MCP registration
-class MCPToolDefinition {
-  const MCPToolDefinition({
-    required this.name,
-    required this.description,
-    this.inputSchema,
-  });
-
-  final String name;
-  final String description;
-  final Map<String, dynamic>? inputSchema;
-
-  Map<String, dynamic> toJson() => {
-    'name': name,
-    'description': description,
-    if (inputSchema != null) 'inputSchema': inputSchema,
-  };
-}
-
-/// Resource definition for MCP registration
-class MCPResourceDefinition {
-  const MCPResourceDefinition({
-    required this.uri,
-    required this.name,
-    this.description,
-    this.mimeType,
-  });
-
-  final String uri;
-  final String name;
-  final String? description;
-  final String? mimeType;
-
-  Map<String, dynamic> toJson() => {
-    'uri': uri,
-    'name': name,
-    if (description != null) 'description': description,
-    if (mimeType != null) 'mimeType': mimeType,
-  };
 }
 
 /// HTTP transport implementation for MCP over HTTP
