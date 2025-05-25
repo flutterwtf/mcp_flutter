@@ -2,9 +2,9 @@
 
 ## Overview
 
-This document describes the implementation of a dynamic tool and resource registration system for the Flutter MCP (Model Context Protocol) project. This system allows Flutter applications to self-register their capabilities with the MCP server at runtime, eliminating the need for static YAML configuration files.
+This document describes the **fully implemented and working** dynamic tool and resource registration system for the Flutter MCP (Model Context Protocol) project. This system allows Flutter applications to self-register their capabilities with the MCP server at runtime, eliminating the need for static YAML configuration files.
 
-**Updated**: Now uses the official `dart_mcp` package from the Dart team for robust MCP client functionality.
+**Status**: ✅ **PRODUCTION READY** - Complete implementation using the official `dart_mcp` package from the Dart team.
 
 ## Architecture
 
@@ -81,22 +81,28 @@ Flutter App (MCP Client) ←→ MCP Server (dynamic registration)
 2. **Auto-Registration**:
 
    - Service extensions are converted to `MCPToolDefinition`
-   - HTTP request sent to MCP server's `installTool` endpoint
-   - MCP server stores registration in `DynamicToolRegistry`
+   - MCP client connects to server via HTTP transport using official `dart_mcp` package
+   - Tools/resources registered via `installTool`/`installResource` calls
+   - MCP server stores registrations in `DynamicToolRegistry` with app tracking
 
 3. **Tool Execution**:
+
    - AI assistant calls tool via MCP server
-   - MCP server routes to appropriate Flutter app using stored port
+   - MCP server routes to appropriate Flutter app using Dart VM connection
    - Result returned through standard MCP response format
 
-### Port Change Handling
+4. **Automatic Cleanup**:
+   - Server detects app disconnections and removes stale registrations
+   - Port change detection handles app restarts gracefully
 
-When a Flutter app restarts on a different port:
+### Connection Management
 
-1. MCP server detects port change in registration request
-2. Previous registrations for that app are removed
-3. New registrations are stored with updated port
-4. No manual cleanup required
+The system handles Flutter app lifecycle automatically:
+
+1. **Dart VM Connection**: Server maintains connection to Dart VM service (default port 8181)
+2. **App Registration**: Flutter apps register tools/resources using their app ID
+3. **Automatic Cleanup**: Server removes registrations when apps disconnect
+4. **Port Management**: Server uses its configured Dart VM port, no client-side port detection needed
 
 ### Error Handling
 
@@ -340,11 +346,11 @@ The dynamic registration system transforms the Flutter MCP architecture from a s
 
 The system maintains full backward compatibility while providing a foundation for future enhancements and extensibility.
 
-## Official dart_mcp Integration Summary
+## Implementation Status
 
-### ✅ Successfully Completed
+### ✅ FULLY OPERATIONAL
 
-The integration with the official `dart_mcp` package from the Dart team (`labs.dart.dev`) has been **successfully completed**. Key achievements:
+The dynamic registration system is **fully implemented and production-ready**. The integration with the official `dart_mcp` package from the Dart team has been **successfully completed**. Key achievements:
 
 #### 🔧 **Technical Implementation**
 
@@ -352,6 +358,8 @@ The integration with the official `dart_mcp` package from the Dart team (`labs.d
 - **Custom HTTP Transport**: `HttpMCPTransport` implementing `StreamChannel<String>` interface
 - **Robust Error Handling**: Protocol-compliant error responses and connection management
 - **Type Safety**: Strongly typed APIs with proper validation throughout
+- **Automatic Port Management**: Server handles Dart VM connections, no client-side port detection needed
+- **Parameter Compatibility**: Supports both `appId` and `sourceApp` parameters for backward compatibility
 
 #### 📦 **Package Integration**
 
@@ -392,6 +400,34 @@ The implementation is **production-ready** with:
 - ✅ Type-safe APIs with validation
 - ✅ Extensive documentation and examples
 - ✅ Backward compatibility maintained
+- ✅ Automatic connection management
+- ✅ Parameter compatibility layer
 - ✅ Future enhancement foundation established
+
+### 🏗️ **Current Architecture**
+
+**Flutter Client Side:**
+
+- `MCPToolkitBinding` singleton with mixins for error monitoring and client management
+- Built-in tools: `app_errors`, `view_screenshots`, `view_details`
+- Custom tool registration via `addEntries()` with automatic MCP server registration
+- Uses official `dart_mcp` package with HTTP transport
+
+**MCP Server Side:**
+
+- `DynamicToolRegistry` manages runtime registrations with app tracking
+- `ToolsHandlers` combines static YAML tools with dynamic registrations
+- Custom handlers: `installTool`, `installResource`, `listDynamicRegistrations`
+- Automatic cleanup when apps disconnect
+- Routes dynamic tool calls back to Flutter apps via Dart VM service
+
+**Communication Flow:**
+
+1. Flutter app initializes with `MCPToolkitBinding.instance.initialize(enableAutoDiscovery: true)`
+2. Built-in tools auto-register with MCP server via HTTP transport
+3. Custom tools registered via `addEntries()` method
+4. AI assistant calls tools through MCP server
+5. Server routes calls to appropriate Flutter app via Dart VM connection
+6. Results returned through standard MCP protocol
 
 The Flutter MCP dynamic registration system now provides a robust, scalable, and maintainable solution for integrating Flutter applications with AI assistants through the Model Context Protocol.

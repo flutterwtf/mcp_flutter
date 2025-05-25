@@ -164,33 +164,59 @@ export function createCustomRpcHandlerMap(
         );
       }
 
-      const {
-        tool,
-        sourceApp,
-        dartVmPort = 8181,
-      } = (request.params.arguments || {}) as {
-        tool: any;
-        sourceApp: string;
-        dartVmPort?: number;
+      const { tool, tools, appId, sourceApp } = (request.params.arguments ||
+        {}) as {
+        tool?: any;
+        tools?: any[];
+        appId?: string;
+        sourceApp?: string;
       };
 
+      // Use the server's configured Dart VM port since it already has the connection
+      const dartVmPort = rpcUtils.args.dartVMPort;
+
+      // Handle parameter naming compatibility
+      const actualSourceApp = sourceApp || appId;
+      if (!actualSourceApp) {
+        throw new McpError(
+          ErrorCode.InvalidParams,
+          "Either sourceApp or appId parameter is required"
+        );
+      }
+
+      // Handle both single tool and batch tools registration
+      const toolsToRegister = tools || (tool ? [tool] : []);
+      if (toolsToRegister.length === 0) {
+        throw new McpError(
+          ErrorCode.InvalidParams,
+          "Either tool or tools parameter is required"
+        );
+      }
+
       try {
-        // Validate tool schema
-        if (!tool.name || !tool.description) {
-          throw new McpError(
-            ErrorCode.InvalidParams,
-            "Tool must have name and description"
+        // Register all tools
+        for (const toolToRegister of toolsToRegister) {
+          // Validate tool schema
+          if (!toolToRegister.name || !toolToRegister.description) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "Tool must have name and description"
+            );
+          }
+
+          // Handle port changes
+          dynamicRegistry.handlePortChange(actualSourceApp, dartVmPort);
+
+          // Register the tool
+          dynamicRegistry.registerTool(
+            toolToRegister,
+            actualSourceApp,
+            dartVmPort
           );
         }
 
-        // Handle port changes
-        dynamicRegistry.handlePortChange(sourceApp, dartVmPort);
-
-        // Register the tool
-        dynamicRegistry.registerTool(tool, sourceApp, dartVmPort);
-
         logger.info(
-          `[InstallTool] Successfully registered tool: ${tool.name} from ${sourceApp}:${dartVmPort}`
+          `[InstallTool] Successfully registered ${toolsToRegister.length} tools from ${actualSourceApp}:${dartVmPort}`
         );
 
         return {
@@ -200,9 +226,9 @@ export function createCustomRpcHandlerMap(
               text: JSON.stringify(
                 {
                   success: true,
-                  message: `Tool '${tool.name}' installed successfully`,
-                  toolName: tool.name,
-                  sourceApp,
+                  message: `${toolsToRegister.length} tool(s) installed successfully`,
+                  toolNames: toolsToRegister.map((t) => t.name),
+                  sourceApp: actualSourceApp,
                   dartVmPort,
                   registeredAt: new Date().toISOString(),
                 },
@@ -231,33 +257,59 @@ export function createCustomRpcHandlerMap(
         );
       }
 
-      const {
-        resource,
-        sourceApp,
-        dartVmPort = 8181,
-      } = (request.params.arguments || {}) as {
-        resource: any;
-        sourceApp: string;
-        dartVmPort?: number;
+      const { resource, resources, appId, sourceApp } = (request.params
+        .arguments || {}) as {
+        resource?: any;
+        resources?: any[];
+        appId?: string;
+        sourceApp?: string;
       };
 
+      // Use the server's configured Dart VM port since it already has the connection
+      const dartVmPort = rpcUtils.args.dartVMPort;
+
+      // Handle parameter naming compatibility
+      const actualSourceApp = sourceApp || appId;
+      if (!actualSourceApp) {
+        throw new McpError(
+          ErrorCode.InvalidParams,
+          "Either sourceApp or appId parameter is required"
+        );
+      }
+
+      // Handle both single resource and batch resources registration
+      const resourcesToRegister = resources || (resource ? [resource] : []);
+      if (resourcesToRegister.length === 0) {
+        throw new McpError(
+          ErrorCode.InvalidParams,
+          "Either resource or resources parameter is required"
+        );
+      }
+
       try {
-        // Validate resource schema
-        if (!resource.uri || !resource.name) {
-          throw new McpError(
-            ErrorCode.InvalidParams,
-            "Resource must have uri and name"
+        // Register all resources
+        for (const resourceToRegister of resourcesToRegister) {
+          // Validate resource schema
+          if (!resourceToRegister.uri || !resourceToRegister.name) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              "Resource must have uri and name"
+            );
+          }
+
+          // Handle port changes
+          dynamicRegistry.handlePortChange(actualSourceApp, dartVmPort);
+
+          // Register the resource
+          dynamicRegistry.registerResource(
+            resourceToRegister,
+            actualSourceApp,
+            dartVmPort
           );
         }
 
-        // Handle port changes
-        dynamicRegistry.handlePortChange(sourceApp, dartVmPort);
-
-        // Register the resource
-        dynamicRegistry.registerResource(resource, sourceApp, dartVmPort);
-
         logger.info(
-          `[InstallResource] Successfully registered resource: ${resource.uri} from ${sourceApp}:${dartVmPort}`
+          `[InstallResource] Successfully registered ${resourcesToRegister.length} resources from ${actualSourceApp}:${dartVmPort}`
         );
 
         return {
@@ -267,9 +319,9 @@ export function createCustomRpcHandlerMap(
               text: JSON.stringify(
                 {
                   success: true,
-                  message: `Resource '${resource.name}' installed successfully`,
-                  resourceUri: resource.uri,
-                  sourceApp,
+                  message: `${resourcesToRegister.length} resource(s) installed successfully`,
+                  resourceUris: resourcesToRegister.map((r) => r.uri),
+                  sourceApp: actualSourceApp,
                   dartVmPort,
                   registeredAt: new Date().toISOString(),
                 },

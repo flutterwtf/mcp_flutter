@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:from_json_to_json/from_json_to_json.dart';
 import 'package:is_dart_empty_or_not/is_dart_empty_or_not.dart';
 
@@ -24,8 +26,9 @@ Set<MCPCallEntry> getFlutterMcpToolkitEntries({
 /// Extension on [MCPToolkitBinding] to initialize the Flutter MCP Toolkit.
 extension MCPToolkitBindingExtension on MCPToolkitBinding {
   /// Initializes the Flutter MCP Toolkit.
-  void initializeFlutterToolkit() =>
-      addEntries(entries: getFlutterMcpToolkitEntries(binding: this));
+  void initializeFlutterToolkit() => unawaited(
+    addEntries(entries: getFlutterMcpToolkitEntries(binding: this)),
+  );
 }
 
 /// {@template on_app_errors_entry}
