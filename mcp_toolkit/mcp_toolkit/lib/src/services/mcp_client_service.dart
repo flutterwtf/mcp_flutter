@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_catches_without_on_clauses
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as developer;
@@ -76,8 +78,11 @@ class HttpMCPTransport extends StreamChannelMixin<String> {
   }
 }
 
-/// Service for communicating with MCP server using the official dart_mcp package
+/// Service for communicating with MCP server using the official [dart_mcp]
+/// package
 class MCPClientService {
+  /// The [config] is the MCP server configuration.
+  /// The [appId] is the app ID.
   MCPClientService({final MCPServerConfig? config, final String? appId})
     : _config = config ?? const MCPServerConfig(),
       _appId = appId ?? _generateAppId();
@@ -188,7 +193,7 @@ class MCPClientService {
       final result = await _serverConnection!.callTool(
         CallToolRequest(
           name: 'installTool',
-          arguments: {'appId': _appId, 'tool': tool.toJson()},
+          arguments: {'appId': _appId, 'tool': tool},
         ),
       );
 
@@ -217,7 +222,7 @@ class MCPClientService {
       final result = await _serverConnection!.callTool(
         CallToolRequest(
           name: 'installResource',
-          arguments: {'appId': _appId, 'resource': resource.toJson()},
+          arguments: {'appId': _appId, 'resource': resource},
         ),
       );
 
@@ -245,22 +250,22 @@ class MCPClientService {
       final result = await _serverConnection!.callTool(
         CallToolRequest(
           name: 'installTool',
-          arguments: {
-            'appId': _appId,
-            'tools': tools.map((final tool) => tool.toJson()).toList(),
-          },
+          arguments: {'appId': _appId, 'tools': tools},
         ),
       );
 
       if (result.isError == true) {
-        developer.log('Failed to register tools: ${result.content}');
+        developer.log(
+          'Failed to register tools: ${result.content}',
+          stackTrace: StackTrace.current,
+        );
         return false;
       }
 
       developer.log('Successfully registered ${tools.length} tools');
       return true;
-    } catch (e) {
-      developer.log('Error registering tools: $e');
+    } catch (e, stackTrace) {
+      developer.log('Error registering tools: $e', stackTrace: stackTrace);
       return false;
     }
   }
@@ -278,23 +283,22 @@ class MCPClientService {
       final result = await _serverConnection!.callTool(
         CallToolRequest(
           name: 'installResource',
-          arguments: {
-            'appId': _appId,
-            'resources':
-                resources.map((final resource) => resource.toJson()).toList(),
-          },
+          arguments: {'appId': _appId, 'resources': resources},
         ),
       );
 
       if (result.isError == true) {
-        developer.log('Failed to register resources: ${result.content}');
+        developer.log(
+          'Failed to register resources: ${result.content}',
+          stackTrace: StackTrace.current,
+        );
         return false;
       }
 
       developer.log('Successfully registered ${resources.length} resources');
       return true;
-    } catch (e) {
-      developer.log('Error registering resources: $e');
+    } catch (e, stackTrace) {
+      developer.log('Error registering resources: $e', stackTrace: stackTrace);
       return false;
     }
   }

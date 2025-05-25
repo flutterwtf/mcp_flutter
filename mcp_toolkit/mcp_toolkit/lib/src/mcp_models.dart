@@ -1,3 +1,5 @@
+// ignore_for_file: lines_longer_than_80_chars
+
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -65,6 +67,12 @@ extension type const MCPDefinition._(Map<String, dynamic> _value)
     required final String description,
     final Map<String, dynamic>? params,
   }) => MCPDefinition._({'name': name, 'description': description, ...?params});
+
+  /// Get the name of this definition
+  String get name => _value['name'] as String;
+
+  /// Get the description of this definition
+  String get description => _value['description'] as String;
 }
 
 /// Tool definition for MCP registration

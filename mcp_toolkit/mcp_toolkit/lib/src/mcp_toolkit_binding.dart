@@ -47,9 +47,6 @@ class MCPToolkitBinding extends MCPToolkitBindingBase
   /// The singleton instance of the MCP Toolkit binding.
   static final instance = MCPToolkitBinding._();
 
-  MCPClientService? _mcpClient;
-  final Set<MCPCallEntry> _registeredEntries = {};
-
   @override
   void initialize({
     final String serviceExtensionName = kMCPServiceExtensionName,
@@ -68,15 +65,11 @@ class MCPToolkitBinding extends MCPToolkitBindingBase
 
     super.initialize(serviceExtensionName: serviceExtensionName);
 
-    // Initialize MCP client for auto-discovery
-    if (enableAutoDiscovery) {
-      _mcpClient = MCPClientService(
-        config: mcpServerConfig ?? const MCPServerConfig(),
-      );
-
-      // Attempt to connect to MCP server
-      unawaited(connectToMCPServer());
-    }
+    // Initialize MCP client for auto-discovery using the mixin
+    initializeMCPClient(
+      mcpServerConfig: mcpServerConfig,
+      enableAutoDiscovery: enableAutoDiscovery,
+    );
   }
 
   /// Initializes the MCP Toolkit binding.
@@ -92,17 +85,14 @@ class MCPToolkitBinding extends MCPToolkitBindingBase
       return true;
     }());
 
-    _registeredEntries.addAll(entries);
-
     // Auto-register with MCP server if enabled
-    if (autoRegisterWithServer && _mcpClient != null) {
+    if (autoRegisterWithServer && isConnectedToMCPServer) {
       unawaited(autoRegisterEntries(entries));
     }
   }
 
   /// Disposes the MCP Toolkit binding.
   Future<void> dispose() async {
-    await _mcpClient?.disconnect();
-    _mcpClient = null;
+    await disposeMCPClient();
   }
 }

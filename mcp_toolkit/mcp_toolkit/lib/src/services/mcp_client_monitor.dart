@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_catches_without_on_clauses
+
 import 'dart:async';
 import 'dart:developer' as developer;
 
@@ -52,11 +54,12 @@ mixin MCPClientMonitor {
           level: 900,
         );
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       developer.log(
         '[MCPToolkit] Error connecting to MCP server: $e',
         name: 'mcp_toolkit',
         error: e,
+        stackTrace: stackTrace,
         level: 900,
       );
     }
@@ -75,45 +78,82 @@ mixin MCPClientMonitor {
     _registeredEntries.addAll(entries);
 
     final tools = <MCPToolDefinition>[];
+    final resources = <MCPResourceDefinition>[];
 
     for (final entry in entries) {
-      // Convert MCPCallEntry to MCPToolDefinition
-      final tool = MCPToolDefinition(
-        name: entry.key,
-        description: 'Flutter app tool: ${entry.key}',
-        inputSchema: {
-          'type': 'object',
-          'properties': {
-            'parameters': {
-              'type': 'object',
-              'description': 'Parameters for the tool call',
+      // Use existing tool definition if available, otherwise
+      // create a default one
+      if (entry.hasTool) {
+        tools.add(entry.value.toolDefinition!);
+      } else {
+        // Create a default tool definition for entries without one
+        final tool = MCPToolDefinition(
+          name: entry.key,
+          description: 'Flutter app tool: ${entry.key}',
+          inputSchema: {
+            'type': 'object',
+            'properties': {
+              'parameters': {
+                'type': 'object',
+                'description': 'Parameters for the tool call',
+              },
             },
           },
-        },
-      );
-      tools.add(tool);
+        );
+        tools.add(tool);
+      }
+
+      // Register resources if available
+      if (entry.hasResource) {
+        resources.add(entry.value.resourceDefinition!);
+      }
     }
 
     try {
-      final success = await _mcpClient!.registerTools(tools);
-      if (success) {
-        developer.log(
-          '[MCPToolkit] Auto-registered ${tools.length} tools with MCP server',
-          name: 'mcp_toolkit',
-        );
-      } else {
-        developer.log(
-          '[MCPToolkit] Failed to auto-register tools with MCP server',
-          name: 'mcp_toolkit',
-          level: 900,
-        );
+      var success = true;
+
+      // Register tools if any
+      if (tools.isNotEmpty) {
+        success = await _mcpClient!.registerTools(tools);
+        if (success) {
+          developer.log(
+            '[MCPToolkit] Auto-registered ${tools.length} '
+            'tools with MCP server',
+            name: 'mcp_toolkit',
+          );
+        } else {
+          developer.log(
+            '[MCPToolkit] Failed to auto-register tools with MCP server',
+            name: 'mcp_toolkit',
+            level: 900,
+          );
+        }
       }
-    } catch (e) {
+
+      // Register resources if any
+      if (resources.isNotEmpty && success) {
+        success = await _mcpClient!.registerResources(resources);
+        if (success) {
+          developer.log(
+            '[MCPToolkit] Auto-registered ${resources.length} '
+            'resources with MCP server',
+            name: 'mcp_toolkit',
+          );
+        } else {
+          developer.log(
+            '[MCPToolkit] Failed to auto-register resources with MCP server',
+            name: 'mcp_toolkit',
+            level: 900,
+          );
+        }
+      }
+    } catch (e, stackTrace) {
       developer.log(
-        '[MCPToolkit] Failed to auto-register tools: $e',
+        '[MCPToolkit] Failed to auto-register tools/resources: $e',
         name: 'mcp_toolkit',
         error: e,
         level: 900,
+        stackTrace: stackTrace,
       );
     }
   }
@@ -122,9 +162,11 @@ mixin MCPClientMonitor {
   Future<bool> registerCustomTool(final MCPToolDefinition tool) async {
     if (_mcpClient == null) {
       developer.log(
-        '[MCPToolkit] MCP client not initialized. Call initializeMCPClient() with enableAutoDiscovery: true',
+        '[MCPToolkit] MCP client not initialized. Call '
+        'initializeMCPClient() with enableAutoDiscovery: true',
         name: 'mcp_toolkit',
         level: 900,
+        stackTrace: StackTrace.current,
       );
       return false;
     }
@@ -134,6 +176,7 @@ mixin MCPClientMonitor {
         '[MCPToolkit] MCP client not connected. Attempting to connect...',
         name: 'mcp_toolkit',
         level: 900,
+        stackTrace: StackTrace.current,
       );
 
       final connected = await _mcpClient!.connect();
@@ -142,6 +185,7 @@ mixin MCPClientMonitor {
           '[MCPToolkit] Failed to connect to MCP server',
           name: 'mcp_toolkit',
           level: 900,
+          stackTrace: StackTrace.current,
         );
         return false;
       }
@@ -156,9 +200,11 @@ mixin MCPClientMonitor {
   ) async {
     if (_mcpClient == null) {
       developer.log(
-        '[MCPToolkit] MCP client not initialized. Call initializeMCPClient() with enableAutoDiscovery: true',
+        '[MCPToolkit] MCP client not initialized. '
+        'Call initializeMCPClient() with enableAutoDiscovery: true',
         name: 'mcp_toolkit',
         level: 900,
+        stackTrace: StackTrace.current,
       );
       return false;
     }
@@ -168,6 +214,7 @@ mixin MCPClientMonitor {
         '[MCPToolkit] MCP client not connected. Attempting to connect...',
         name: 'mcp_toolkit',
         level: 900,
+        stackTrace: StackTrace.current,
       );
 
       final connected = await _mcpClient!.connect();
@@ -176,6 +223,7 @@ mixin MCPClientMonitor {
           '[MCPToolkit] Failed to connect to MCP server',
           name: 'mcp_toolkit',
           level: 900,
+          stackTrace: StackTrace.current,
         );
         return false;
       }
