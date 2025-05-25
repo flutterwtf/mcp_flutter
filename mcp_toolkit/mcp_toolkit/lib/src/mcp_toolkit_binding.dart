@@ -73,6 +73,37 @@ class MCPToolkitBinding extends MCPToolkitBindingBase
       _mcpClient = MCPClientService(
         config: mcpServerConfig ?? const MCPServerConfig(),
       );
+
+      // Attempt to connect to MCP server
+      unawaited(_connectToMCPServer());
+    }
+  }
+
+  /// Connect to the MCP server
+  Future<void> _connectToMCPServer() async {
+    if (_mcpClient == null) return;
+
+    try {
+      final connected = await _mcpClient!.connect();
+      if (connected) {
+        developer.log(
+          '[MCPToolkit] Successfully connected to MCP server',
+          name: 'mcp_toolkit',
+        );
+      } else {
+        developer.log(
+          '[MCPToolkit] Failed to connect to MCP server',
+          name: 'mcp_toolkit',
+          level: 900,
+        );
+      }
+    } catch (e) {
+      developer.log(
+        '[MCPToolkit] Error connecting to MCP server: $e',
+        name: 'mcp_toolkit',
+        error: e,
+        level: 900,
+      );
     }
   }
 
@@ -99,7 +130,14 @@ class MCPToolkitBinding extends MCPToolkitBindingBase
 
   /// Auto-register entries with the MCP server
   Future<void> _autoRegisterEntries(final Set<MCPCallEntry> entries) async {
-    if (_mcpClient == null) return;
+    if (_mcpClient == null || !_mcpClient!.isConnected) {
+      developer.log(
+        '[MCPToolkit] Cannot auto-register: MCP client not connected',
+        name: 'mcp_toolkit',
+        level: 900,
+      );
+      return;
+    }
 
     final tools = <MCPToolDefinition>[];
 
@@ -122,13 +160,19 @@ class MCPToolkitBinding extends MCPToolkitBindingBase
     }
 
     try {
-      final results = await _mcpClient!.registerTools(tools);
-      final successCount = results.where((final r) => r).length;
-
-      developer.log(
-        '[MCPToolkit] Auto-registered $successCount/${tools.length} tools with MCP server',
-        name: 'mcp_toolkit',
-      );
+      final success = await _mcpClient!.registerTools(tools);
+      if (success) {
+        developer.log(
+          '[MCPToolkit] Auto-registered ${tools.length} tools with MCP server',
+          name: 'mcp_toolkit',
+        );
+      } else {
+        developer.log(
+          '[MCPToolkit] Failed to auto-register tools with MCP server',
+          name: 'mcp_toolkit',
+          level: 900,
+        );
+      }
     } catch (e) {
       developer.log(
         '[MCPToolkit] Failed to auto-register tools: $e',
@@ -150,6 +194,24 @@ class MCPToolkitBinding extends MCPToolkitBindingBase
       return false;
     }
 
+    if (!_mcpClient!.isConnected) {
+      developer.log(
+        '[MCPToolkit] MCP client not connected. Attempting to connect...',
+        name: 'mcp_toolkit',
+        level: 900,
+      );
+
+      final connected = await _mcpClient!.connect();
+      if (!connected) {
+        developer.log(
+          '[MCPToolkit] Failed to connect to MCP server',
+          name: 'mcp_toolkit',
+          level: 900,
+        );
+        return false;
+      }
+    }
+
     return _mcpClient!.registerTool(tool);
   }
 
@@ -166,18 +228,50 @@ class MCPToolkitBinding extends MCPToolkitBindingBase
       return false;
     }
 
+    if (!_mcpClient!.isConnected) {
+      developer.log(
+        '[MCPToolkit] MCP client not connected. Attempting to connect...',
+        name: 'mcp_toolkit',
+        level: 900,
+      );
+
+      final connected = await _mcpClient!.connect();
+      if (!connected) {
+        developer.log(
+          '[MCPToolkit] Failed to connect to MCP server',
+          name: 'mcp_toolkit',
+          level: 900,
+        );
+        return false;
+      }
+    }
+
     return _mcpClient!.registerResource(resource);
   }
 
   /// Get current registrations from the MCP server
-  Future<Map<String, dynamic>?> getServerRegistrations() async =>
-      await _mcpClient?.getRegistrations();
+  /// Note: This method is deprecated as the new dart_mcp API doesn't support this directly
+  @Deprecated('Use localEntries to get locally registered entries')
+  Future<Map<String, dynamic>?> getServerRegistrations() async {
+    developer.log(
+      '[MCPToolkit] getServerRegistrations is deprecated. Use localEntries instead.',
+      name: 'mcp_toolkit',
+      level: 900,
+    );
+    return null;
+  }
 
   /// Get locally registered entries
   Set<MCPCallEntry> get localEntries => Set.unmodifiable(_registeredEntries);
 
-  void dispose() {
-    _mcpClient?.dispose();
+  /// Get the MCP client instance
+  MCPClientService? get mcpClient => _mcpClient;
+
+  /// Check if connected to MCP server
+  bool get isConnectedToMCPServer => _mcpClient?.isConnected ?? false;
+
+  Future<void> dispose() async {
+    await _mcpClient?.disconnect();
     _mcpClient = null;
   }
 }
