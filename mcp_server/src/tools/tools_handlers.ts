@@ -37,6 +37,13 @@ export class ToolsHandlers {
     this.dynamicRegistry = new DynamicToolRegistry(logger);
   }
 
+  /**
+   * Get the dynamic registry instance for use by other handlers
+   */
+  public getDynamicRegistry(): DynamicToolRegistry {
+    return this.dynamicRegistry;
+  }
+
   public setHandlers(
     server: Server,
     rpcUtils: RpcUtilities,
@@ -61,30 +68,35 @@ export class ToolsHandlers {
       serverToolsCustomPath
     );
 
-    // Combine all tool schemes (static + dynamic)
-    const toolSchemes: Tool[] = [
+    // Get static tool schemes (these don't change)
+    const staticToolSchemes: Tool[] = [
       ...serverToolsFlutter.tools,
       ...serverToolsCustom.tools,
       ...resourcesHandlers.getToolSchemes(rpcUtils),
-      ...this.dynamicRegistry.getDynamicTools(),
     ];
 
-    // Filter tools based on environment and capabilities
-    const filteredToolSchemes = toolSchemes.filter((tool) => {
-      if (rpcUtils.args.env === Env.Production) {
-        if (tool.name.includes("dump") && !rpcUtils.args.areDumpSupported) {
-          return false;
-        }
-        return true;
-      }
-      if (rpcUtils.args.env === Env.Development) {
-        return true;
-      }
-      return false;
-    });
-
-    // Register list tools handler
+    // Register list tools handler - dynamically fetch tools on each request
     server.setRequestHandler(ListToolsRequestSchema, async () => {
+      // Combine static tools with current dynamic tools
+      const allToolSchemes: Tool[] = [
+        ...staticToolSchemes,
+        ...this.dynamicRegistry.getDynamicTools(),
+      ];
+
+      // Filter tools based on environment and capabilities
+      const filteredToolSchemes = allToolSchemes.filter((tool) => {
+        if (rpcUtils.args.env === Env.Production) {
+          if (tool.name.includes("dump") && !rpcUtils.args.areDumpSupported) {
+            return false;
+          }
+          return true;
+        }
+        if (rpcUtils.args.env === Env.Development) {
+          return true;
+        }
+        return false;
+      });
+
       return {
         tools: filteredToolSchemes,
       };

@@ -73,14 +73,21 @@ export class FlutterInspectorServer {
         (request) => this.rpcUtils.handlePortParam(request) // Simplified since only Dart VM supported
       );
 
-      // Set up resource and tool handlers
-      this.resources.setHandlers(server, this.rpcUtils, rpcHandlers);
+      // Set up tool handlers first to initialize dynamic registry
       this.tools.setHandlers(
         server,
         this.rpcUtils,
         this.logger,
         rpcHandlers,
         this.resources
+      );
+
+      // Set up resource handlers with access to dynamic registry
+      this.resources.setHandlers(
+        server,
+        this.rpcUtils,
+        rpcHandlers,
+        this.tools.getDynamicRegistry()
       );
     } catch (error) {
       this.logger.error("Error setting up tool handlers:", { error });
