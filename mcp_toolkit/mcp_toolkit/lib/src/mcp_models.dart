@@ -207,4 +207,8 @@ extension type const MCPCallEntry._(_MCPCallEntryRecord entry)
 
   /// Check if this entry has a resource definition
   bool get hasResource => value.resourceDefinition != null;
+
+  /// Get the resource URI for this entry
+  String get resourceUri =>
+      'visual://localhost/${entry.key.split('_').join('/')}';
 }

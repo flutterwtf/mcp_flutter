@@ -410,7 +410,7 @@ export function createCustomRpcHandlerMap(
       try {
         // Call the Flutter app's registerDynamics service extension to get all tools and resources
         const result = await rpcUtils.callDartVm({
-          method: "ext.mcp_toolkit.registerDynamics",
+          method: "ext.mcp.toolkit.registerDynamics",
           dartVmPort,
           params: {},
         });

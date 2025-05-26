@@ -10,6 +10,12 @@ import 'services/error_monitor.dart';
 mixin MCPToolkitExtensions on MCPToolkitBindingBase {
   var _debugServiceExtensionsRegistered = false;
 
+  /// Accumulated entries from all addEntries calls
+  final _allEntries = <MCPCallEntry>{};
+
+  /// Get all accumulated entries (read-only)
+  Set<MCPCallEntry> get allEntries => Set.unmodifiable(_allEntries);
+
   /// Called when the binding is initialized, to register service
   /// extensions.
   ///
@@ -34,14 +40,17 @@ mixin MCPToolkitExtensions on MCPToolkitBindingBase {
     required final ErrorMonitor errorMonitor,
     required final Set<MCPCallEntry> entries,
   }) {
-    assert(!_debugServiceExtensionsRegistered);
     if (kReleaseMode) {
       throw UnsupportedError(
         'MCP Toolkit entries should only be added in debug mode',
       );
     }
+
+    // Accumulate entries from this call
+    _allEntries.addAll(entries);
+
     assert(() {
-      // Register individual service extensions for each entry
+      // Register individual service extensions for each entry in this batch
       for (final entry in entries) {
         registerServiceExtension(
           name: entry.key,
@@ -49,11 +58,13 @@ mixin MCPToolkitExtensions on MCPToolkitBindingBase {
         );
       }
 
-      // Register the registerDynamics service extension
-      registerServiceExtension(
-        name: 'registerDynamics',
-        callback: (final parameters) async => _handleRegisterDynamics(entries),
-      );
+      // Register the registerDynamics service extension only once
+      if (!_debugServiceExtensionsRegistered) {
+        registerServiceExtension(
+          name: 'registerDynamics',
+          callback: (final parameters) async => _handleRegisterDynamics(),
+        );
+      }
 
       return true;
     }());
@@ -64,14 +75,13 @@ mixin MCPToolkitExtensions on MCPToolkitBindingBase {
   }
 
   /// Handles the registerDynamics service extension call
-  /// Returns all tools and resources in the format expected by the MCP server
-  Map<String, dynamic> _handleRegisterDynamics(
-    final Set<MCPCallEntry> entries,
-  ) {
+  /// Returns all accumulated tools and resources in the format expected by the MCP server
+  Map<String, dynamic> _handleRegisterDynamics() {
     final tools = <Map<String, dynamic>>[];
     final resources = <Map<String, dynamic>>[];
 
-    for (final entry in entries) {
+    // Use all accumulated entries, not just the latest batch
+    for (final entry in _allEntries) {
       // Add tool definitions
       if (entry.hasTool) {
         tools.add(Map<String, dynamic>.from(entry.value.toolDefinition!));
@@ -94,9 +104,10 @@ mixin MCPToolkitExtensions on MCPToolkitBindingBase {
 
       // Add resource definitions
       if (entry.hasResource) {
-        resources.add(
-          Map<String, dynamic>.from(entry.value.resourceDefinition!),
-        );
+        resources.add({
+          ...entry.value.resourceDefinition!,
+          'uri': entry.resourceUri,
+        });
       }
     }
 
@@ -105,6 +116,7 @@ mixin MCPToolkitExtensions on MCPToolkitBindingBase {
       'resources': resources,
       'appId': 'flutter_app_${DateTime.now().millisecondsSinceEpoch}',
       'registeredAt': DateTime.now().toIso8601String(),
+      'totalEntries': _allEntries.length,
     };
   }
 }

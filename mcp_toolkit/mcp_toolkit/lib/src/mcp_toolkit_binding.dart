@@ -72,4 +72,8 @@ class MCPToolkitBinding extends MCPToolkitBindingBase
       return true;
     }());
   }
+
+  /// Get all accumulated entries across all addEntries calls
+  @override
+  Set<MCPCallEntry> get allEntries => super.allEntries;
 }
