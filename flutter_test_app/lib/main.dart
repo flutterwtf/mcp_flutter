@@ -8,14 +8,7 @@ Future<void> main() async {
     () async {
       WidgetsFlutterBinding.ensureInitialized();
       MCPToolkitBinding.instance
-        ..initialize(
-          enableAutoDiscovery: true,
-          mcpServerConfig: const MCPServerConfig(
-            host: 'localhost',
-            port: 3535,
-            protocol: 'http',
-          ),
-        )
+        ..initialize()
         ..initializeFlutterToolkit(); // Adds Flutter related methods to the MCP server
 
       // Register custom tools dynamically
@@ -74,7 +67,7 @@ Future<void> _registerCustomTools() async {
         message: 'Current application state and configuration',
         parameters: {
           'appName': 'MCP Toolkit Demo',
-          'isConnected': binding.isConnectedToMCPServer,
+          'isConnected': true, // Always true since we use service extensions
           'timestamp': DateTime.now().toIso8601String(),
         },
       );
@@ -195,10 +188,9 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _checkConnectionStatus() {
-    final binding = MCPToolkitBinding.instance;
     setState(() {
-      _isConnected = binding.isConnectedToMCPServer;
-      _localEntries = binding.localEntries;
+      _isConnected = true; // Always true since we use service extensions
+      _localEntries = {}; // Service extensions are registered automatically
     });
   }
 

@@ -14,12 +14,31 @@ This document describes the **fully implemented and working** dynamic tool and r
 AI Assistant → MCP Server (static YAML tools) → Dart VM Service → Flutter App
 ```
 
-### After (Dynamic System)
+### After (Dynamic System with registerDynamics)
 
 ```
-AI Assistant → MCP Server (static + dynamic tools) → Dart VM Service → Flutter App
-                    ↑
-Flutter App (MCP Client) ←→ MCP Server (dynamic registration)
+AI Assistant → MCP Server → registerDynamics → Dart VM Service → Flutter App (service extensions)
+                                                      ↑
+                                              Returns tools & resources
+```
+
+### Registration Flow Comparison
+
+**Old Approach (Multiple HTTP Calls):**
+
+```
+Flutter App (HTTP Client) → installTool(tool1) → MCP Server
+Flutter App (HTTP Client) → installTool(tool2) → MCP Server
+Flutter App (HTTP Client) → installResource(res1) → MCP Server
+Flutter App (HTTP Client) → installResource(res2) → MCP Server
+```
+
+**New Approach (Service Extension Call):**
+
+```
+MCP Server → registerDynamics() → Dart VM Service → Flutter App (service extension)
+                                                           ↓
+                                                   Returns all tools & resources
 ```
 
 ## Key Components
@@ -37,9 +56,13 @@ Flutter App (MCP Client) ←→ MCP Server (dynamic registration)
 
 #### New MCP Tools
 
-- **`installTool`**: Register a new tool from Flutter app
-- **`installResource`**: Register a new resource from Flutter app
+- **`registerDynamics`**: Calls Flutter app's service extension to get all tools and resources (preferred method)
 - **`listDynamicRegistrations`**: List all dynamic registrations
+
+**Internal Functions (not exposed as MCP tools):**
+
+- **`_installTool`**: Internal helper for registering individual tools
+- **`_installResource`**: Internal helper for registering individual resources
 
 #### Enhanced ToolsHandlers (`mcp_server/src/tools/tools_handlers.ts`)
 
@@ -49,22 +72,11 @@ Flutter App (MCP Client) ←→ MCP Server (dynamic registration)
 
 ### 2. Flutter Components
 
-#### MCPClientService (`mcp_toolkit/mcp_toolkit/lib/src/services/mcp_client_service.dart`)
+#### MCPToolkitBinding (`mcp_toolkit/mcp_toolkit/lib/src/mcp_toolkit_binding.dart`)
 
-- **Purpose**: MCP client using the official `dart_mcp` package for communicating with MCP server
-- **Features**:
-  - Built on official Dart MCP client (`dart_mcp` package)
-  - Tool and resource registration via HTTP transport
-  - Automatic app ID generation
-  - Connection management and status tracking
-  - Batch registration support
-  - Proper MCP protocol compliance
-
-#### Enhanced MCPToolkitBinding (`mcp_toolkit/mcp_toolkit/lib/src/mcp_toolkit_binding.dart`)
-
-- **Auto-Discovery**: Automatically registers service extensions with MCP server
-- **Custom Registration**: Manual registration of additional tools/resources
-- **Configuration**: Configurable MCP server connection settings
+- **Service Extension Registration**: Registers Flutter service extensions that can be called by MCP server
+- **Custom Registration**: Manual registration of additional tools/resources via `addEntries()`
+- **No HTTP Client**: Uses native Flutter service extension mechanism instead of HTTP transport
 
 ## Implementation Details
 
@@ -80,9 +92,9 @@ Flutter App (MCP Client) ←→ MCP Server (dynamic registration)
 
 2. **Auto-Registration**:
 
-   - Service extensions are converted to `MCPToolDefinition`
-   - MCP client connects to server via HTTP transport using official `dart_mcp` package
-   - Tools/resources registered via `installTool`/`installResource` calls
+   - Service extensions are registered with Flutter's native service extension system
+   - MCP server calls `registerDynamics` service extension to get all tools/resources
+   - Flutter app returns all available tools and resources in a single response
    - MCP server stores registrations in `DynamicToolRegistry` with app tracking
 
 3. **Tool Execution**:
@@ -147,12 +159,12 @@ bool isConnected = MCPToolkitBinding.instance.isConnectedToMCPServer;
 MCPClientService? client = MCPToolkitBinding.instance.mcpClient;
 ```
 
-### Custom Tool Registration
+### Custom Tool and Resource Registration
 
 ```dart
-// Register a custom calculation tool
-await MCPToolkitBinding.instance.registerCustomTool(
-  const MCPToolDefinition(
+// Register multiple tools and resources in a single atomic operation
+final tools = [
+  MCPToolDefinition(
     name: 'calculate_fibonacci',
     description: 'Calculate the nth Fibonacci number',
     inputSchema: {
@@ -168,21 +180,30 @@ await MCPToolkitBinding.instance.registerCustomTool(
       'required': ['n'],
     },
   ),
-);
-```
+];
 
-### Custom Resource Registration
-
-```dart
-// Register app state as a resource
-await MCPToolkitBinding.instance.registerCustomResource(
-  const MCPResourceDefinition(
+final resources = [
+  MCPResourceDefinition(
     uri: 'flutter://app/state',
     name: 'App State',
     description: 'Current application state and configuration',
     mimeType: 'application/json',
   ),
+];
+
+// Single call to register everything
+await MCPToolkitBinding.instance.mcpClient?.registerDynamics(
+  tools: tools,
+  resources: resources,
 );
+```
+
+### Legacy Registration (Deprecated)
+
+```dart
+// Individual registration (deprecated - use registerDynamics instead)
+await MCPToolkitBinding.instance.registerCustomTool(tool);
+await MCPToolkitBinding.instance.registerCustomResource(resource);
 ```
 
 ## Configuration
@@ -241,6 +262,14 @@ dependencies:
 - **Batch Operations**: Simplified API returning single boolean instead of array of results
 
 ## Benefits
+
+### New `registerDynamics` Architecture
+
+- **Atomic Operations**: All tools and resources registered in a single transaction
+- **Better Performance**: Single HTTP call instead of multiple round trips
+- **Simplified Error Handling**: Single success/failure response for all registrations
+- **Reduced Network Overhead**: Bulk registration minimizes network traffic
+- **Consistent State**: All-or-nothing registration prevents partial failures
 
 ### For Developers
 
@@ -417,7 +446,7 @@ The implementation is **production-ready** with:
 
 - `DynamicToolRegistry` manages runtime registrations with app tracking
 - `ToolsHandlers` combines static YAML tools with dynamic registrations
-- Custom handlers: `installTool`, `installResource`, `listDynamicRegistrations`
+- Custom handlers: `registerDynamics` (preferred), `installTool` (deprecated), `installResource` (deprecated), `listDynamicRegistrations`
 - Automatic cleanup when apps disconnect
 - Routes dynamic tool calls back to Flutter apps via Dart VM service
 

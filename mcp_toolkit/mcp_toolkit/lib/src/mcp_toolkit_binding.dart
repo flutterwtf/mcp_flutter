@@ -8,8 +8,6 @@ import 'mcp_models.dart';
 import 'mcp_toolkit_binding_base.dart';
 import 'mcp_toolkit_extensions.dart';
 import 'services/error_monitor.dart';
-import 'services/mcp_client_monitor.dart';
-import 'services/mcp_client_service.dart';
 
 /// The binding for the MCP Toolkit.
 ///
@@ -41,7 +39,7 @@ import 'services/mcp_client_service.dart';
 /// }
 /// ```
 class MCPToolkitBinding extends MCPToolkitBindingBase
-    with ErrorMonitor, MCPClientMonitor, MCPToolkitExtensions {
+    with ErrorMonitor, MCPToolkitExtensions {
   MCPToolkitBinding._();
 
   /// The singleton instance of the MCP Toolkit binding.
@@ -51,8 +49,6 @@ class MCPToolkitBinding extends MCPToolkitBindingBase
   void initialize({
     final String serviceExtensionName = kMCPServiceExtensionName,
     final int maxErrors = kDefaultMaxErrors,
-    final MCPServerConfig? mcpServerConfig,
-    final bool enableAutoDiscovery = true,
   }) {
     assert(() {
       assert(
@@ -64,35 +60,16 @@ class MCPToolkitBinding extends MCPToolkitBindingBase
     }());
 
     super.initialize(serviceExtensionName: serviceExtensionName);
-
-    // Initialize MCP client for auto-discovery using the mixin
-    initializeMCPClient(
-      mcpServerConfig: mcpServerConfig,
-      enableAutoDiscovery: enableAutoDiscovery,
-    );
   }
 
   /// Initializes the MCP Toolkit binding.
   ///
-  /// If [listeners] is not provided, the [MCPToolkitListenersImpl]
-  /// will be used.
-  Future<void> addEntries({
-    required final Set<MCPCallEntry> entries,
-    final bool autoRegisterWithServer = true,
-  }) async {
+  /// Registers service extensions that can be called by the MCP server
+  /// through the Dart VM service.
+  Future<void> addEntries({required final Set<MCPCallEntry> entries}) async {
     assert(() {
       initializeServiceExtensions(errorMonitor: this, entries: entries);
       return true;
     }());
-
-    // Auto-register with MCP server if enabled
-    if (autoRegisterWithServer && isConnectedToMCPServer) {
-      await autoRegisterEntries(entries);
-    }
-  }
-
-  /// Disposes the MCP Toolkit binding.
-  Future<void> dispose() async {
-    await disposeMCPClient();
   }
 }

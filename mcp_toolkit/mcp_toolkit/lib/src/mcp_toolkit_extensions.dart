@@ -41,6 +41,7 @@ mixin MCPToolkitExtensions on MCPToolkitBindingBase {
       );
     }
     assert(() {
+      // Register individual service extensions for each entry
       for (final entry in entries) {
         registerServiceExtension(
           name: entry.key,
@@ -48,11 +49,62 @@ mixin MCPToolkitExtensions on MCPToolkitBindingBase {
         );
       }
 
+      // Register the registerDynamics service extension
+      registerServiceExtension(
+        name: 'registerDynamics',
+        callback: (final parameters) async => _handleRegisterDynamics(entries),
+      );
+
       return true;
     }());
     assert(() {
       _debugServiceExtensionsRegistered = true;
       return true;
     }());
+  }
+
+  /// Handles the registerDynamics service extension call
+  /// Returns all tools and resources in the format expected by the MCP server
+  Map<String, dynamic> _handleRegisterDynamics(
+    final Set<MCPCallEntry> entries,
+  ) {
+    final tools = <Map<String, dynamic>>[];
+    final resources = <Map<String, dynamic>>[];
+
+    for (final entry in entries) {
+      // Add tool definitions
+      if (entry.hasTool) {
+        tools.add(Map<String, dynamic>.from(entry.value.toolDefinition!));
+      } else {
+        // Create a default tool definition for entries without one
+        tools.add({
+          'name': entry.key,
+          'description': 'Flutter app tool: ${entry.key}',
+          'inputSchema': {
+            'type': 'object',
+            'properties': {
+              'parameters': {
+                'type': 'object',
+                'description': 'Parameters for the tool call',
+              },
+            },
+          },
+        });
+      }
+
+      // Add resource definitions
+      if (entry.hasResource) {
+        resources.add(
+          Map<String, dynamic>.from(entry.value.resourceDefinition!),
+        );
+      }
+    }
+
+    return {
+      'tools': tools,
+      'resources': resources,
+      'appId': 'flutter_app_${DateTime.now().millisecondsSinceEpoch}',
+      'registeredAt': DateTime.now().toIso8601String(),
+    };
   }
 }

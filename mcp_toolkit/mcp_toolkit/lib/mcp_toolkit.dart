@@ -9,5 +9,4 @@ export 'src/mcp_toolkit_binding.dart';
 export 'src/mcp_toolkit_binding_base.dart';
 export 'src/mcp_toolkit_extensions.dart';
 export 'src/services/error_monitor.dart';
-export 'src/services/mcp_client_service.dart';
 export 'src/toolkits/flutter_mcp_toolkit.dart';
