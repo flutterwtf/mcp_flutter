@@ -11,10 +11,15 @@ Future<void> main() async {
         ..initialize()
         ..initializeFlutterToolkit(); // Adds Flutter related methods to the MCP server
 
-      // Register custom tools dynamically
+      // Register initial custom tools dynamically
       await _registerCustomTools();
 
       runApp(const MyApp());
+
+      // Register additional tools after a delay to test auto-registration
+      Timer(const Duration(seconds: 5), () async {
+        await _registerAdditionalTools();
+      });
     },
     (error, stack) {
       // Optionally, you can also use the bridge's error handling for zone errors
@@ -79,6 +84,16 @@ Future<void> _registerCustomTools() async {
     ),
   );
 
+  // Register all entries
+  await binding.addEntries(entries: {fibonacciEntry, appStateEntry});
+
+  print('Initial custom tools and resources registration completed');
+}
+
+/// Register additional tools after delay to test auto-registration
+Future<void> _registerAdditionalTools() async {
+  final binding = MCPToolkitBinding.instance;
+
   // Create user preferences tool entry
   final preferencesEntry = MCPCallEntry(
     methodName: const MCPMethodName('get_user_preferences'),
@@ -106,12 +121,33 @@ Future<void> _registerCustomTools() async {
     ),
   );
 
-  // Register all entries
-  await binding.addEntries(
-    entries: {fibonacciEntry, appStateEntry, preferencesEntry},
+  // Create system info tool
+  final systemInfoEntry = MCPCallEntry(
+    methodName: const MCPMethodName('get_system_info'),
+    handler: (request) {
+      return MCPCallResult(
+        message: 'System information',
+        parameters: {
+          'platform': 'Flutter',
+          'version': '3.0.0',
+          'buildMode': 'debug',
+          'timestamp': DateTime.now().toIso8601String(),
+        },
+      );
+    },
+    toolDefinition: MCPToolDefinition(
+      name: 'get_system_info',
+      description: 'Get system and app information',
+      inputSchema: {'type': 'object', 'properties': {}},
+    ),
   );
 
-  print('Custom tools and resources registration completed');
+  // Register additional entries - this should trigger auto-registration
+  await binding.addEntries(entries: {preferencesEntry, systemInfoEntry});
+
+  print(
+    'Additional tools registration completed - should trigger auto-registration event',
+  );
 }
 
 /// Calculate Fibonacci number

@@ -96,6 +96,14 @@ export class DynamicToolRegistry {
   }
 
   /**
+   * Clear all registrations for a specific app (alias for unregisterApp)
+   * Used by automatic registration to avoid duplicates
+   */
+  clearAppRegistrations(sourceApp: string): void {
+    this.unregisterApp(sourceApp);
+  }
+
+  /**
    * Handle port change - treat as new app registration
    */
   handlePortChange(sourceApp: string, newPort: number): void {

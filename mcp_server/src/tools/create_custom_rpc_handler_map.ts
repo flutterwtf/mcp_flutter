@@ -432,6 +432,9 @@ export function createCustomRpcHandlerMap(
           );
         }
 
+        // Clear existing registrations for this app to avoid duplicates
+        dynamicRegistry.clearAppRegistrations(appId);
+
         const registeredTools: string[] = [];
         const registeredResources: string[] = [];
 
@@ -485,6 +488,152 @@ export function createCustomRpcHandlerMap(
           ErrorCode.InternalError,
           `Failed to register dynamics: ${error}`
         );
+      }
+    },
+
+    autoRegisterDynamics: async (
+      request: CallToolRequest
+    ): Promise<CallToolResult> => {
+      if (!dynamicRegistry) {
+        throw new McpError(
+          ErrorCode.InternalError,
+          "Dynamic registry not available"
+        );
+      }
+
+      const dartVmPort = rpcUtils.args.dartVMPort;
+
+      try {
+        logger.info("[AutoRegisterDynamics] Triggering automatic registration");
+
+        // Wait a bit for Flutter app to be ready
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        // Call the Flutter app's registerDynamics service extension
+        const result = await rpcUtils.callDartVm({
+          method: "ext.mcp.toolkit.registerDynamics",
+          dartVmPort,
+          params: {},
+        });
+
+        const {
+          tools = [],
+          resources = [],
+          appId,
+        } = result as {
+          tools?: any[];
+          resources?: any[];
+          appId?: string;
+        };
+
+        if (!appId) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify(
+                  {
+                    success: false,
+                    message: "Flutter app did not provide appId",
+                    trigger: "auto_register_dynamics",
+                  },
+                  null,
+                  2
+                ),
+              },
+            ],
+          };
+        }
+
+        // Check if we already have registrations for this app
+        const existingStats = dynamicRegistry.getStats();
+        const existingApp = existingStats.apps.find(
+          (app) => app.name === appId
+        );
+
+        // Clear existing registrations for this app to avoid duplicates
+        dynamicRegistry.clearAppRegistrations(appId);
+
+        const registeredTools: string[] = [];
+        const registeredResources: string[] = [];
+
+        // Register all tools
+        for (const tool of tools) {
+          try {
+            _registerTool(tool, appId, dartVmPort, dynamicRegistry, logger);
+            registeredTools.push(tool.name);
+          } catch (error) {
+            logger.warn(
+              `[AutoRegisterDynamics] Failed to register tool ${tool.name}:`,
+              { error }
+            );
+          }
+        }
+
+        // Register all resources
+        for (const resource of resources) {
+          try {
+            _registerResource(
+              resource,
+              appId,
+              dartVmPort,
+              dynamicRegistry,
+              logger
+            );
+            registeredResources.push(resource.uri);
+          } catch (error) {
+            logger.warn(
+              `[AutoRegisterDynamics] Failed to register resource ${resource.uri}:`,
+              { error }
+            );
+          }
+        }
+
+        logger.info(
+          `[AutoRegisterDynamics] Successfully registered ${tools.length} tools and ${resources.length} resources from ${appId}`
+        );
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  success: true,
+                  message: `Auto-registered ${tools.length} tool(s) and ${resources.length} resource(s) successfully`,
+                  toolNames: registeredTools,
+                  resourceUris: registeredResources,
+                  sourceApp: appId,
+                  dartVmPort,
+                  trigger: "auto_register_dynamics",
+                  registeredAt: new Date().toISOString(),
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      } catch (error) {
+        logger.warn(`[AutoRegisterDynamics] Auto-registration failed:`, {
+          error,
+        });
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  success: false,
+                  message: `Auto-registration failed: ${error}`,
+                  trigger: "auto_register_dynamics",
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
       }
     },
 

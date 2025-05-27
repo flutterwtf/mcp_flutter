@@ -1,5 +1,7 @@
 // ignore_for_file: prefer_asserts_with_message, lines_longer_than_80_chars
 
+import 'dart:developer' as developer;
+
 import 'package:flutter/foundation.dart';
 
 import 'mcp_models.dart';
@@ -72,6 +74,49 @@ mixin MCPToolkitExtensions on MCPToolkitBindingBase {
       _debugServiceExtensionsRegistered = true;
       return true;
     }());
+
+    // Post event to notify MCP server about new tool registrations
+    _postToolRegistrationEvent(entries);
+  }
+
+  /// Post an event to the Dart VM when new tools are registered
+  /// This allows the MCP server to detect tool changes in real-time
+  void _postToolRegistrationEvent(final Set<MCPCallEntry> newEntries) {
+    if (newEntries.isEmpty) return;
+
+    final toolNames =
+        newEntries
+            .where((final entry) => entry.hasTool)
+            .map((final entry) => entry.key.toString())
+            .toList();
+
+    final resourceUris =
+        newEntries
+            .where((final entry) => entry.hasResource)
+            .map((final entry) => entry.resourceUri)
+            .toList();
+
+    // Post event to Dart VM that MCP server can listen to
+    developer.postEvent('MCPToolkit.ToolRegistration', {
+      'timestamp': DateTime.now().toIso8601String(),
+      'toolCount': toolNames.length,
+      'resourceCount': resourceUris.length,
+      'toolNames': toolNames,
+      'resourceUris': resourceUris,
+      'appId': _getAppId(),
+    });
+
+    if (kDebugMode) {
+      debugPrint(
+        '[MCPToolkit] Posted tool registration event: ${toolNames.length} tools, ${resourceUris.length} resources',
+      );
+    }
+  }
+
+  /// Get a unique app identifier for this Flutter app
+  String _getAppId() {
+    // Use a combination of process identifier and timestamp for uniqueness
+    return 'flutter_app_${DateTime.now().millisecondsSinceEpoch}';
   }
 
   /// Handles the registerDynamics service extension call

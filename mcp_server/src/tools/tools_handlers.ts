@@ -14,6 +14,7 @@ import { Env } from "../index.js";
 import { Logger } from "../logger.js";
 import { ResourcesHandlers } from "../resources/resource_handlers.js";
 import { RpcUtilities } from "../servers/rpc_utilities.js";
+import { AutomaticRegistrationManager } from "../services/dynamic_registry/automatic_registration_manager.js";
 import { DynamicToolRegistry } from "../services/dynamic_registry/dynamic_tool_registry.js";
 import { createCustomRpcHandlerMap } from "./create_custom_rpc_handler_map.js";
 import { createRpcHandlerMap } from "./create_rpc_handler_map.js";
@@ -32,6 +33,7 @@ const __dirname = path.dirname(__filename);
  */
 export class ToolsHandlers {
   private dynamicRegistry: DynamicToolRegistry;
+  private autoRegistrationManager: AutomaticRegistrationManager | null = null;
 
   constructor(logger: Logger) {
     this.dynamicRegistry = new DynamicToolRegistry(logger);
@@ -44,7 +46,7 @@ export class ToolsHandlers {
     return this.dynamicRegistry;
   }
 
-  public setHandlers(
+  public async setHandlers(
     server: Server,
     rpcUtils: RpcUtilities,
     logger: Logger,
@@ -157,6 +159,21 @@ export class ToolsHandlers {
         );
       }
     );
+
+    // Initialize automatic registration system
+    this.autoRegistrationManager = new AutomaticRegistrationManager(
+      logger,
+      rpcUtils,
+      this.dynamicRegistry
+    );
+
+    // Start automatic registration (don't await to avoid blocking server startup)
+    this.autoRegistrationManager.initialize().catch((error) => {
+      logger.warn(
+        "[ToolsHandlers] Failed to initialize automatic registration:",
+        { error }
+      );
+    });
   }
 
   /**

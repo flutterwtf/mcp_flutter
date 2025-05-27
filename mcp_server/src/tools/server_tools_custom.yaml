@@ -82,3 +82,9 @@ tools:
           enum: ["tools", "resources", "all"]
           default: "all"
       required: []
+  - name: autoRegisterDynamics
+    description: "Manually trigger automatic registration of Flutter app tools and resources. This uses the AutomaticRegistrationManager to detect and register tools from connected Flutter applications."
+    inputSchema:
+      type: object
+      properties: {}
+      required: []
