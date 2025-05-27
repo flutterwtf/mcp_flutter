@@ -8,6 +8,7 @@ _For AI-Powered Development_
 [![Flutter](https://img.shields.io/badge/Flutter-3.x-blue.svg)](https://flutter.dev)
 [![smithery badge](https://smithery.ai/badge/@Arenukvern/mcp_flutter)](https://smithery.ai/server/@Arenukvern/mcp_flutter)
 [![Verified on MseeP](https://mseep.ai/badge.svg)](https://mseep.ai/app/03aa0f2d-4ef7-40ae-93de-c7b87e0ac32d)
+[![All Contributors](https://img.shields.io/github/all-contributors/Arenukvern/mcp_flutter?color=ee8449&style=flat-square)](https://github.com/Arenukvern/mcp_flutter#contributors-)
 
 </div>
 
@@ -140,6 +141,21 @@ The Flutter MCP Server is registered with Smithery's registry, making it discove
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit pull requests or report issues on the [GitHub repository](https://github.com/Arenukvern/mcp_flutter).
+
+## ✨ Contributors
+
+Huge thanks to all contributors for making this project better!
+
+<!-- https://allcontributors.org/docs/en/bot/usage -->
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
 
 ## 📖 Learn More
 
