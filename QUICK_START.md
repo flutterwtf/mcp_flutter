@@ -21,7 +21,7 @@ For developers who want to contribute to the project or run the latest version d
 
    ```bash
    git clone https://github.com/Arenukvern/mcp_flutter
-   cd flutter-inspector
+   cd mcp_flutter
    ```
 
 2. **Install and build dependencies:**
