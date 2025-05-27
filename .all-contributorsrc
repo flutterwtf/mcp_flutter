@@ -54,6 +54,16 @@
         "userTesting",
         "bug"
       ]
+    },
+    {
+      "login": "torbenkeller",
+      "name": "Torben Keller",
+      "avatar_url": "https://avatars.githubusercontent.com/u/33001558?v=4",
+      "profile": "https://github.com/torbenkeller",
+      "contributions": [
+        "userTesting",
+        "bug"
+      ]
     }
   ]
 }
