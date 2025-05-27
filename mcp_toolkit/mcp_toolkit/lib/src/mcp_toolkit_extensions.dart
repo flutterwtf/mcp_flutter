@@ -114,10 +114,8 @@ mixin MCPToolkitExtensions on MCPToolkitBindingBase {
   }
 
   /// Get a unique app identifier for this Flutter app
-  String _getAppId() {
-    // Use a combination of process identifier and timestamp for uniqueness
-    return 'flutter_app_${DateTime.now().millisecondsSinceEpoch}';
-  }
+  // Use a combination of process identifier and timestamp for uniqueness
+  String _getAppId() => 'flutter_app_${DateTime.now().millisecondsSinceEpoch}';
 
   /// Handles the registerDynamics service extension call
   /// Returns all accumulated tools and resources in the format expected by the MCP server

@@ -1,3 +1,4 @@
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import {
   CallToolRequest,
   CallToolResult,
@@ -71,11 +72,32 @@ function _registerResource(
   dynamicRegistry.registerResource(resource, sourceApp, dartVmPort);
 }
 
+/**
+ * Helper function to send tools list changed notification
+ */
+async function notifyToolsListChanged(
+  server: Server,
+  logger: Logger
+): Promise<void> {
+  try {
+    await server.notification({
+      method: "notifications/tools/list_changed",
+    });
+    logger.debug("[CustomRpcHandlers] Sent tools/list_changed notification");
+  } catch (error) {
+    logger.warn(
+      "[CustomRpcHandlers] Failed to send tools/list_changed notification:",
+      { error }
+    );
+  }
+}
+
 export function createCustomRpcHandlerMap(
   rpcUtils: RpcUtilities,
   logger: Logger,
   handlePortParam: (request: CallToolRequest) => number,
-  dynamicRegistry?: DynamicToolRegistry
+  dynamicRegistry?: DynamicToolRegistry,
+  server?: Server
 ): CustomRpcHandlerMap {
   return {
     test_custom_ext: async (request: CallToolRequest) => {
@@ -270,6 +292,11 @@ export function createCustomRpcHandlerMap(
           `[InstallTool] Successfully registered ${toolsToRegister.length} tools from ${actualSourceApp}:${dartVmPort}`
         );
 
+        // Notify MCP clients that the tools list has changed
+        if (server && toolsToRegister.length > 0) {
+          await notifyToolsListChanged(server, logger);
+        }
+
         return {
           content: [
             {
@@ -364,6 +391,11 @@ export function createCustomRpcHandlerMap(
           `[InstallResource] Successfully registered ${resourcesToRegister.length} resources from ${actualSourceApp}:${dartVmPort}`
         );
 
+        // Notify MCP clients that the tools list has changed
+        if (server && resourcesToRegister.length > 0) {
+          await notifyToolsListChanged(server, logger);
+        }
+
         return {
           content: [
             {
@@ -390,103 +422,6 @@ export function createCustomRpcHandlerMap(
         throw new McpError(
           ErrorCode.InternalError,
           `Failed to install resource: ${error}`
-        );
-      }
-    },
-
-    registerDynamics: async (
-      request: CallToolRequest
-    ): Promise<CallToolResult> => {
-      if (!dynamicRegistry) {
-        throw new McpError(
-          ErrorCode.InternalError,
-          "Dynamic registry not available"
-        );
-      }
-
-      // Use the server's configured Dart VM port since it already has the connection
-      const dartVmPort = rpcUtils.args.dartVMPort;
-
-      try {
-        // Call the Flutter app's registerDynamics service extension to get all tools and resources
-        const result = await rpcUtils.callDartVm({
-          method: "ext.mcp.toolkit.registerDynamics",
-          dartVmPort,
-          params: {},
-        });
-
-        const {
-          tools = [],
-          resources = [],
-          appId,
-        } = result as {
-          tools?: any[];
-          resources?: any[];
-          appId?: string;
-        };
-
-        if (!appId) {
-          throw new McpError(
-            ErrorCode.InternalError,
-            "Flutter app did not provide appId"
-          );
-        }
-
-        // Clear existing registrations for this app to avoid duplicates
-        dynamicRegistry.clearAppRegistrations(appId);
-
-        const registeredTools: string[] = [];
-        const registeredResources: string[] = [];
-
-        // Register all tools using internal helper
-        for (const tool of tools) {
-          _registerTool(tool, appId, dartVmPort, dynamicRegistry, logger);
-          registeredTools.push(tool.name);
-        }
-
-        // Register all resources using internal helper
-        for (const resource of resources) {
-          _registerResource(
-            resource,
-            appId,
-            dartVmPort,
-            dynamicRegistry,
-            logger
-          );
-          registeredResources.push(resource.uri);
-        }
-
-        logger.info(
-          `[RegisterDynamics] Successfully registered ${tools.length} tools and ${resources.length} resources from ${appId}:${dartVmPort}`
-        );
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify(
-                {
-                  success: true,
-                  message: `Registered ${tools.length} tool(s) and ${resources.length} resource(s) successfully`,
-                  toolNames: registeredTools,
-                  resourceUris: registeredResources,
-                  sourceApp: appId,
-                  dartVmPort,
-                  registeredAt: new Date().toISOString(),
-                },
-                null,
-                2
-              ),
-            },
-          ],
-        };
-      } catch (error) {
-        logger.error(`[RegisterDynamics] Failed to register dynamics:`, {
-          error,
-        });
-        throw new McpError(
-          ErrorCode.InternalError,
-          `Failed to register dynamics: ${error}`
         );
       }
     },
@@ -545,12 +480,6 @@ export function createCustomRpcHandlerMap(
           };
         }
 
-        // Check if we already have registrations for this app
-        const existingStats = dynamicRegistry.getStats();
-        const existingApp = existingStats.apps.find(
-          (app) => app.name === appId
-        );
-
         // Clear existing registrations for this app to avoid duplicates
         dynamicRegistry.clearAppRegistrations(appId);
 
@@ -592,6 +521,11 @@ export function createCustomRpcHandlerMap(
         logger.info(
           `[AutoRegisterDynamics] Successfully registered ${tools.length} tools and ${resources.length} resources from ${appId}`
         );
+
+        // Notify MCP clients that the tools list has changed
+        if (server && (tools.length > 0 || resources.length > 0)) {
+          await notifyToolsListChanged(server, logger);
+        }
 
         return {
           content: [

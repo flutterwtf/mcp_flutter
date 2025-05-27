@@ -30,7 +30,9 @@ export class FlutterInspectorServer {
       {
         capabilities: {
           logging: {},
-          tools: {},
+          tools: {
+            listChanged: true,
+          },
           prompts: {},
           resources: {},
         },

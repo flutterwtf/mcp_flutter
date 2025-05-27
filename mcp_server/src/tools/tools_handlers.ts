@@ -112,7 +112,8 @@ export class ToolsHandlers {
       rpcUtils,
       logger,
       (request) => rpcUtils.handlePortParam(request), // Simplified since only Dart VM supported
-      this.dynamicRegistry
+      this.dynamicRegistry,
+      server
     );
 
     // Get resource-based tool handlers
@@ -164,7 +165,8 @@ export class ToolsHandlers {
     this.autoRegistrationManager = new AutomaticRegistrationManager(
       logger,
       rpcUtils,
-      this.dynamicRegistry
+      this.dynamicRegistry,
+      server
     );
 
     // Start automatic registration (don't await to avoid blocking server startup)

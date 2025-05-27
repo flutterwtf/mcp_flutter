@@ -1,3 +1,4 @@
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { Logger } from "../../logger.js";
 import { RpcUtilities } from "../../servers/rpc_utilities.js";
 import { DynamicToolRegistry } from "./dynamic_tool_registry.js";
@@ -17,8 +18,28 @@ export class AutomaticRegistrationManager {
   constructor(
     private readonly logger: Logger,
     private readonly rpcUtils: RpcUtilities,
-    private readonly dynamicRegistry: DynamicToolRegistry
+    private readonly dynamicRegistry: DynamicToolRegistry,
+    private readonly server: Server
   ) {}
+
+  /**
+   * Send notification to clients that the tools list has changed
+   */
+  private async notifyToolsListChanged(): Promise<void> {
+    try {
+      await this.server.notification({
+        method: "notifications/tools/list_changed",
+      });
+      this.logger.debug(
+        "[AutoRegistration] Sent tools/list_changed notification"
+      );
+    } catch (error) {
+      this.logger.warn(
+        "[AutoRegistration] Failed to send tools/list_changed notification:",
+        { error }
+      );
+    }
+  }
 
   /**
    * Initialize automatic registration system
@@ -335,6 +356,9 @@ export class AutomaticRegistrationManager {
         registeredResources,
         trigger
       );
+
+      // Notify MCP clients that the tools list has changed
+      await this.notifyToolsListChanged();
     } catch (error) {
       this.logger.warn(
         `[AutoRegistration] Registration attempt failed (trigger: ${trigger}):`,
