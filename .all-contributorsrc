@@ -1,4 +1,21 @@
 {
   "projectName": "mcp_flutter",
-  "projectOwner": "Arenukvern"
+  "projectOwner": "Arenukvern",
+  "files": [
+    "README.md"
+  ],
+  "commitType": "docs",
+  "commitConvention": "angular",
+  "contributorsPerLine": 7,
+  "contributors": [
+    {
+      "login": "calclavia",
+      "name": "Henry Mao",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1828968?v=4",
+      "profile": "https://calclavia.com",
+      "contributions": [
+        "infra"
+      ]
+    }
+  ]
 }
