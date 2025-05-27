@@ -44,6 +44,16 @@
       "contributions": [
         "infra"
       ]
+    },
+    {
+      "login": "Harishwarrior",
+      "name": "Harish Anbalagan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/38380040?v=4",
+      "profile": "https://github.com/Harishwarrior",
+      "contributions": [
+        "userTesting",
+        "bug"
+      ]
     }
   ]
 }
