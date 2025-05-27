@@ -13,8 +13,6 @@ export class AutomaticRegistrationManager {
   private registrationInProgress = false;
   private eventListenerCleanup: (() => void) | null = null;
   private processedIsolates = new Set<string>();
-  private lastSuccessfulRegistration: number = 0;
-  private wsConnection: any = null;
 
   constructor(
     private readonly logger: Logger,
@@ -261,22 +259,6 @@ export class AutomaticRegistrationManager {
       return;
     }
 
-    // Add cooldown period to prevent too frequent registrations (except for initial connection)
-    const now = Date.now();
-    const cooldownPeriod = 5000; // 5 seconds
-    if (
-      trigger !== "initial_connection" &&
-      this.lastSuccessfulRegistration > 0 &&
-      now - this.lastSuccessfulRegistration < cooldownPeriod
-    ) {
-      this.logger.debug(
-        `[AutoRegistration] Cooldown period active, skipping registration (${
-          now - this.lastSuccessfulRegistration
-        }ms since last)`
-      );
-      return;
-    }
-
     this.registrationInProgress = true;
 
     try {
@@ -306,21 +288,6 @@ export class AutomaticRegistrationManager {
       if (!appId) {
         this.logger.warn(
           "[AutoRegistration] Flutter app did not provide appId, skipping registration"
-        );
-        return;
-      }
-
-      // Check if we already have registrations for this app
-      const existingStats = this.dynamicRegistry.getStats();
-      const existingApp = existingStats.apps.find((app) => app.name === appId);
-
-      if (
-        existingApp &&
-        existingApp.toolCount === tools.length &&
-        existingApp.resourceCount === resources.length
-      ) {
-        this.logger.debug(
-          `[AutoRegistration] App ${appId} already has same number of tools/resources registered, skipping`
         );
         return;
       }
@@ -360,9 +327,6 @@ export class AutomaticRegistrationManager {
       this.logger.info(
         `[AutoRegistration] Successfully registered ${tools.length} tools and ${resources.length} resources from ${appId} (trigger: ${trigger})`
       );
-
-      // Update last successful registration timestamp
-      this.lastSuccessfulRegistration = Date.now();
 
       // Post a custom event to notify about successful registration
       await this.postRegistrationEvent(

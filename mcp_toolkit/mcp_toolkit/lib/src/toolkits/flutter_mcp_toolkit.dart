@@ -67,7 +67,8 @@ extension type OnAppErrorsEntry._(MCPCallEntry entry) implements MCPCallEntry {
         name: 'app_errors',
         description:
             'Get application errors and diagnostics information. '
-            'Returns recent errors with file paths and line numbers for debugging.',
+            'Returns recent errors with file paths and line numbers '
+            'for debugging.',
         inputSchema: {
           'type': 'object',
           'properties': {
