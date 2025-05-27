@@ -25,6 +25,25 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "lwsinclair",
+      "name": "Lawrence Sinclair",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2829939?v=4",
+      "profile": "http://eastagile.com",
+      "contributions": [
+        "doc",
+        "security"
+      ]
+    },
+    {
+      "login": "punkpeye",
+      "name": "Frank Fiegel",
+      "avatar_url": "https://avatars.githubusercontent.com/u/108313943?v=4",
+      "profile": "https://glama.ai",
+      "contributions": [
+        "infra"
+      ]
     }
   ]
 }
