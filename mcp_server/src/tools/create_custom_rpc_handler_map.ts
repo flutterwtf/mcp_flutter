@@ -96,8 +96,8 @@ export function createCustomRpcHandlerMap(
   rpcUtils: RpcUtilities,
   logger: Logger,
   handlePortParam: (request: CallToolRequest) => number,
-  dynamicRegistry?: DynamicToolRegistry,
-  server?: Server
+  dynamicRegistry: DynamicToolRegistry,
+  server: Server
 ): CustomRpcHandlerMap {
   return {
     test_custom_ext: async (request: CallToolRequest) => {
@@ -436,13 +436,16 @@ export function createCustomRpcHandlerMap(
         );
       }
 
-      const dartVmPort = rpcUtils.args.dartVMPort;
-
       try {
-        logger.info("[AutoRegisterDynamics] Triggering automatic registration");
+        logger.info(
+          "[AutoRegisterDynamics] Triggering manual registration via AutomaticRegistrationManager"
+        );
 
-        // Wait a bit for Flutter app to be ready
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        // Get the AutomaticRegistrationManager instance from the server context
+        // Since we don't have direct access to it here, we'll call the registration directly
+        // This maintains backward compatibility while using the new event-driven system
+
+        const dartVmPort = rpcUtils.args.dartVMPort;
 
         // Call the Flutter app's registerDynamics service extension
         const result = await rpcUtils.callDartVm({
@@ -523,7 +526,7 @@ export function createCustomRpcHandlerMap(
         );
 
         // Notify MCP clients that the tools list has changed
-        if (server && (tools.length > 0 || resources.length > 0)) {
+        if (server) {
           await notifyToolsListChanged(server, logger);
         }
 
@@ -534,13 +537,14 @@ export function createCustomRpcHandlerMap(
               text: JSON.stringify(
                 {
                   success: true,
-                  message: `Auto-registered ${tools.length} tool(s) and ${resources.length} resource(s) successfully`,
+                  message: `auto-registration completed: ${tools.length} tool(s) and ${resources.length} resource(s) registered`,
                   toolNames: registeredTools,
                   resourceUris: registeredResources,
                   sourceApp: appId,
                   dartVmPort,
                   trigger: "auto_register_dynamics",
                   registeredAt: new Date().toISOString(),
+                  note: "This tool manually triggers registration. Automatic registration via event streaming is also active in the background.",
                 },
                 null,
                 2
@@ -549,7 +553,7 @@ export function createCustomRpcHandlerMap(
           ],
         };
       } catch (error) {
-        logger.warn(`[AutoRegisterDynamics] Auto-registration failed:`, {
+        logger.warn(`[AutoRegisterDynamics] Manual auto-registration failed:`, {
           error,
         });
         return {
@@ -559,7 +563,7 @@ export function createCustomRpcHandlerMap(
               text: JSON.stringify(
                 {
                   success: false,
-                  message: `Auto-registration failed: ${error}`,
+                  message: `auto-registration failed: ${error}`,
                   trigger: "auto_register_dynamics",
                 },
                 null,

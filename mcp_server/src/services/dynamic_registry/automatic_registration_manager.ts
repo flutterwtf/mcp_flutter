@@ -1,19 +1,19 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import WebSocket from "ws";
 import { Logger } from "../../logger.js";
 import { RpcUtilities } from "../../servers/rpc_utilities.js";
 import { DynamicToolRegistry } from "./dynamic_tool_registry.js";
 
 /**
- * Manages automatic registration of Flutter app tools and resources
- * Handles registration at two key points:
- * 1. When server establishes connection to Dart VM
- * 2. When Dart VM sends event that Flutter application was reloaded
+ * Event-driven automatic registration manager for Flutter app tools and resources
+ * Replaces polling with proper DTD-style event streaming
  */
 export class AutomaticRegistrationManager {
   private isListeningForEvents = false;
   private registrationInProgress = false;
   private eventListenerCleanup: (() => void) | null = null;
   private processedIsolates = new Set<string>();
+  private streamConnections = new Map<string, WebSocket>();
 
   constructor(
     private readonly logger: Logger,
@@ -42,33 +42,27 @@ export class AutomaticRegistrationManager {
   }
 
   /**
-   * Initialize automatic registration system
-   * Sets up event listeners for hot reload detection
+   * Initialize automatic registration system with event streaming
    */
   async initialize(): Promise<void> {
     this.logger.info(
-      "[AutoRegistration] Initializing automatic registration system"
+      "[AutoRegistration] Initializing event-driven registration system"
     );
 
-    // Start listening for Flutter events
-    await this.startEventListening();
-
-    // Perform initial registration attempt
+    await this.startEventStreaming();
     await this.performInitialRegistration();
   }
 
   /**
-   * Perform initial registration when server connects to Dart VM
+   * Perform initial registration when server connects
    */
   private async performInitialRegistration(): Promise<void> {
     this.logger.info(
-      "[AutoRegistration] Attempting initial registration on Dart VM connection"
+      "[AutoRegistration] Attempting initial registration on connection"
     );
 
     try {
-      // Wait a bit for Flutter app to be ready
       await new Promise((resolve) => setTimeout(resolve, 1000));
-
       await this.attemptRegistration("initial_connection");
     } catch (error) {
       this.logger.warn(
@@ -79,9 +73,9 @@ export class AutomaticRegistrationManager {
   }
 
   /**
-   * Start listening for Flutter events that indicate app reload
+   * Start event streaming using DTD-style service and editor streams
    */
-  private async startEventListening(): Promise<void> {
+  private async startEventStreaming(): Promise<void> {
     if (this.isListeningForEvents) {
       return;
     }
@@ -89,183 +83,185 @@ export class AutomaticRegistrationManager {
     try {
       const dartVmPort = this.rpcUtils.args.dartVMPort;
 
-      // Subscribe to VM service events and establish WebSocket connection
-      await this.subscribeToVmEvents(dartVmPort);
+      // Listen to Service stream for ServiceRegistered events
+      await this.subscribeToServiceStream(dartVmPort);
+
+      // Listen to Editor stream for debug session events
+      await this.subscribeToEditorStream(dartVmPort);
 
       this.isListeningForEvents = true;
-      this.logger.info(
-        "[AutoRegistration] Started listening for Flutter events"
-      );
+      this.logger.info("[AutoRegistration] Started DTD-style event streaming");
     } catch (error) {
-      this.logger.error("[AutoRegistration] Failed to start event listening:", {
+      this.logger.error("[AutoRegistration] Failed to start event streaming:", {
         error,
       });
     }
   }
 
   /**
-   * Subscribe to VM service events to detect hot reloads and framework initialization
+   * Subscribe to Service stream for ServiceRegistered events
    */
-  private async subscribeToVmEvents(dartVmPort: number): Promise<void> {
+  private async subscribeToServiceStream(dartVmPort: number): Promise<void> {
     try {
-      // Listen for Extension events (includes Flutter.FrameworkInitialization)
+      // Use DTD streaming pattern
       await this.rpcUtils.sendWebSocketRequest(dartVmPort, "streamListen", {
-        streamId: "Extension",
+        streamId: "Service",
       });
 
-      // Listen for Debug events (includes hot reload completion)
-      await this.rpcUtils.sendWebSocketRequest(dartVmPort, "streamListen", {
-        streamId: "Debug",
+      // Set up WebSocket connection for Service events
+      await this.setupStreamListener(dartVmPort, "Service", (event) => {
+        this.handleServiceEvent(event);
       });
 
-      // Listen for Isolate events (includes isolate start/reload)
-      await this.rpcUtils.sendWebSocketRequest(dartVmPort, "streamListen", {
-        streamId: "Isolate",
-      });
-
-      // Listen for custom MCPToolkit events
-      await this.rpcUtils.sendWebSocketRequest(dartVmPort, "streamListen", {
-        streamId: "Extension",
-      });
-
-      // Set up real-time event handling via WebSocket
-      await this.setupEventHandling(dartVmPort);
+      this.logger.debug("[AutoRegistration] Subscribed to Service stream");
     } catch (error) {
       this.logger.error(
-        "[AutoRegistration] Failed to subscribe to VM events:",
+        "[AutoRegistration] Failed to subscribe to Service stream:",
         { error }
       );
     }
   }
 
   /**
-   * Set up real-time event handling via WebSocket connection
+   * Subscribe to Editor stream for debug session events
    */
-  private async setupEventHandling(dartVmPort: number): Promise<void> {
+  private async subscribeToEditorStream(dartVmPort: number): Promise<void> {
     try {
-      // Try to establish WebSocket connection using existing RPC utilities
-      await this.rpcUtils.connect(dartVmPort);
+      await this.rpcUtils.sendWebSocketRequest(dartVmPort, "streamListen", {
+        streamId: "Editor",
+      });
 
-      // Note: For now, we'll use polling since the RpcUtilities doesn't expose
-      // WebSocket events directly. In future, we can enhance RpcUtilities
-      // to support event streaming.
-      this.logger.info("[AutoRegistration] Using polling for event detection");
-      this.startEventPolling(dartVmPort);
+      await this.setupStreamListener(dartVmPort, "Editor", (event) => {
+        this.handleEditorEvent(event);
+      });
+
+      this.logger.debug("[AutoRegistration] Subscribed to Editor stream");
     } catch (error) {
-      this.logger.warn(
-        "[AutoRegistration] Failed to setup event handling, falling back to polling:",
+      this.logger.error(
+        "[AutoRegistration] Failed to subscribe to Editor stream:",
         { error }
       );
-      // Fallback to polling
-      this.startEventPolling(dartVmPort);
     }
   }
 
   /**
-   * Handle VM service events in real-time
-   * Note: This will be implemented when RpcUtilities supports WebSocket events
+   * Set up WebSocket listener for a specific stream
    */
-  private async handleVmServiceEvent(message: any): Promise<void> {
+  private async setupStreamListener(
+    dartVmPort: number,
+    streamId: string,
+    handler: (event: any) => void
+  ): Promise<void> {
     try {
-      if (message.method === "streamNotify") {
-        const event = message.params?.event;
+      const wsUrl = `ws://127.0.0.1:${dartVmPort}/ws`;
+      const ws = new WebSocket(wsUrl);
 
-        if (!event) return;
-
-        // Handle different types of events
-        switch (event.kind) {
-          case "Extension":
-            await this.handleExtensionEvent(event);
-            break;
-          case "IsolateStart":
-          case "IsolateRunnable":
-            await this.handleIsolateEvent(event);
-            break;
-          case "Debug":
-            await this.handleDebugEvent(event);
-            break;
-        }
-      }
-    } catch (error) {
-      this.logger.debug("[AutoRegistration] Error handling VM service event:", {
-        error,
-      });
-    }
-  }
-
-  /**
-   * Handle extension events (Flutter framework initialization)
-   */
-  private async handleExtensionEvent(event: any): Promise<void> {
-    if (event.extensionKind === "Flutter.FrameworkInitialization") {
-      this.logger.info(
-        "[AutoRegistration] Flutter framework initialized, attempting registration"
-      );
-      await this.attemptRegistration("flutter_framework_init");
-    } else if (event.extensionKind === "MCPToolkit.ToolRegistration") {
-      this.logger.info(
-        "[AutoRegistration] Detected MCPToolkit tool registration event"
-      );
-      const eventData = event.extensionData;
-      if (eventData) {
-        this.logger.info(
-          `[AutoRegistration] New tools registered: ${eventData.toolCount} tools, ${eventData.resourceCount} resources from ${eventData.appId}`
+      ws.on("open", () => {
+        this.logger.debug(
+          `[AutoRegistration] WebSocket connected for ${streamId} stream`
         );
-        await this.attemptRegistration("tool_registration_event");
-      }
-    }
-  }
-
-  /**
-   * Handle isolate events (new isolates starting)
-   */
-  private async handleIsolateEvent(event: any): Promise<void> {
-    const isolateId = event.isolate?.id;
-    if (!isolateId || this.processedIsolates.has(isolateId)) {
-      return;
-    }
-
-    try {
-      const dartVmPort = this.rpcUtils.args.dartVMPort;
-      const isolate = await this.rpcUtils.getIsolate(dartVmPort, isolateId);
-
-      // Check if isolate has Flutter extensions
-      const hasFlutterExtensions = isolate.extensionRPCs?.some(
-        (ext: string) =>
-          ext.startsWith("ext.flutter") || ext.startsWith("ext.mcp.toolkit")
-      );
-
-      if (hasFlutterExtensions) {
-        this.logger.info(
-          `[AutoRegistration] Detected new Flutter isolate ${isolateId} with extensions`
-        );
-        this.processedIsolates.add(isolateId);
-        await this.attemptRegistration("flutter_isolate_detected");
-      }
-    } catch (error) {
-      this.logger.debug("[AutoRegistration] Error checking isolate:", {
-        error,
       });
-    }
-  }
 
-  /**
-   * Handle debug events (hot reload completion)
-   */
-  private async handleDebugEvent(event: any): Promise<void> {
-    if (event.kind === "Resume" && event.topFrame) {
-      this.logger.info(
-        "[AutoRegistration] Flutter app resumed after hot reload"
-      );
-      // Wait a moment for app to be ready after hot reload
-      setTimeout(() => {
-        this.attemptRegistration("hot_reload_completed").catch((error) => {
+      ws.on("message", (data) => {
+        try {
+          const message = JSON.parse(data.toString());
+          if (
+            message.method === "streamNotify" &&
+            message.params?.streamId === streamId
+          ) {
+            handler(message.params.event);
+          }
+        } catch (error) {
           this.logger.debug(
-            "[AutoRegistration] Hot reload registration failed:",
+            `[AutoRegistration] Error parsing ${streamId} event:`,
             { error }
           );
-        });
-      }, 1000);
+        }
+      });
+
+      ws.on("error", (error) => {
+        this.logger.warn(
+          `[AutoRegistration] WebSocket error for ${streamId}:`,
+          { error }
+        );
+      });
+
+      ws.on("close", () => {
+        this.logger.debug(
+          `[AutoRegistration] WebSocket closed for ${streamId}`
+        );
+        this.streamConnections.delete(streamId);
+      });
+
+      this.streamConnections.set(streamId, ws);
+    } catch (error) {
+      this.logger.error(
+        `[AutoRegistration] Failed to setup ${streamId} listener:`,
+        { error }
+      );
+    }
+  }
+
+  /**
+   * Handle Service stream events (ServiceRegistered)
+   */
+  private async handleServiceEvent(event: any): Promise<void> {
+    this.logger.debug("[AutoRegistration] Service event:", event);
+
+    if (event.kind === "ServiceRegistered") {
+      const { service, method } = event.data || {};
+
+      // Look for relevant service registrations
+      if (
+        (service === "Editor" && method === "getDebugSessions") ||
+        (service === "MCPToolkit" && method === "registerDynamics")
+      ) {
+        this.logger.info(
+          `[AutoRegistration] ServiceRegistered: ${service}.${method}, attempting registration`
+        );
+        await this.attemptRegistration("service_registered");
+      }
+    }
+  }
+
+  /**
+   * Handle Editor stream events (debugSessionStarted, debugSessionChanged, activeLocationChanged)
+   */
+  private async handleEditorEvent(event: any): Promise<void> {
+    this.logger.debug("[AutoRegistration] Editor event:", event);
+
+    switch (event.kind) {
+      case "debugSessionStarted":
+        this.logger.info(
+          "[AutoRegistration] Debug session started, attempting registration"
+        );
+        await this.attemptRegistration("debug_session_started");
+        break;
+
+      case "debugSessionChanged":
+        this.logger.info(
+          "[AutoRegistration] Debug session changed, attempting registration"
+        );
+        await this.attemptRegistration("debug_session_changed");
+        break;
+
+      case "activeLocationChanged":
+        this.logger.info(
+          "[AutoRegistration] Active location changed, attempting registration"
+        );
+        await this.attemptRegistration("active_location_changed");
+        break;
+
+      case "debugSessionStopped":
+        // Clean up when debug session stops
+        const sessionId = event.data?.debugSessionId;
+        if (sessionId) {
+          this.processedIsolates.delete(sessionId);
+          this.logger.debug(
+            `[AutoRegistration] Cleaned up session ${sessionId}`
+          );
+        }
+        break;
     }
   }
 
@@ -289,7 +285,6 @@ export class AutomaticRegistrationManager {
 
       const dartVmPort = this.rpcUtils.args.dartVMPort;
 
-      // Call the registerDynamics service extension
       const result = await this.rpcUtils.callDartVm({
         method: "ext.mcp.toolkit.registerDynamics",
         dartVmPort,
@@ -349,14 +344,6 @@ export class AutomaticRegistrationManager {
         `[AutoRegistration] Successfully registered ${tools.length} tools and ${resources.length} resources from ${appId} (trigger: ${trigger})`
       );
 
-      // Post a custom event to notify about successful registration
-      await this.postRegistrationEvent(
-        appId,
-        registeredTools,
-        registeredResources,
-        trigger
-      );
-
       // Notify MCP clients that the tools list has changed
       await this.notifyToolsListChanged();
     } catch (error) {
@@ -366,40 +353,6 @@ export class AutomaticRegistrationManager {
       );
     } finally {
       this.registrationInProgress = false;
-    }
-  }
-
-  /**
-   * Post a custom event to the Dart VM to notify about successful registration
-   */
-  private async postRegistrationEvent(
-    appId: string,
-    tools: string[],
-    resources: string[],
-    trigger: string
-  ): Promise<void> {
-    try {
-      // This is a custom event that Flutter apps can listen for
-      const eventData = {
-        appId,
-        toolCount: tools.length,
-        resourceCount: resources.length,
-        tools,
-        resources,
-        trigger,
-        timestamp: new Date().toISOString(),
-      };
-
-      // We can't directly post events to the VM, but we can log this for debugging
-      this.logger.debug(
-        "[AutoRegistration] Registration completed:",
-        eventData
-      );
-    } catch (error) {
-      this.logger.debug(
-        "[AutoRegistration] Failed to post registration event:",
-        { error }
-      );
     }
   }
 
@@ -416,13 +369,29 @@ export class AutomaticRegistrationManager {
   async stop(): Promise<void> {
     this.isListeningForEvents = false;
 
+    // Close all WebSocket connections
+    for (const [streamId, ws] of this.streamConnections) {
+      try {
+        ws.close();
+        this.logger.debug(
+          `[AutoRegistration] Closed ${streamId} stream connection`
+        );
+      } catch (error) {
+        this.logger.debug(
+          `[AutoRegistration] Error closing ${streamId} stream:`,
+          { error }
+        );
+      }
+    }
+    this.streamConnections.clear();
+
     if (this.eventListenerCleanup) {
       this.eventListenerCleanup();
       this.eventListenerCleanup = null;
     }
 
     this.logger.info(
-      "[AutoRegistration] Stopped automatic registration system"
+      "[AutoRegistration] Stopped event-driven registration system"
     );
   }
 
@@ -432,113 +401,12 @@ export class AutomaticRegistrationManager {
   getStatus(): {
     isListening: boolean;
     isRegistering: boolean;
-    lastRegistrationAttempt?: string;
+    activeStreams: string[];
   } {
     return {
       isListening: this.isListeningForEvents,
       isRegistering: this.registrationInProgress,
+      activeStreams: Array.from(this.streamConnections.keys()),
     };
-  }
-
-  /**
-   * Polling mechanism for event detection
-   */
-  private startEventPolling(dartVmPort: number): void {
-    const pollInterval = 10000; // Poll every 10 seconds
-    let lastEventTimestamp = Date.now();
-
-    const poll = async () => {
-      try {
-        // Check for recent events that might indicate a reload
-        const vmInfo = await this.rpcUtils.getVmInfo(dartVmPort);
-
-        if (vmInfo) {
-          // Check if there are new isolates or if isolates have been restarted
-          await this.checkForReloadIndicators(dartVmPort, lastEventTimestamp);
-          lastEventTimestamp = Date.now();
-        }
-      } catch (error) {
-        // Silently handle polling errors to avoid spam
-        this.logger.debug("[AutoRegistration] Event polling error:", { error });
-      }
-
-      // Continue polling if still listening
-      if (this.isListeningForEvents) {
-        setTimeout(poll, pollInterval);
-      }
-    };
-
-    // Start polling
-    setTimeout(poll, pollInterval);
-  }
-
-  /**
-   * Check for indicators that suggest a Flutter app reload occurred
-   */
-  private async checkForReloadIndicators(
-    dartVmPort: number,
-    lastCheck: number
-  ): Promise<void> {
-    try {
-      // Get current isolates
-      const vmInfo = await this.rpcUtils.getVmInfo(dartVmPort);
-      const isolates = vmInfo?.isolates || [];
-
-      // Track current isolate IDs
-      const currentIsolateIds = new Set(isolates.map((ref) => ref.id));
-
-      // Check for new isolates that we haven't processed
-      for (const isolateRef of isolates) {
-        // Skip if we've already processed this isolate
-        if (this.processedIsolates.has(isolateRef.id)) {
-          continue;
-        }
-
-        try {
-          const isolate = await this.rpcUtils.getIsolate(
-            dartVmPort,
-            isolateRef.id
-          );
-
-          // Check if isolate has Flutter extensions (indicates Flutter app)
-          const hasFlutterExtensions = isolate.extensionRPCs?.some(
-            (ext: string) =>
-              ext.startsWith("ext.flutter") || ext.startsWith("ext.mcp.toolkit")
-          );
-
-          if (hasFlutterExtensions) {
-            this.logger.info(
-              `[AutoRegistration] Detected new Flutter isolate ${isolateRef.id} with extensions, attempting registration`
-            );
-
-            // Mark this isolate as processed
-            this.processedIsolates.add(isolateRef.id);
-
-            await this.attemptRegistration("flutter_isolate_detected");
-            break;
-          }
-        } catch (error) {
-          // Continue checking other isolates
-          this.logger.debug("[AutoRegistration] Error checking isolate:", {
-            error,
-          });
-        }
-      }
-
-      // Clean up processed isolates that no longer exist (garbage collection)
-      for (const processedId of this.processedIsolates) {
-        if (!currentIsolateIds.has(processedId)) {
-          this.processedIsolates.delete(processedId);
-          this.logger.debug(
-            `[AutoRegistration] Cleaned up processed isolate ${processedId}`
-          );
-        }
-      }
-    } catch (error) {
-      this.logger.debug(
-        "[AutoRegistration] Error checking reload indicators:",
-        { error }
-      );
-    }
   }
 }

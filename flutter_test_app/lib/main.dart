@@ -204,8 +204,6 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
-  bool _isConnected = false;
-  Set<MCPCallEntry> _localEntries = {};
 
   @override
   void initState() {
@@ -224,10 +222,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _checkConnectionStatus() {
-    setState(() {
-      _isConnected = true; // Always true since we use service extensions
-      _localEntries = {}; // Service extensions are registered automatically
-    });
+    setState(() {});
   }
 
   Future<void> _registerNewTool() async {
@@ -293,42 +288,6 @@ class _MyHomePageState extends State<MyHomePage> {
               style: TextStyle(fontSize: 16),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 20),
-
-            // Connection Status
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color:
-                    _isConnected ? Colors.green.shade100 : Colors.red.shade100,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: _isConnected ? Colors.green : Colors.red,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    _isConnected ? Icons.check_circle : Icons.error,
-                    color: _isConnected ? Colors.green : Colors.red,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    _isConnected
-                        ? 'Connected to MCP Server'
-                        : 'Not connected to MCP Server',
-                    style: TextStyle(
-                      color:
-                          _isConnected
-                              ? Colors.green.shade800
-                              : Colors.red.shade800,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
 
             const SizedBox(height: 20),
             const Text('Counter value:'),
@@ -345,11 +304,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
             const SizedBox(height: 20),
             Text(
-              'Local Entries: ${_localEntries.length}',
+              'Local Entries: ${MCPToolkitBinding.instance.allEntries.length}',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
 
-            if (_localEntries.isNotEmpty) ...[
+            if (MCPToolkitBinding.instance.allEntries.isNotEmpty) ...[
               const SizedBox(height: 10),
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -366,7 +325,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
-                    ..._localEntries.map(
+                    ...MCPToolkitBinding.instance.allEntries.map(
                       (entry) => Padding(
                         padding: const EdgeInsets.symmetric(vertical: 2),
                         child: Text(
