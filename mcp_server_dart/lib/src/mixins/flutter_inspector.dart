@@ -13,11 +13,12 @@ import 'package:is_dart_empty_or_not/is_dart_empty_or_not.dart';
 import 'package:meta/meta.dart';
 import 'package:vm_service/vm_service.dart';
 
+import '../server.dart';
 import 'vm_service_support.dart';
 
 /// Mix this in to any MCPServer to add Flutter Inspector functionality.
 base mixin FlutterInspector
-    on ToolsSupport, ResourcesSupport, VMServiceSupport {
+    on BaseMCPToolkitServer, ToolsSupport, ResourcesSupport, VMServiceSupport {
   @override
   FutureOr<InitializeResult> initialize(final InitializeRequest request) {
     // Register core tools
@@ -26,10 +27,8 @@ base mixin FlutterInspector
     registerTool(getExtensionRpcsTool, _getExtensionRpcs);
     registerTool(getActivePortsTool, _getActivePorts);
 
-    final server = this as VMServiceConfiguration;
-
     // Register debug dump tools
-    if (server.dumpsSupported) {
+    if (configuration.dumpsSupported) {
       registerTool(debugDumpLayerTreeTool, _debugDumpLayerTree);
       registerTool(debugDumpSemanticsTreeTool, _debugDumpSemanticsTree);
       registerTool(debugDumpRenderTreeTool, _debugDumpRenderTree);
@@ -37,7 +36,7 @@ base mixin FlutterInspector
     }
 
     // Smart registration: Resources OR Tools (not both)
-    if (server.enableResources) {
+    if (configuration.resourcesSupported) {
       // Register as resources (existing behavior)
       _registerResources();
     } else {
@@ -73,16 +72,14 @@ base mixin FlutterInspector
 
   /// Register resources for widget tree, screenshots, and app errors.
   void _registerResources() {
-    final server = this as VMServiceConfiguration;
-
     // App errors resource
-    final lastestAppErrorSrc = Resource(
+    final latestAppErrorSrc = Resource(
       uri: 'visual://localhost/app/errors/latest',
       name: 'Latest Application Error',
       mimeType: 'application/json',
       description: 'Get the most recent application error from Dart VM',
     );
-    addResource(lastestAppErrorSrc, _handleAppErrorsResource);
+    addResource(latestAppErrorSrc, _handleAppErrorsResource);
 
     // App errors resource
     final appErrorsResource = ResourceTemplate(
@@ -95,7 +92,7 @@ base mixin FlutterInspector
     addResourceTemplate(appErrorsResource, _handleAppErrorsResource);
 
     // Screenshots resource (if images supported)
-    if (server.enableImages) {
+    if (configuration.imagesSupported) {
       final screenshotsResource = Resource(
         uri: 'visual://localhost/view/screenshots',
         name: 'Screenshots',
@@ -631,8 +628,7 @@ base mixin FlutterInspector
     registerTool(getAppErrorsTool, _getAppErrors);
 
     // Register screenshots tool if images supported
-    final server = this as VMServiceConfiguration;
-    if (server.enableImages) {
+    if (configuration.imagesSupported) {
       registerTool(getScreenshotsTool, _getScreenshots);
     }
 
@@ -651,13 +647,15 @@ base mixin FlutterInspector
     }
 
     try {
-      final count = request.arguments?['count'] as int? ?? 4;
+      final count = jsonDecodeInt(request.arguments?['count']).whenZeroUse(4);
       final result = await callFlutterExtension('ext.mcp.toolkit.app_errors', {
         'count': count,
       });
 
-      final errors = result.json?['errors'] as List? ?? [];
-      final message = result.json?['message'] as String? ?? 'No errors found';
+      final errors = jsonDecodeList(result.json?['errors']);
+      final message = jsonDecodeString(
+        result.json?['message'],
+      ).whenEmptyUse('No errors found');
 
       return CallToolResult(
         content: [TextContent(text: '$message\n${jsonEncode(errors)}')],

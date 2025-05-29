@@ -233,14 +233,3 @@ base mixin VMServiceSupport on MCPServer {
     }
   }
 }
-
-/// Interface for accessing VM service configuration.
-abstract interface class VMServiceConfiguration {
-  String get vmHost;
-  int get vmPort;
-  bool get enableResources;
-  bool get enableImages;
-  bool get dumpsSupported;
-  String get logLevel;
-  String get environment;
-}

@@ -19,24 +19,14 @@ void main(final List<String> args) async {
 
   await runZonedGuarded(
     () async {
-      await FlutterInspectorMCPServer.connect(
-        StreamChannel.withCloseGuarantee(io.stdin, io.stdout)
-            .transform(StreamChannelTransformer.fromCodec(utf8))
-            .transformStream(const LineSplitter())
-            .transformSink(
-              StreamSinkTransformer.fromHandlers(
-                handleData: (final data, final sink) {
-                  sink.add('$data\n');
-                },
-              ),
-            ),
-        dartVMHost:
+      final VMServiceConfiguration configuration = (
+        vmHost:
             parsedArgs.option(dartVMHost) ??
             const String.fromEnvironment(
               'DART_VM_HOST',
               defaultValue: 'localhost',
             ),
-        dartVMPort:
+        vmPort:
             int.tryParse(
               parsedArgs.option(dartVMPort) ??
                   const String.fromEnvironment(
@@ -47,7 +37,6 @@ void main(final List<String> args) async {
             8181,
         resourcesSupported: parsedArgs.flag(resourcesSupported),
         imagesSupported: parsedArgs.flag(imagesSupported),
-
         dumpsSupported: parsedArgs.flag(dumpsSupported),
         logLevel:
             parsedArgs.option(logLevel) ??
@@ -58,6 +47,19 @@ void main(final List<String> args) async {
               'NODE_ENV',
               defaultValue: 'production',
             ),
+      );
+      await MCPToolkitServer.connect(
+        StreamChannel.withCloseGuarantee(io.stdin, io.stdout)
+            .transform(StreamChannelTransformer.fromCodec(utf8))
+            .transformStream(const LineSplitter())
+            .transformSink(
+              StreamSinkTransformer.fromHandlers(
+                handleData: (final data, final sink) {
+                  sink.add('$data\n');
+                },
+              ),
+            ),
+        configuration: configuration,
       );
     },
     (final e, final s) {

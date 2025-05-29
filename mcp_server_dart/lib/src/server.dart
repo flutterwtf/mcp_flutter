@@ -9,21 +9,38 @@ import 'package:stream_channel/stream_channel.dart';
 import 'mixins/flutter_inspector.dart';
 import 'mixins/vm_service_support.dart';
 
+/// Interface for accessing VM service configuration.
+typedef VMServiceConfiguration =
+    ({
+      String vmHost,
+      int vmPort,
+      bool resourcesSupported,
+      bool imagesSupported,
+      bool dumpsSupported,
+      String logLevel,
+      String environment,
+    });
+
+abstract base class BaseMCPToolkitServer extends MCPServer {
+  BaseMCPToolkitServer.fromStreamChannel(
+    super.channel, {
+    required this.configuration,
+    required super.implementation,
+    required super.instructions,
+    super.protocolLogSink,
+  }) : super.fromStreamChannel();
+
+  final VMServiceConfiguration configuration;
+}
+
 /// Flutter Inspector MCP Server
 ///
 /// Provides tools and resources for Flutter app inspection and debugging
-final class FlutterInspectorMCPServer extends MCPServer
-    with ToolsSupport, ResourcesSupport, VMServiceSupport, FlutterInspector
-    implements VMServiceConfiguration {
-  FlutterInspectorMCPServer.fromStreamChannel(
+final class MCPToolkitServer extends BaseMCPToolkitServer
+    with ToolsSupport, ResourcesSupport, VMServiceSupport, FlutterInspector {
+  MCPToolkitServer.fromStreamChannel(
     super.channel, {
-    required this.vmHost,
-    required this.vmPort,
-    required this.enableResources,
-    required this.enableImages,
-    required this.dumpsSupported,
-    required this.logLevel,
-    required this.environment,
+    required super.configuration,
   }) : super.fromStreamChannel(
          implementation: ServerImplementation(
            name: 'flutter-inspector',
@@ -39,7 +56,7 @@ Available tools:
 - get_vm: Get VM information
 - get_extension_rpcs: List available extension RPCs
 
-${dumpsSupported ? '''
+${configuration.dumpsSupported ? '''
 - debug_dump_layer_tree: Dump layer tree (WARNING: Heavy operation)
 - debug_dump_semantics_tree: Dump semantics tree (WARNING: Heavy operation)
 - debug_dump_semantics_tree_inverse: Dump semantics tree in inverse order (WARNING: Heavy operation)
@@ -48,7 +65,7 @@ ${dumpsSupported ? '''
 - get_active_ports: Get list of Flutter/Dart process ports
 ''' : ''}
 
-${enableResources ? '''
+${configuration.resourcesSupported ? '''
 Available resources:
 - visual://localhost/app/errors/latest: Get latest app errors
 - visual://localhost/app/errors/{count}: Get certain number of app errors
@@ -68,20 +85,12 @@ Connect to a running Flutter app on debug mode to use these features.
           ''',
        );
 
-  @override
-  final String vmHost;
-  @override
-  final int vmPort;
-  @override
-  final bool enableResources;
-  @override
-  final bool enableImages;
-  @override
-  final bool dumpsSupported;
-  @override
-  final String logLevel;
-  @override
-  final String environment;
+  /// Create and connect a Flutter Inspector MCP Server
+  factory MCPToolkitServer.connect(
+    final StreamChannel<String> channel, {
+    required final VMServiceConfiguration configuration,
+  }) =>
+      MCPToolkitServer.fromStreamChannel(channel, configuration: configuration);
 
   @override
   FutureOr<InitializeResult> initialize(final InitializeRequest request) async {
@@ -123,30 +132,5 @@ Connect to a running Flutter app on debug mode to use these features.
   Future<void> shutdown() async {
     await disconnectVMService();
     await super.shutdown();
-  }
-
-  /// Create and connect a Flutter Inspector MCP Server
-  static Future<FlutterInspectorMCPServer> connect(
-    final StreamChannel<String> channel, {
-    required final String dartVMHost,
-    required final int dartVMPort,
-    final bool resourcesSupported = true,
-    final bool imagesSupported = false,
-    final bool dumpsSupported = false,
-    final String logLevel = 'critical',
-    final String environment = 'production',
-  }) async {
-    final server = FlutterInspectorMCPServer.fromStreamChannel(
-      channel,
-      vmHost: dartVMHost,
-      vmPort: dartVMPort,
-      enableResources: resourcesSupported,
-      enableImages: imagesSupported,
-      dumpsSupported: dumpsSupported,
-      logLevel: logLevel,
-      environment: environment,
-    );
-
-    return server;
   }
 }
