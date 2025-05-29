@@ -240,4 +240,7 @@ abstract interface class VMServiceConfiguration {
   int get vmPort;
   bool get enableResources;
   bool get enableImages;
+  bool get dumpsSupported;
+  String get logLevel;
+  String get environment;
 }

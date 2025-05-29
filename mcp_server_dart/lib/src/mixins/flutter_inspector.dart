@@ -5,9 +5,11 @@
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:dart_mcp/server.dart';
 import 'package:from_json_to_json/from_json_to_json.dart';
+import 'package:is_dart_empty_or_not/is_dart_empty_or_not.dart';
 import 'package:meta/meta.dart';
 import 'package:vm_service/vm_service.dart';
 
@@ -18,16 +20,29 @@ base mixin FlutterInspector
     on ToolsSupport, ResourcesSupport, VMServiceSupport {
   @override
   FutureOr<InitializeResult> initialize(final InitializeRequest request) {
-    // Register tools
+    // Register core tools
     registerTool(hotReloadTool, _hotReload);
     registerTool(getVmTool, _getVm);
     registerTool(getExtensionRpcsTool, _getExtensionRpcs);
-    registerTool(testCustomExtTool, _testCustomExt);
+    registerTool(getActivePortsTool, _getActivePorts);
 
-    // Register resources if supported
     final server = this as VMServiceConfiguration;
+
+    // Register debug dump tools
+    if (server.dumpsSupported) {
+      registerTool(debugDumpLayerTreeTool, _debugDumpLayerTree);
+      registerTool(debugDumpSemanticsTreeTool, _debugDumpSemanticsTree);
+      registerTool(debugDumpRenderTreeTool, _debugDumpRenderTree);
+      registerTool(debugDumpFocusTreeTool, _debugDumpFocusTree);
+    }
+
+    // Smart registration: Resources OR Tools (not both)
     if (server.enableResources) {
+      // Register as resources (existing behavior)
       _registerResources();
+    } else {
+      // Register as tools instead
+      _registerResourcesAsTools();
     }
 
     return super.initialize(request);
@@ -61,18 +76,30 @@ base mixin FlutterInspector
     final server = this as VMServiceConfiguration;
 
     // App errors resource
-    final appErrorsResource = Resource(
+    final lastestAppErrorSrc = Resource(
       uri: 'visual://localhost/app/errors/latest',
       name: 'Latest Application Error',
+      mimeType: 'application/json',
       description: 'Get the most recent application error from Dart VM',
     );
-    addResource(appErrorsResource, _handleAppErrorsResource);
+    addResource(lastestAppErrorSrc, _handleAppErrorsResource);
+
+    // App errors resource
+    final appErrorsResource = ResourceTemplate(
+      uriTemplate: 'visual://localhost/app/errors/{count}',
+      name: 'Application Errors',
+      mimeType: 'application/json',
+      description:
+          'Get a specified number of latest application errors from Dart VM. Limit to 4 or fewer for performance.',
+    );
+    addResourceTemplate(appErrorsResource, _handleAppErrorsResource);
 
     // Screenshots resource (if images supported)
     if (server.enableImages) {
       final screenshotsResource = Resource(
         uri: 'visual://localhost/view/screenshots',
         name: 'Screenshots',
+        mimeType: 'image/png',
         description:
             'Get screenshots of all views in the application. Returns base64 encoded images.',
       );
@@ -83,6 +110,7 @@ base mixin FlutterInspector
     final viewDetailsResource = Resource(
       uri: 'visual://localhost/view/details',
       name: 'View Details',
+      mimeType: 'application/json',
       description: 'Get details for all views in the application.',
     );
     addResource(viewDetailsResource, _handleViewDetailsResource);
@@ -173,42 +201,20 @@ base mixin FlutterInspector
     }
   }
 
-  /// Test custom extension.
-  Future<CallToolResult> _testCustomExt(final CallToolRequest request) async {
-    final connected = await ensureVMServiceConnected();
-    if (!connected) {
-      return CallToolResult(
-        isError: true,
-        content: [TextContent(text: 'VM service not connected')],
-      );
-    }
-    try {
-      final result = await callFlutterExtension('ext.mcp.toolkit.app_errors', {
-        'count': 10,
-      });
-
-      return CallToolResult(
-        content: [TextContent(text: jsonEncode(result.json))],
-      );
-    } catch (e) {
-      return CallToolResult(
-        isError: true,
-        content: [TextContent(text: 'Test custom extension failed: $e')],
-      );
-    }
-  }
-
   /// Handle app errors resource request.
   Future<ReadResourceResult> _handleAppErrorsResource(
     final ReadResourceRequest request,
   ) async {
     try {
+      final count = Uri.parse(request.uri).pathSegments.last;
       final result = await callFlutterExtension('ext.mcp.toolkit.app_errors', {
-        'count': 4,
+        'count': jsonDecodeInt(count).whenZeroUse(4),
       });
 
-      final errors = result.json?['errors'] as List? ?? [];
-      final message = result.json?['message'] as String? ?? 'No errors found';
+      final errors = jsonDecodeList(result.json?['errors']);
+      final message = jsonDecodeString(
+        result.json?['message'],
+      ).whenEmptyUse('No errors found');
 
       if (errors.isEmpty) {
         return ReadResourceResult(
@@ -246,7 +252,7 @@ base mixin FlutterInspector
         {'compress': true},
       );
 
-      final images = result.json?['images'] as List? ?? [];
+      final images = jsonDecodeListAs<String>(result.json?['images']);
 
       return ReadResourceResult(
         contents:
@@ -254,7 +260,7 @@ base mixin FlutterInspector
                 .map(
                   (final image) => BlobResourceContents(
                     uri: request.uri,
-                    blob: image as String,
+                    blob: image,
                     mimeType: 'image/png',
                   ),
                 )
@@ -282,14 +288,18 @@ base mixin FlutterInspector
         {},
       );
 
-      final details = result.json?['details'] ?? {};
-      final message = result.json?['message'] as String? ?? 'View details';
+      final details = jsonDecodeString(result.json?['details']);
+      final message = jsonDecodeString(
+        result.json?['message'],
+      ).whenEmptyUse('View details');
 
       return ReadResourceResult(
         contents: [
+          TextResourceContents(uri: request.uri, text: '$message'),
           TextResourceContents(
             uri: request.uri,
-            text: '$message\n${jsonEncode(details)}',
+            text: '$details',
+            mimeType: 'application/json',
           ),
         ],
       );
@@ -363,10 +373,9 @@ base mixin FlutterInspector
   );
 
   @visibleForTesting
-  static final testCustomExtTool = Tool(
-    name: 'test_custom_ext',
-    description:
-        'Utility: Test the custom extension. This is a helper tool for testing the custom extension.',
+  static final debugDumpLayerTreeTool = Tool(
+    name: 'debug_dump_layer_tree',
+    description: 'Dumps the layer tree of the Flutter app.',
     inputSchema: Schema.object(
       properties: {
         'port': Schema.int(
@@ -376,4 +385,354 @@ base mixin FlutterInspector
       },
     ),
   );
+
+  @visibleForTesting
+  static final debugDumpSemanticsTreeTool = Tool(
+    name: 'debug_dump_semantics_tree',
+    description: 'Dumps the semantics tree of the Flutter app.',
+    inputSchema: Schema.object(
+      properties: {
+        'port': Schema.int(
+          description:
+              'Optional: Custom port number if not using default Flutter debug port 8181',
+        ),
+      },
+    ),
+  );
+
+  @visibleForTesting
+  static final debugDumpRenderTreeTool = Tool(
+    name: 'debug_dump_render_tree',
+    description: 'Dumps the render tree of the Flutter app.',
+    inputSchema: Schema.object(
+      properties: {
+        'port': Schema.int(
+          description:
+              'Optional: Custom port number if not using default Flutter debug port 8181',
+        ),
+      },
+    ),
+  );
+
+  @visibleForTesting
+  static final debugDumpFocusTreeTool = Tool(
+    name: 'debug_dump_focus_tree',
+    description: 'Dumps the focus tree of the Flutter app.',
+    inputSchema: Schema.object(
+      properties: {
+        'port': Schema.int(
+          description:
+              'Optional: Custom port number if not using default Flutter debug port 8181',
+        ),
+      },
+    ),
+  );
+
+  @visibleForTesting
+  static final getActivePortsTool = Tool(
+    name: 'get_active_ports',
+    description: 'Gets the active ports of the Flutter app.',
+    inputSchema: Schema.object(
+      properties: {
+        'port': Schema.int(
+          description:
+              'Optional: Custom port number if not using default Flutter debug port 8181',
+        ),
+      },
+    ),
+  );
+
+  @visibleForTesting
+  static final getAppErrorsTool = Tool(
+    name: 'get_app_errors',
+    description: 'Get the most recent application errors from Dart VM',
+    inputSchema: Schema.object(
+      properties: {
+        'count': Schema.int(
+          description: 'Number of recent errors to retrieve (default: 4)',
+        ),
+      },
+    ),
+  );
+
+  @visibleForTesting
+  static final getScreenshotsTool = Tool(
+    name: 'get_screenshots',
+    description: 'Get screenshots of all views in the application',
+    inputSchema: Schema.object(
+      properties: {
+        'compress': Schema.bool(
+          description: 'Whether to compress the images (default: true)',
+        ),
+      },
+    ),
+  );
+
+  @visibleForTesting
+  static final getViewDetailsTool = Tool(
+    name: 'get_view_details',
+    description: 'Get details for all views in the application',
+    inputSchema: Schema.object(properties: {}),
+  );
+
+  /// Debug dump layer tree.
+  Future<CallToolResult> _debugDumpLayerTree(
+    final CallToolRequest request,
+  ) async {
+    final connected = await ensureVMServiceConnected();
+    if (!connected) {
+      return CallToolResult(
+        isError: true,
+        content: [TextContent(text: 'VM service not connected')],
+      );
+    }
+
+    try {
+      final result = await callFlutterExtension(
+        'ext.flutter.debugDumpLayerTree',
+        {},
+      );
+      return CallToolResult(
+        content: [TextContent(text: jsonEncode(result.json))],
+      );
+    } catch (e) {
+      return CallToolResult(
+        isError: true,
+        content: [TextContent(text: 'Debug dump layer tree failed: $e')],
+      );
+    }
+  }
+
+  /// Debug dump semantics tree.
+  Future<CallToolResult> _debugDumpSemanticsTree(
+    final CallToolRequest request,
+  ) async {
+    final connected = await ensureVMServiceConnected();
+    if (!connected) {
+      return CallToolResult(
+        isError: true,
+        content: [TextContent(text: 'VM service not connected')],
+      );
+    }
+
+    try {
+      final result = await callFlutterExtension(
+        'ext.flutter.debugDumpSemanticsTreeInTraversalOrder',
+        {},
+      );
+      return CallToolResult(
+        content: [TextContent(text: jsonEncode(result.json))],
+      );
+    } catch (e) {
+      return CallToolResult(
+        isError: true,
+        content: [TextContent(text: 'Debug dump semantics tree failed: $e')],
+      );
+    }
+  }
+
+  /// Debug dump render tree.
+  Future<CallToolResult> _debugDumpRenderTree(
+    final CallToolRequest request,
+  ) async {
+    final connected = await ensureVMServiceConnected();
+    if (!connected) {
+      return CallToolResult(
+        isError: true,
+        content: [TextContent(text: 'VM service not connected')],
+      );
+    }
+
+    try {
+      final result = await callFlutterExtension(
+        'ext.flutter.debugDumpRenderTree',
+        {},
+      );
+      return CallToolResult(
+        content: [TextContent(text: jsonEncode(result.json))],
+      );
+    } catch (e) {
+      return CallToolResult(
+        isError: true,
+        content: [TextContent(text: 'Debug dump render tree failed: $e')],
+      );
+    }
+  }
+
+  /// Debug dump focus tree.
+  Future<CallToolResult> _debugDumpFocusTree(
+    final CallToolRequest request,
+  ) async {
+    final connected = await ensureVMServiceConnected();
+    if (!connected) {
+      return CallToolResult(
+        isError: true,
+        content: [TextContent(text: 'VM service not connected')],
+      );
+    }
+
+    try {
+      final result = await callFlutterExtension(
+        'ext.flutter.debugDumpFocusTree',
+        {},
+      );
+      return CallToolResult(
+        content: [TextContent(text: jsonEncode(result.json))],
+      );
+    } catch (e) {
+      return CallToolResult(
+        isError: true,
+        content: [TextContent(text: 'Debug dump focus tree failed: $e')],
+      );
+    }
+  }
+
+  /// Get active ports.
+  Future<CallToolResult> _getActivePorts(final CallToolRequest request) async {
+    try {
+      // Implement port scanning logic
+      final ports = await _scanForFlutterPorts();
+      return CallToolResult(content: [TextContent(text: jsonEncode(ports))]);
+    } catch (e) {
+      return CallToolResult(
+        isError: true,
+        content: [TextContent(text: 'Failed to get active ports: $e')],
+      );
+    }
+  }
+
+  /// Scan for ports where Flutter/Dart processes are listening
+  Future<List<int>> _scanForFlutterPorts() async {
+    final activePorts = <int>[];
+
+    // Common Flutter debug ports to check
+    final portsToCheck = [8181, 8080, 3000, 5000, 8000, 8888, 9000];
+
+    for (final port in portsToCheck) {
+      try {
+        final socket = await Socket.connect(
+          'localhost',
+          port,
+          timeout: const Duration(milliseconds: 100),
+        );
+        await socket.close();
+        activePorts.add(port);
+      } catch (e) {
+        // Port not available, continue
+      }
+    }
+
+    return activePorts;
+  }
+
+  /// Register resource functionality as tools when resources not supported
+  void _registerResourcesAsTools() {
+    // Always register app errors tool
+    registerTool(getAppErrorsTool, _getAppErrors);
+
+    // Register screenshots tool if images supported
+    final server = this as VMServiceConfiguration;
+    if (server.enableImages) {
+      registerTool(getScreenshotsTool, _getScreenshots);
+    }
+
+    // Always register view details tool
+    registerTool(getViewDetailsTool, _getViewDetails);
+  }
+
+  /// Get app errors as tool.
+  Future<CallToolResult> _getAppErrors(final CallToolRequest request) async {
+    final connected = await ensureVMServiceConnected();
+    if (!connected) {
+      return CallToolResult(
+        isError: true,
+        content: [TextContent(text: 'VM service not connected')],
+      );
+    }
+
+    try {
+      final count = request.arguments?['count'] as int? ?? 4;
+      final result = await callFlutterExtension('ext.mcp.toolkit.app_errors', {
+        'count': count,
+      });
+
+      final errors = result.json?['errors'] as List? ?? [];
+      final message = result.json?['message'] as String? ?? 'No errors found';
+
+      return CallToolResult(
+        content: [TextContent(text: '$message\n${jsonEncode(errors)}')],
+      );
+    } catch (e) {
+      return CallToolResult(
+        isError: true,
+        content: [TextContent(text: 'Failed to get app errors: $e')],
+      );
+    }
+  }
+
+  /// Get screenshots as tool.
+  Future<CallToolResult> _getScreenshots(final CallToolRequest request) async {
+    final connected = await ensureVMServiceConnected();
+    if (!connected) {
+      return CallToolResult(
+        isError: true,
+        content: [TextContent(text: 'VM service not connected')],
+      );
+    }
+
+    try {
+      final compress =
+          bool.tryParse('${request.arguments?['compress']}') ?? true;
+      final result = await callFlutterExtension(
+        'ext.mcp.toolkit.view_screenshots',
+        {'compress': compress},
+      );
+
+      final images = jsonDecodeList(result.json?['images']);
+
+      return CallToolResult(
+        content: [
+          ...images.map(
+            (final image) => ImageContent(data: image, mimeType: 'image/png'),
+          ),
+        ],
+      );
+    } catch (e) {
+      return CallToolResult(
+        isError: true,
+        content: [TextContent(text: 'Failed to get screenshots: $e')],
+      );
+    }
+  }
+
+  /// Get view details as tool.
+  Future<CallToolResult> _getViewDetails(final CallToolRequest request) async {
+    final connected = await ensureVMServiceConnected();
+    if (!connected) {
+      return CallToolResult(
+        isError: true,
+        content: [TextContent(text: 'VM service not connected')],
+      );
+    }
+
+    try {
+      final result = await callFlutterExtension(
+        'ext.mcp.toolkit.view_details',
+        {},
+      );
+      final details = jsonDecodeString(result.json?['details']);
+      final message = jsonDecodeString(
+        result.json?['message'],
+      ).whenEmptyUse('View details');
+
+      return CallToolResult(
+        content: [TextContent(text: message), TextContent(text: details)],
+      );
+    } catch (e) {
+      return CallToolResult(
+        isError: true,
+        content: [TextContent(text: 'Failed to get view details: $e')],
+      );
+    }
+  }
 }

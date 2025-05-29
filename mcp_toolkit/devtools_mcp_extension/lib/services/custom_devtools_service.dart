@@ -1,11 +1,6 @@
 // ignore_for_file: avoid_catches_without_on_clauses
 
-import 'dart:convert';
-
 import 'package:devtools_mcp_extension/common_imports.dart';
-import 'package:devtools_mcp_extension/core/devtools_core/shared/diagnostics/diagnostics_node.dart';
-import 'package:devtools_mcp_extension/core/devtools_core/shared/diagnostics/inspector_service.dart'
-    as inspector_service;
 import 'package:devtools_mcp_extension/services/error_devtools/error_monitor.dart';
 import 'package:devtools_mcp_extension/services/object_group_manager.dart';
 
@@ -107,115 +102,115 @@ final class CustomDevtoolsService extends BaseDevtoolsService {
     //   isolateId,
     //   'RenderFlex#${errors.first.renderFlexId}', // The ID from RenderFlex#f8f6b
     // );
-    final group = objectGroupManager.next;
-    final response = await devtoolsService.serviceManager.callService(
-      // 'ext.flutter.inspector.'
-      // '${WidgetInspectorServiceExtensions.getRootWidget.name}',
-      'reloadSources',
-      isolateId:
-          devtoolsService.serviceManager.isolateManager.mainIsolate.value?.id
-              ?.split('/')
-              .last ??
-          '',
-      args: {
-        // 'isolateId':
-        //     devtoolsService.serviceManager.isolateManager.mainIsolate.value?.id
-        //         ?.split('/')
-        //         .last ??
-        //     '',
-        // 'groupName': group.groupName,
-        // 'objectGroup': group.groupName,
-        // 'isSummaryTree': 'true',
-        // 'withPreviews': 'true',
-        // 'fullDetails': 'true',
-        'force': true,
-      },
-    );
+    // final group = objectGroupManager.next;
+    // final response = await devtoolsService.serviceManager.callService(
+    //   // 'ext.flutter.inspector.'
+    //   // '${WidgetInspectorServiceExtensions.getRootWidget.name}',
+    //   'reloadSources',
+    //   isolateId:
+    //       devtoolsService.serviceManager.isolateManager.mainIsolate.value?.id
+    //           ?.split('/')
+    //           .last ??
+    //       '',
+    //   args: {
+    //     // 'isolateId':
+    //     //     devtoolsService.serviceManager.isolateManager.mainIsolate.value?.id
+    //     //         ?.split('/')
+    //     //         .last ??
+    //     //     '',
+    //     // 'groupName': group.groupName,
+    //     // 'objectGroup': group.groupName,
+    //     // 'isSummaryTree': 'true',
+    //     // 'withPreviews': 'true',
+    //     // 'fullDetails': 'true',
+    //     'force': true,
+    //   },
+    // );
 
-    final objectGroupApi = inspector_service.ObjectGroup(
-      'visual-errors',
-      inspector_service.InspectorService(
-        dartVmDevtoolsService: devtoolsService,
-      ),
-    );
+    // final objectGroupApi = inspector_service.ObjectGroup(
+    //   'visual-errors',
+    //   inspector_service.InspectorService(
+    //     dartVmDevtoolsService: devtoolsService,
+    //   ),
+    // );
 
-    final rootNodes = RemoteDiagnosticsNode(
-      response.json!['result'] as Map<String, Object?>,
-      objectGroupApi,
-      false,
-      null,
-    );
+    // final rootNodes = RemoteDiagnosticsNode(
+    //   response.json!['result'] as Map<String, Object?>,
+    //   objectGroupApi,
+    //   false,
+    //   null,
+    // );
 
-    // one of children contains in description correct renderFlexId.
-    // so we need to find it and use it as rootNode.
-    Future<RemoteDiagnosticsNode?> findNodeWithId(
-      final RemoteDiagnosticsNode node,
-      final String id,
-    ) async {
-      if (node.toString(minLevel: DiagnosticLevel.debug).contains(id)) {
-        return node;
-      }
-      if (!node.hasChildren) return null;
-      final children = await node.children ?? [];
-      for (final child in children) {
-        final found = await findNodeWithId(child, id);
-        if (found != null) return found;
-      }
-      return null;
-    }
+    // // one of children contains in description correct renderFlexId.
+    // // so we need to find it and use it as rootNode.
+    // Future<RemoteDiagnosticsNode?> findNodeWithId(
+    //   final RemoteDiagnosticsNode node,
+    //   final String id,
+    // ) async {
+    //   if (node.toString(minLevel: DiagnosticLevel.debug).contains(id)) {
+    //     return node;
+    //   }
+    //   if (!node.hasChildren) return null;
+    //   final children = await node.children ?? [];
+    //   for (final child in children) {
+    //     final found = await findNodeWithId(child, id);
+    //     if (found != null) return found;
+    //   }
+    //   return null;
+    // }
 
-    // final rootNode = await findNodeWithId(rootNodes, errors.first.renderFlexId);
+    // // final rootNode = await findNodeWithId(rootNodes, errors.first.renderFlexId);
 
-    // print(jsonEncode(rootNode?.json));
+    // // print(jsonEncode(rootNode?.json));
 
-    // return RPCResponse.successMap({'errors': errors});
+    // // return RPCResponse.successMap({'errors': errors});
 
-    try {
-      // Get a new object group for this operation
-      final group = objectGroupManager.next;
+    // try {
+    //   // Get a new object group for this operation
+    //   final group = objectGroupManager.next;
 
-      try {
-        // Get the root widget tree with full details to analyze for errors
-        final response = await vmService.callServiceExtension(
-          'ext.flutter.inspector.getRootWidgetTree',
-          // isolateId: isolateId,
-          args: {
-            'groupName': group.groupName,
-            'isSummaryTree': 'true',
-            'withPreviews': 'true',
-            'fullDetails': 'false',
-          },
-        );
+    //   try {
+    //     // Get the root widget tree with full details to analyze for errors
+    //     final response = await vmService.callServiceExtension(
+    //       'ext.flutter.inspector.getRootWidgetTree',
+    //       // isolateId: isolateId,
+    //       args: {
+    //         'groupName': group.groupName,
+    //         'isSummaryTree': 'true',
+    //         'withPreviews': 'true',
+    //         'fullDetails': 'false',
+    //       },
+    //     );
 
-        if (response.json == null || response.json!['result'] == null) {
-          await objectGroupManager.cancelNext();
-          return RPCResponse.error('Root widget tree not available');
-        }
+    //     if (response.json == null || response.json!['result'] == null) {
+    //       await objectGroupManager.cancelNext();
+    //       return RPCResponse.error('Root widget tree not available');
+    //     }
 
-        // Parse the root node
-        final rootNode = RemoteDiagnosticsNode(
-          response.json!['result'] as Map<String, Object?>,
-          null, // objectGroupApi not needed for error detection
-          false, // not a property
-          null, // no parent
-        );
-        print(jsonEncode(rootNode.json));
+    //     // Parse the root node
+    //     final rootNode = RemoteDiagnosticsNode(
+    //       response.json!['result'] as Map<String, Object?>,
+    //       null, // objectGroupApi not needed for error detection
+    //       false, // not a property
+    //       null, // no parent
+    //     );
+    //     print(jsonEncode(rootNode.json));
 
-        // Find all errors in the tree
-        // final errors = await _findErrors(rootNode);
+    //     // Find all errors in the tree
+    //     // final errors = await _findErrors(rootNode);
 
-        // Promote the group after successful operation
-        await objectGroupManager.promoteNext();
+    //     // Promote the group after successful operation
+    //     await objectGroupManager.promoteNext();
 
-        return RPCResponse.successMap({'errors': []});
-      } catch (e) {
-        // Cancel the group on error
-        await objectGroupManager.cancelNext();
-        rethrow;
-      }
-    } catch (e, stackTrace) {
-      return RPCResponse.error('Error getting visual errors: $e', stackTrace);
-    }
+    //     return RPCResponse.successMap({'errors': []});
+    //   } catch (e) {
+    //     // Cancel the group on error
+    //     await objectGroupManager.cancelNext();
+    //     rethrow;
+    //   }
+    // } catch (e, stackTrace) {
+    //   return RPCResponse.error('Error getting visual errors: $e', stackTrace);
+    // }
   }
 
   /// Gets the diagnostic tree for the current Flutter widget tree.
@@ -276,20 +271,21 @@ final class CustomDevtoolsService extends BaseDevtoolsService {
         }
 
         // Parse the root node
-        final rootNode = RemoteDiagnosticsNode(
-          response.json!['result'] as Map<String, Object?>,
-          null, // objectGroupApi not needed for tree viewing
-          false, // not a property
-          null, // no parent
-        );
+        // final rootNode = RemoteDiagnosticsNode(
+        //   response.json!['result'] as Map<String, Object?>,
+        //   null, // objectGroupApi not needed for tree viewing
+        //   false, // not a property
+        //   null, // no parent
+        // );
 
         // Promote the group after successful operation
-        await objectGroupManager.promoteNext();
+        // await objectGroupManager.promoteNext();
 
-        return RPCResponse.successMap({
-          'root': rootNode.json,
-          'groupName': group.groupName,
-        });
+        // return RPCResponse.successMap({
+        //   'root': rootNode.json,
+        //   'groupName': group.groupName,
+        // });
+        throw UnimplementedError();
       } catch (e, stack) {
         // Cancel the group on error
         await objectGroupManager.cancelNext();
@@ -354,21 +350,21 @@ final class CustomDevtoolsService extends BaseDevtoolsService {
           propertiesResponse.json!['result'] as List<Object?>;
       final properties =
           propertiesList.map((final prop) {
-            final propNode = RemoteDiagnosticsNode(
-              prop! as Map<String, Object?>,
-              null, // objectGroupApi not needed for properties viewing
-              true, // this is a property
-              null, // no parent
-            );
-            return {
-              'name': propNode.name,
-              'description': propNode.description,
-              'value': propNode.valueRef.id,
-              'type': propNode.type,
-              'level': propNode.level.toString(),
-              'propertyType': propNode.propertyType,
-              'style': propNode.style.toString(),
-            };
+            // final propNode = RemoteDiagnosticsNode(
+            //   prop! as Map<String, Object?>,
+            //   null, // objectGroupApi not needed for properties viewing
+            //   true, // this is a property
+            //   null, // no parent
+            // );
+            // return {
+            //   'name': propNode.name,
+            //   'description': propNode.description,
+            //   'value': propNode.valueRef.id,
+            //   'type': propNode.type,
+            //   'level': propNode.level.toString(),
+            //   'propertyType': propNode.propertyType,
+            //   'style': propNode.style.toString(),
+            // };
           }).toList();
 
       // Get the parent chain for context
@@ -378,32 +374,33 @@ final class CustomDevtoolsService extends BaseDevtoolsService {
         args: {'arg': nodeId, 'objectGroup': groupName},
       );
 
-      List<Map<String, Object?>> parentChain = [];
-      if (parentChainResponse.json != null &&
-          parentChainResponse.json!['result'] != null) {
-        final List<Object?> chainList =
-            parentChainResponse.json!['result'] as List<Object?>;
-        parentChain =
-            chainList.map((final node) {
-              final parentNode = RemoteDiagnosticsNode(
-                node! as Map<String, Object?>,
-                null,
-                false,
-                null,
-              );
-              return {
-                'id': parentNode.valueRef.id,
-                'type': parentNode.type,
-                'description': parentNode.description,
-                'widgetRuntimeType': parentNode.widgetRuntimeType,
-              };
-            }).toList();
-      }
+      // List<Map<String, Object?>> parentChain = [];
+      // if (parentChainResponse.json != null &&
+      //     parentChainResponse.json!['result'] != null) {
+      //   final List<Object?> chainList =
+      //       parentChainResponse.json!['result'] as List<Object?>;
+      //   parentChain =
+      //       chainList.map((final node) {
+      //         final parentNode = RemoteDiagnosticsNode(
+      //           node! as Map<String, Object?>,
+      //           null,
+      //           false,
+      //           null,
+      //         );
+      //         return {
+      //           'id': parentNode.valueRef.id,
+      //           'type': parentNode.type,
+      //           'description': parentNode.description,
+      //           'widgetRuntimeType': parentNode.widgetRuntimeType,
+      //         };
+      //       }).toList();
+      // }
 
-      return RPCResponse.successMap({
-        'properties': properties,
-        'parentChain': parentChain,
-      });
+      // return RPCResponse.successMap({
+      //   'properties': properties,
+      //   'parentChain': parentChain,
+      // });
+      throw UnimplementedError();
     } catch (e, stack) {
       return RPCResponse.error('Error getting node details: $e', stack);
     }
@@ -455,26 +452,26 @@ final class CustomDevtoolsService extends BaseDevtoolsService {
       final List<Object?> childrenList =
           response.json!['result'] as List<Object?>;
       final children =
-          childrenList.map((final child) {
-            final childNode = RemoteDiagnosticsNode(
-              child! as Map<String, Object?>,
-              null, // objectGroupApi not needed for children viewing
-              false, // not a property
-              null, // parent will be set when tree is built
-            );
-            return {
-              'id': childNode.valueRef.id,
-              'description': childNode.description,
-              'type': childNode.type,
-              'style': childNode.style.toString(),
-              'hasChildren': childNode.hasChildren,
-              'widgetRuntimeType': childNode.widgetRuntimeType,
-              'isStateful': childNode.isStateful,
-              'isSummaryTree': childNode.isSummaryTree,
-            };
-          }).toList();
-
-      return RPCResponse.successMap({'children': children});
+          // childrenList.map((final child) {
+          //   final childNode = RemoteDiagnosticsNode(
+          //     child! as Map<String, Object?>,
+          //     null, // objectGroupApi not needed for children viewing
+          //     false, // not a property
+          //     null, // parent will be set when tree is built
+          //   );
+          //   return {
+          //     'id': childNode.valueRef.id,
+          //     'description': childNode.description,
+          //     'type': childNode.type,
+          //     'style': childNode.style.toString(),
+          //     'hasChildren': childNode.hasChildren,
+          //     'widgetRuntimeType': childNode.widgetRuntimeType,
+          //     'isStateful': childNode.isStateful,
+          //     'isSummaryTree': childNode.isSummaryTree,
+          //   };
+          // }).toList();
+          // return RPCResponse.successMap({'children': children});
+          throw UnimplementedError();
     } catch (e, stack) {
       return RPCResponse.error('Error getting node children: $e', stack);
     }
