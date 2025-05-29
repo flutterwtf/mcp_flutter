@@ -53,13 +53,36 @@ Connect to a running Flutter app on debug mode to use these features.
 
   @override
   FutureOr<InitializeResult> initialize(final InitializeRequest request) async {
-    // Initialize VM service connection
-    await initializeVMService();
-
-    // Call parent initialize which will trigger the mixin's initialize
+    // Call parent initialize first which will trigger the mixin's initialize
+    // This registers tools and resources regardless of VM service connection
     final result = await super.initialize(request);
 
+    // Try to initialize VM service connection (non-blocking)
+    // This allows tools to be available even if no Flutter app is running
+    _initializeVMServiceAsync()
+        .then((_) {
+          // VM service connected successfully
+        })
+        .catchError((final e, final s) {
+          // Log but don't fail - tools should still be available
+          print(
+            'VM service initialization failed (this is normal if no Flutter app is running): $e',
+          );
+        });
+
     return result;
+  }
+
+  /// Initialize VM service connection asynchronously without blocking
+  Future<void> _initializeVMServiceAsync() async {
+    try {
+      await initializeVMService();
+    } catch (e, s) {
+      // Log but don't fail - tools should still be available
+      print(
+        'VM service initialization failed (this is normal if no Flutter app is running): $e',
+      );
+    }
   }
 
   @override

@@ -90,6 +90,13 @@ base mixin FlutterInspector
 
   /// Hot reload the Flutter application.
   Future<CallToolResult> _hotReload(final CallToolRequest request) async {
+    final connected = await ensureVMServiceConnected();
+    if (!connected) {
+      return CallToolResult(
+        isError: true,
+        content: [TextContent(text: 'VM service not connected')],
+      );
+    }
     try {
       final result = await hotReload(
         force: jsonDecodeBool(request.arguments?['force']),
@@ -110,14 +117,14 @@ base mixin FlutterInspector
 
   /// Get VM information.
   Future<CallToolResult> _getVm(final CallToolRequest request) async {
+    final connected = await ensureVMServiceConnected();
+    if (!connected) {
+      return CallToolResult(
+        isError: true,
+        content: [TextContent(text: 'VM service not connected')],
+      );
+    }
     try {
-      if (vmService == null) {
-        return CallToolResult(
-          isError: true,
-          content: [TextContent(text: 'VM service not connected')],
-        );
-      }
-
       final vm = await vmService!.getVM();
 
       return CallToolResult(
@@ -135,14 +142,14 @@ base mixin FlutterInspector
   Future<CallToolResult> _getExtensionRpcs(
     final CallToolRequest request,
   ) async {
+    final connected = await ensureVMServiceConnected();
+    if (!connected) {
+      return CallToolResult(
+        isError: true,
+        content: [TextContent(text: 'VM service not connected')],
+      );
+    }
     try {
-      if (vmService == null) {
-        return CallToolResult(
-          isError: true,
-          content: [TextContent(text: 'VM service not connected')],
-        );
-      }
-
       final vm = await vmService!.getVM();
       final allExtensions = <String>[];
 
@@ -168,6 +175,13 @@ base mixin FlutterInspector
 
   /// Test custom extension.
   Future<CallToolResult> _testCustomExt(final CallToolRequest request) async {
+    final connected = await ensureVMServiceConnected();
+    if (!connected) {
+      return CallToolResult(
+        isError: true,
+        content: [TextContent(text: 'VM service not connected')],
+      );
+    }
     try {
       final result = await callFlutterExtension('ext.mcp.toolkit.app_errors', {
         'count': 10,

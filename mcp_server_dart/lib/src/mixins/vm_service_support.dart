@@ -5,7 +5,6 @@
 
 import 'dart:async';
 
-import 'package:collection/collection.dart';
 import 'package:dart_mcp/server.dart';
 import 'package:dtd/dtd.dart';
 import 'package:from_json_to_json/from_json_to_json.dart';
@@ -97,10 +96,15 @@ base mixin VMServiceSupport on MCPServer {
   /// Get the main isolate (Flutter app isolate)
   Future<IsolateRef?> getMainIsolate() async {
     final isolates = await getIsolates();
-    // Find isolate with Flutter app name pattern
-    return isolates.firstWhereOrNull(
-      (final isolate) => isolate.name?.contains('flutter') ?? false,
-    );
+    // Find isolate with Flutter extension RPCs
+    for (final isolate in isolates) {
+      final isolateInfo = await _vmService!.getIsolate(isolate.id!);
+      final extensionRPCs = isolateInfo.extensionRPCs ?? [];
+      if (extensionRPCs.any((final ext) => ext.startsWith('ext.flutter'))) {
+        return isolate;
+      }
+    }
+    return null;
   }
 
   /// Hot reload the Flutter app
@@ -208,6 +212,24 @@ base mixin VMServiceSupport on MCPServer {
       return {'extensions': isolateInfo.extensionRPCs};
     } catch (e, s) {
       return {'error': 'Failed to get extension RPCs: $e $s'};
+    }
+  }
+
+  /// Ensure VM service is connected; try to connect if not.
+  Future<bool> ensureVMServiceConnected({
+    final Duration timeout = const Duration(seconds: 2),
+  }) async {
+    if (isVMServiceConnected) return true;
+    try {
+      final connectFuture = initializeVMService();
+      if (timeout != Duration.zero) {
+        await connectFuture.timeout(timeout);
+      } else {
+        await connectFuture;
+      }
+      return isVMServiceConnected;
+    } catch (_) {
+      return false;
     }
   }
 }

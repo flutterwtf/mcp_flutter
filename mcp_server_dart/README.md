@@ -20,6 +20,10 @@ A Model Context Protocol (MCP) server implementation in Dart that provides Flutt
 
 ### Build from Source
 
+- **[Cursor MCP Integration](../docs/cursor_mcp_integration.md)** - Complete guide for Cursor IDE integration
+- **[Quick Cursor Setup](../docs/quick_setup_cursor.md)** - 5-minute setup guide
+- **[Testing MCP Server](../docs/testing_mcp_server.md)** - Comprehensive testing and troubleshooting guide
+
 ```bash
 cd mcp_server_dart
 dart pub get
