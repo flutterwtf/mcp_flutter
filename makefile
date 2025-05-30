@@ -11,3 +11,6 @@ build:
 	cd $(CURDIR)/mcp_server && npm run build
 inspect:
 	cd $(CURDIR)/mcp_server && npm run inspect 
+
+install-dart:
+	cd $(CURDIR)/mcp_server_dart && make setup
