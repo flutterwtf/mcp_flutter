@@ -1,0 +1,69 @@
+{
+  "projectName": "mcp_flutter",
+  "projectOwner": "Arenukvern",
+  "files": [
+    "README.md"
+  ],
+  "commitType": "docs",
+  "commitConvention": "angular",
+  "contributorsPerLine": 7,
+  "contributors": [
+    {
+      "login": "calclavia",
+      "name": "Henry Mao",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1828968?v=4",
+      "profile": "https://calclavia.com",
+      "contributions": [
+        "infra"
+      ]
+    },
+    {
+      "login": "marwenbk",
+      "name": "Marwen",
+      "avatar_url": "https://avatars.githubusercontent.com/u/18284646?v=4",
+      "profile": "https://github.com/marwenbk",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "lwsinclair",
+      "name": "Lawrence Sinclair",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2829939?v=4",
+      "profile": "http://eastagile.com",
+      "contributions": [
+        "doc",
+        "security"
+      ]
+    },
+    {
+      "login": "punkpeye",
+      "name": "Frank Fiegel",
+      "avatar_url": "https://avatars.githubusercontent.com/u/108313943?v=4",
+      "profile": "https://glama.ai",
+      "contributions": [
+        "infra"
+      ]
+    },
+    {
+      "login": "Harishwarrior",
+      "name": "Harish Anbalagan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/38380040?v=4",
+      "profile": "https://github.com/Harishwarrior",
+      "contributions": [
+        "userTesting",
+        "bug"
+      ]
+    },
+    {
+      "login": "torbenkeller",
+      "name": "Torben Keller",
+      "avatar_url": "https://avatars.githubusercontent.com/u/33001558?v=4",
+      "profile": "https://github.com/torbenkeller",
+      "contributions": [
+        "userTesting",
+        "bug"
+      ]
+    }
+  ]
+}

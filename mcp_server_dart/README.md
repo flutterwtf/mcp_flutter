@@ -1,24 +1,8 @@
-# 🚀 MCP Flutter - Quick Start Guide
+# MCP Toolkit Server (Dart) (beta)
 
-This guide walks you through setting up the MCP Flutter toolkit to enable AI assistants to interact with Flutter applications.
+This is a beta version of MCP Toolkit Server (Dart) that will replace the deprecated [mcp_server](../mcp_server/README.md) server.
 
-## Overview
-
-MCP Flutter provides a bridge between AI assistants and Flutter applications through the Model Context Protocol (MCP). The system uses **Flutter's native service extension mechanism** to enable real-time communication.
-
-**Architecture**: `AI Assistant ↔ MCP Server ↔ Dart VM ↔ Flutter Service Extensions`
-
-## 📦 Prerequisites
-
-- Node.js (v14 or later)
-- Flutter SDK (3.0.0 or later)
-- A Flutter app running in debug mode
-- One of: Cursor, Claude, Cline AI, Windsurf, RooCode, or any other AI assistant that supports MCP server
-
-## 📺 Video Tutorial
-
-- using Cursor: https://www.youtube.com/watch?v=pyDHaI81uts
-- using VSCode + Cline: (Soon)
+## Quick Start
 
 ## 📦 Installation from GitHub (Currently Recommended)
 
@@ -34,10 +18,10 @@ For developers who want to contribute to the project or run the latest version d
 2. **Install and build dependencies:**
 
    ```bash
-   make install
+   make install-dart
    ```
 
-   This command installs all necessary dependencies listed in `package.json` and then builds the MCP server.
+   This command installs all necessary dependencies listed in `pubspec.yaml` and then builds the MCP server.
 
 3. **Add `mcp_toolkit` Package to Your Flutter App:**
 
@@ -98,9 +82,13 @@ For developers who want to contribute to the project or run the latest version d
 
 6. **🛠️ Add Flutter Inspector to your AI tool**
 
+   # ⚠️ Resources Limitations ⚠️
+
+   - Current server has problems with resources. If you see no resources in your AI tool, try to pass `--no-resources` as an argument.
+
    **Note for Local Development (GitHub Install):**
 
-   If you installed the Flutter Inspector from GitHub and built it locally, you need to adjust the paths in the AI tool configurations to point to your local `build/index.js` file. Refer to the "Installation from GitHub" section for instructions on cloning and building the project.
+   If you installed the Flutter Inspector from GitHub and built it locally, you need to adjust the paths in the AI tool configurations to point to your local `build/flutter_inspector_mcp` file. Refer to the "Installation from GitHub" section for instructions on cloning and building the project.
 
    #### Cline Setup
 
@@ -109,16 +97,14 @@ For developers who want to contribute to the project or run the latest version d
       {
         "mcpServers": {
           "flutter-inspector": {
-            "command": "node",
+            "command": "/path/to/your/cloned/mcp_flutter/mcp_server_dart/build/flutter_inspector_mcp",
             "args": [
-              "/path/to/your/cloned/mcp_flutter/mcp_server/build/index.js"
+              "--dart-vm-host=localhost",
+              "--dart-vm-port=8181",
+              "--no-resources",
+              "--images"
             ],
-            "env": {
-              "PORT": "3334",
-              "LOG_LEVEL": "critical",
-              "RESOURCES_SUPPORTED": "true",
-              "IMAGES_SUPPORTED": "true"
-            },
+            "env": {},
             "disabled": false,
             "autoApprove": []
           }
@@ -127,12 +113,9 @@ For developers who want to contribute to the project or run the latest version d
       ```
    2. Restart Cline
    3. The Flutter inspector will be automatically available in your conversations
+   4. You're ready! Try commands like "Please get screenshot of my app"
 
    #### Cursor Setup
-
-   # ⚠️ Resources Limitations ⚠️
-
-   - Since Cursor doesn't support resources, make sure you passed `RESOURCES_SUPPORTED=false` as environment variable. It will make some resources to be displayed as tools.
 
    1. Open Cursor's settings
    2. Go to the Features tab
@@ -141,23 +124,23 @@ For developers who want to contribute to the project or run the latest version d
       {
         "mcpServers": {
           "flutter-inspector": {
-            "command": "node",
+            "command": "/path/to/your/cloned/mcp_flutter/mcp_server_dart/build/flutter_inspector_mcp",
             "args": [
-              "/path/to/your/cloned/mcp_flutter/mcp_server/build/index.js"
+              "--dart-vm-host=localhost",
+              "--dart-vm-port=8181",
+              "--no-resources",
+              "--images"
             ],
-            "env": {
-              "RESOURCES_SUPPORTED": "false",
-              "IMAGES_SUPPORTED": "true",
-              "LOG_LEVEL": "critical"
-            },
-            "disabled": false
+            "env": {},
+            "disabled": false,
+            "autoApprove": []
           }
         }
       }
       ```
    4. Restart Cursor
    5. Open Agent Panel (cmd + L on macOS)
-   6. You're ready! Try commands like "analyze my Flutter app's widget tree"
+   6. You're ready! Try commands like "Please get screenshot of my app"
 
    #### Claude Setup
 
@@ -166,26 +149,52 @@ For developers who want to contribute to the project or run the latest version d
       {
         "mcpServers": {
           "flutter-inspector": {
-            "command": "node",
+            "command": "/path/to/your/cloned/mcp_flutter/mcp_server_dart/build/flutter_inspector_mcp",
             "args": [
-              "/path/to/your/cloned/mcp_flutter/mcp_server/build/index.js"
+              "--dart-vm-host=localhost",
+              "--dart-vm-port=8181",
+              "--resources",
+              "--images"
             ],
-            "env": {
-              "PORT": "3334",
-              "LOG_LEVEL": "critical"
-            },
-            "disabled": false
+            "env": {},
+            "disabled": false,
+            "autoApprove": []
           }
         }
       }
       ```
    2. Restart Claude
    3. The Flutter inspector tools will be automatically available
+   4. You're ready! Try commands like "Please get screenshot of my app"
 
-## 📦 Installation via Smithery (🚧 WIP 🚧)
+# Development
 
-To install Flutter Inspector for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@Arenukvern/mcp_flutter):
+### Command Line Options
 
 ```bash
-npx -y @smithery/cli install @Arenukvern/mcp_flutter --client claude
+./build/flutter_inspector_mcp_server [options]
+
+Options:
+  --dart-vm-host                Host for Dart VM connection (default: localhost)
+  --dart-vm-port                Port for Dart VM connection (default: 8181)
+  --resources                   Enable resources support (default: true)
+  --images                      Enable images support (default: true)
+  --dumps                       Enable dumps support (default: false)
+  --log-level                   Logging level (default: critical)
+  --environment                 Environment (default: production)
+  -h, --help                    Show usage text
 ```
+
+### Basic Usage
+
+1. Start your Flutter app in debug mode:
+
+   ```bash
+   flutter run --debug --dart-vm-host=localhost --dart-vm-port=8181
+   ```
+
+2. Run the MCP server:
+
+   ```bash
+   ./build/flutter_inspector_mcp_server
+   ```
