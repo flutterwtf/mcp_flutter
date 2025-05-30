@@ -3,7 +3,7 @@
 import 'package:devtools_extensions/devtools_extensions.dart'
     as devtools_extensions;
 import 'package:devtools_mcp_extension/common_imports.dart';
-import 'package:devtools_mcp_extension/core/devtools_core/shared/diagnostics/diagnostics_node.dart';
+// import 'package:devtools_mcp_extension/core/devtools_core/shared/diagnostics/diagnostics_node.dart';
 import 'package:devtools_mcp_extension/services/error_devtools/error_event.dart';
 import 'package:vm_service/vm_service.dart';
 
@@ -102,23 +102,23 @@ class FlutterErrorMonitor {
     final data = event.extensionData?.data;
     if (data is! Map<String, Object?>) return;
 
-    final errorData = RemoteDiagnosticsNode(data, null, false, null);
+    // final errorData = RemoteDiagnosticsNode(data, null, false, null);
 
-    final type = errorData.getStringMember('type') ?? 'Flutter Error';
-    final message = errorData.getStringMember('description') ?? '';
+    // final type = errorData.getStringMember('type') ?? 'Flutter Error';
+    // final message = errorData.getStringMember('description') ?? '';
 
-    final errorEvent = FlutterErrorEvent(
-      nodeId: errorData.getStringMember('nodeId') ?? '',
-      type: type,
-      message: message,
-      diagnostics: await _getErrorInstance(data),
-      timestamp: DateTime.now(),
-      severity: _determineSeverity(errorData),
-      json: errorData.json,
-    );
+    // final errorEvent = FlutterErrorEvent(
+    //   nodeId: errorData.getStringMember('nodeId') ?? '',
+    //   type: type,
+    //   message: message,
+    //   diagnostics: await _getErrorInstance(data),
+    //   timestamp: DateTime.now(),
+    //   severity: _determineSeverity(errorData),
+    //   json: errorData.json,
+    // );
 
-    _errorController.add(errorEvent);
-    _errors.add(errorEvent);
+    // _errorController.add(errorEvent);
+    // _errors.add(errorEvent);
   }
 
   /// Get an Instance object from error data.
@@ -220,29 +220,29 @@ class FlutterErrorMonitor {
   }
 
   /// Determine the severity of an error based on its diagnostics.
-  ErrorSeverity _determineSeverity(final RemoteDiagnosticsNode error) {
-    final description =
-        error.getStringMember('description')?.toLowerCase() ?? '';
-    final level = error.getLevelMember('level', DiagnosticLevel.info);
+  // ErrorSeverity _determineSeverity(final RemoteDiagnosticsNode error) {
+  //   final description =
+  //       error.getStringMember('description')?.toLowerCase() ?? '';
+  //   final level = error.getLevelMember('level', DiagnosticLevel.info);
 
-    if (level == DiagnosticLevel.error ||
-        description.contains('error') ||
-        description.contains('exception')) {
-      return ErrorSeverity.error;
-    }
+  //   if (level == DiagnosticLevel.error ||
+  //       description.contains('error') ||
+  //       description.contains('exception')) {
+  //     return ErrorSeverity.error;
+  //   }
 
-    if (level == DiagnosticLevel.warning || description.contains('warning')) {
-      return ErrorSeverity.warning;
-    }
+  //   if (level == DiagnosticLevel.warning || description.contains('warning')) {
+  //     return ErrorSeverity.warning;
+  //   }
 
-    if (description.contains('fatal') ||
-        description.contains('crash') ||
-        description.contains('assertion')) {
-      return ErrorSeverity.fatal;
-    }
+  //   if (description.contains('fatal') ||
+  //       description.contains('crash') ||
+  //       description.contains('assertion')) {
+  //     return ErrorSeverity.fatal;
+  //   }
 
-    return ErrorSeverity.error;
-  }
+  //   return ErrorSeverity.error;
+  // }
 
   /// Dispose of the error monitor.
   Future<void> dispose() => _errorController.close();
