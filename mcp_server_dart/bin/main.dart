@@ -20,33 +20,14 @@ void main(final List<String> args) {
   runZonedGuarded(
     () {
       final VMServiceConfigurationRecord configuration = (
-        vmHost:
-            parsedArgs.option(dartVMHost) ??
-            const String.fromEnvironment(
-              'DART_VM_HOST',
-              defaultValue: 'localhost',
-            ),
+        vmHost: parsedArgs.option(dartVMHost) ?? defaultHost,
         vmPort:
-            int.tryParse(
-              parsedArgs.option(dartVMPort) ??
-                  const String.fromEnvironment(
-                    'DART_VM_PORT',
-                    defaultValue: '8181',
-                  ),
-            ) ??
-            8181,
+            int.tryParse(parsedArgs.option(dartVMPort) ?? '') ?? defaultPort,
         resourcesSupported: parsedArgs.flag(resourcesSupported),
         imagesSupported: parsedArgs.flag(imagesSupported),
         dumpsSupported: parsedArgs.flag(dumpsSupported),
-        logLevel:
-            parsedArgs.option(logLevel) ??
-            const String.fromEnvironment('LOG_LEVEL', defaultValue: 'critical'),
-        environment:
-            parsedArgs.option(environment) ??
-            const String.fromEnvironment(
-              'ENVIRONMENT',
-              defaultValue: 'production',
-            ),
+        logLevel: parsedArgs.option(logLevel) ?? defaultLogLevel,
+        environment: parsedArgs.option(environment) ?? defaultEnvironment,
       );
       MCPToolkitServer.connect(
         StreamChannel.withCloseGuarantee(io.stdin, io.stdout)
@@ -79,54 +60,48 @@ final argParser =
     ArgParser(allowTrailingOptions: false)
       ..addOption(
         dartVMHost,
-        defaultsTo: 'localhost',
+        defaultsTo: defaultHost,
         help: 'Host for Dart VM connection',
       )
       ..addOption(
         dartVMPort,
-        defaultsTo: '8181',
+        defaultsTo: '$defaultPort',
         help: 'Port for Dart VM connection',
       )
       ..addFlag(
         resourcesSupported,
-        defaultsTo: const bool.fromEnvironment(
-          'RESOURCES_SUPPORTED',
-          defaultValue: true,
-        ),
+        defaultsTo: true,
         help: 'Enable resources support for widget tree and screenshots',
       )
       ..addFlag(
         imagesSupported,
-        defaultsTo: const bool.fromEnvironment(
-          'IMAGES_SUPPORTED',
-          defaultValue: true,
-        ),
+        defaultsTo: true,
         help: 'Enable images support for screenshots',
       )
-      ..addFlag(
-        dumpsSupported,
-        // ignore: avoid_redundant_argument_values
-        defaultsTo: const bool.fromEnvironment('DUMPS_SUPPORTED'),
-        help: 'Enable debug dump operations',
-      )
+      ..addFlag(dumpsSupported, help: 'Enable debug dump operations')
       ..addOption(
         logLevel,
-        defaultsTo: 'critical',
+        defaultsTo: defaultLogLevel,
         help:
-            'Logging level (debug|info|notice|warning|error|critical|alert|emergency)',
+            'Logging level '
+            '(debug|info|notice|warning|error|critical|alert|emergency)',
       )
       ..addOption(
         environment,
-        defaultsTo: 'production',
+        defaultsTo: defaultEnvironment,
         help: 'Environment mode (development|production)',
       )
       ..addFlag(help, abbr: 'h', help: 'Show usage text');
 
+const defaultHost = 'localhost';
+const defaultPort = 8181;
+const defaultLogLevel = 'critical';
+const defaultEnvironment = 'production';
 const dartVMHost = 'dart-vm-host';
 const dartVMPort = 'dart-vm-port';
-const resourcesSupported = 'resources-supported';
-const imagesSupported = 'images-supported';
-const dumpsSupported = 'dumps-supported';
+const resourcesSupported = 'resources';
+const imagesSupported = 'images';
+const dumpsSupported = 'dumps';
 const logLevel = 'log-level';
 const environment = 'environment';
 const help = 'help';
