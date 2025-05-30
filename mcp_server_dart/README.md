@@ -20,7 +20,7 @@ make compile
 ### Command Line Options
 
 ```bash
-./flutter_inspector_mcp_server [options]
+./build/flutter_inspector_mcp_server [options]
 
 Options:
   --dart-vm-host                Host for Dart VM connection (default: localhost)

@@ -60,7 +60,7 @@ Create `~/.cursor/mcp_servers.json`:
 {
   "mcpServers": {
     "flutter-inspector": {
-      "command": "/Users/antonio/mcp/cline/mcp_flutter/mcp_server_dart/flutter_inspector_mcp",
+      "command": "/absolute/path/to/mcp_flutter/mcp_server_dart/build/flutter_inspector_mcp",
       "args": [
         "--dart-vm-host=localhost",
         "--dart-vm-port=8181",
