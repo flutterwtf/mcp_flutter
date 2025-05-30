@@ -5,9 +5,9 @@
 
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:dart_mcp/server.dart';
+import 'package:flutter_inspector_mcp_server/src/mixins/port_scanner.dart';
 import 'package:flutter_inspector_mcp_server/src/mixins/vm_service_support.dart';
 import 'package:flutter_inspector_mcp_server/src/server.dart';
 import 'package:from_json_to_json/from_json_to_json.dart';
@@ -607,8 +607,8 @@ base mixin FlutterInspector
   /// Get active ports.
   Future<CallToolResult> _getActivePorts(final CallToolRequest request) async {
     try {
-      // Implement port scanning logic
-      final ports = await _scanForFlutterPorts();
+      // Use the new PortScanner class
+      final ports = await PortScanner.scanForFlutterPorts();
       return CallToolResult(content: [TextContent(text: jsonEncode(ports))]);
     } catch (e) {
       return CallToolResult(
@@ -616,30 +616,6 @@ base mixin FlutterInspector
         content: [TextContent(text: 'Failed to get active ports: $e')],
       );
     }
-  }
-
-  /// Scan for ports where Flutter/Dart processes are listening
-  Future<List<int>> _scanForFlutterPorts() async {
-    final activePorts = <int>[];
-    final result = await Process.run('lsof', ['-i', '-P', '-n']);
-    final stdout = jsonDecodeString(result.stdout);
-    final lines = stdout.split('\n');
-
-    for (final line in lines) {
-      if (line.toLowerCase().contains('dart') ||
-          line.toLowerCase().contains('flutter')) {
-        final parts = line.split(RegExp(r'\s+'));
-        if (parts.length < 9) continue;
-        final addressPart = parts[8];
-        final portMatch = RegExp(r':(\d+)$').firstMatch(addressPart);
-        if (portMatch == null) continue;
-        final port = jsonDecodeInt(portMatch.group(1));
-        if (port.isZero) continue;
-        activePorts.add(port);
-      }
-    }
-
-    return activePorts.toSet().toList();
   }
 
   /// Register resource functionality as tools when resources not supported
