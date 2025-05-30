@@ -5,7 +5,7 @@
       "args": [
         "--dart-vm-host=localhost",
         "--dart-vm-port=8181",
-        "--resources-supported",
+        "--no-resources-supported",
         "--images-supported"
       ],
       "env": {},

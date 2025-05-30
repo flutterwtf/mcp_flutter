@@ -4,13 +4,12 @@
 import 'dart:async';
 
 import 'package:dart_mcp/server.dart';
+import 'package:flutter_inspector_mcp_server/src/mixins/flutter_inspector.dart';
+import 'package:flutter_inspector_mcp_server/src/mixins/vm_service_support.dart';
 import 'package:stream_channel/stream_channel.dart';
 
-import 'mixins/flutter_inspector.dart';
-import 'mixins/vm_service_support.dart';
-
 /// Interface for accessing VM service configuration.
-typedef VMServiceConfiguration =
+typedef VMServiceConfigurationRecord =
     ({
       String vmHost,
       int vmPort,
@@ -30,7 +29,7 @@ abstract base class BaseMCPToolkitServer extends MCPServer {
     super.protocolLogSink,
   }) : super.fromStreamChannel();
 
-  final VMServiceConfiguration configuration;
+  final VMServiceConfigurationRecord configuration;
 }
 
 /// Flutter Inspector MCP Server
@@ -88,7 +87,7 @@ Connect to a running Flutter app on debug mode to use these features.
   /// Create and connect a Flutter Inspector MCP Server
   factory MCPToolkitServer.connect(
     final StreamChannel<String> channel, {
-    required final VMServiceConfiguration configuration,
+    required final VMServiceConfigurationRecord configuration,
   }) =>
       MCPToolkitServer.fromStreamChannel(channel, configuration: configuration);
 

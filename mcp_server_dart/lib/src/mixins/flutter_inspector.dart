@@ -8,13 +8,12 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dart_mcp/server.dart';
+import 'package:flutter_inspector_mcp_server/src/mixins/vm_service_support.dart';
+import 'package:flutter_inspector_mcp_server/src/server.dart';
 import 'package:from_json_to_json/from_json_to_json.dart';
 import 'package:is_dart_empty_or_not/is_dart_empty_or_not.dart';
 import 'package:meta/meta.dart';
 import 'package:vm_service/vm_service.dart';
-
-import '../server.dart';
-import 'vm_service_support.dart';
 
 /// Mix this in to any MCPServer to add Flutter Inspector functionality.
 base mixin FlutterInspector
@@ -79,7 +78,7 @@ base mixin FlutterInspector
       mimeType: 'application/json',
       description: 'Get the most recent application error from Dart VM',
     );
-    addResource(latestAppErrorSrc, _handleAppErrorsResource);
+    addResource(latestAppErrorSrc, _handleAppLatestErrorResource);
 
     // App errors resource
     final appErrorsResource = ResourceTemplate(
@@ -129,7 +128,8 @@ base mixin FlutterInspector
 
       return CallToolResult(
         content: [
-          TextContent(text: 'Hot reload completed: ${jsonEncode(result)}'),
+          TextContent(text: 'Hot reload completed'),
+          TextContent(text: jsonEncode(result)),
         ],
       );
     } catch (e) {
@@ -198,19 +198,31 @@ base mixin FlutterInspector
     }
   }
 
+  Future<ReadResourceResult> _handleAppLatestErrorResource(
+    final ReadResourceRequest request,
+  ) => _handleAppErrorsResource(request, count: 1);
+
   /// Handle app errors resource request.
   Future<ReadResourceResult> _handleAppErrorsResource(
-    final ReadResourceRequest request,
-  ) async {
+    final ReadResourceRequest request, {
+    final int count = 4,
+  }) async {
     try {
-      final count = Uri.parse(request.uri).pathSegments.last;
+      final parsedCount = Uri.parse(request.uri).pathSegments.last;
       final result = await callFlutterExtension('ext.mcp.toolkit.app_errors', {
-        'count': jsonDecodeInt(count).whenZeroUse(4),
+        'count': jsonDecodeInt(parsedCount).whenZeroUse(count),
       });
-
-      final errors = jsonDecodeList(result.json?['errors']);
+      final json = result.json;
+      if (json == null) {
+        return ReadResourceResult(
+          contents: [
+            TextResourceContents(uri: request.uri, text: 'No errors found'),
+          ],
+        );
+      }
+      final errors = jsonDecodeListAs<Map<String, dynamic>>(json['errors']);
       final message = jsonDecodeString(
-        result.json?['message'],
+        json['message'],
       ).whenEmptyUse('No errors found');
 
       if (errors.isEmpty) {
@@ -221,9 +233,13 @@ base mixin FlutterInspector
 
       return ReadResourceResult(
         contents: [
-          TextResourceContents(
-            uri: request.uri,
-            text: '$message\n${jsonEncode(errors)}',
+          TextResourceContents(uri: request.uri, text: message),
+          ...errors.map(
+            (final error) => TextResourceContents(
+              uri: request.uri,
+              text: jsonEncode(error),
+              mimeType: 'application/json',
+            ),
           ),
         ],
       );
@@ -285,18 +301,22 @@ base mixin FlutterInspector
         {},
       );
 
-      final details = jsonDecodeString(result.json?['details']);
+      final details = jsonDecodeListAs<Map<String, dynamic>>(
+        result.json?['details'],
+      );
       final message = jsonDecodeString(
         result.json?['message'],
       ).whenEmptyUse('View details');
 
       return ReadResourceResult(
         contents: [
-          TextResourceContents(uri: request.uri, text: '$message'),
-          TextResourceContents(
-            uri: request.uri,
-            text: '$details',
-            mimeType: 'application/json',
+          TextResourceContents(uri: request.uri, text: message),
+          ...details.map(
+            (final detail) => TextResourceContents(
+              uri: request.uri,
+              text: jsonEncode(detail),
+              mimeType: 'application/json',
+            ),
           ),
         ],
       );
@@ -601,25 +621,25 @@ base mixin FlutterInspector
   /// Scan for ports where Flutter/Dart processes are listening
   Future<List<int>> _scanForFlutterPorts() async {
     final activePorts = <int>[];
+    final result = await Process.run('lsof', ['-i', '-P', '-n']);
+    final stdout = jsonDecodeString(result.stdout);
+    final lines = stdout.split('\n');
 
-    // Common Flutter debug ports to check
-    final portsToCheck = [8181, 8080, 3000, 5000, 8000, 8888, 9000];
-
-    for (final port in portsToCheck) {
-      try {
-        final socket = await Socket.connect(
-          'localhost',
-          port,
-          timeout: const Duration(milliseconds: 100),
-        );
-        await socket.close();
+    for (final line in lines) {
+      if (line.toLowerCase().contains('dart') ||
+          line.toLowerCase().contains('flutter')) {
+        final parts = line.split(RegExp(r'\s+'));
+        if (parts.length < 9) continue;
+        final addressPart = parts[8];
+        final portMatch = RegExp(r':(\d+)$').firstMatch(addressPart);
+        if (portMatch == null) continue;
+        final port = jsonDecodeInt(portMatch.group(1));
+        if (port.isZero) continue;
         activePorts.add(port);
-      } catch (e) {
-        // Port not available, continue
       }
     }
 
-    return activePorts;
+    return activePorts.toSet().toList();
   }
 
   /// Register resource functionality as tools when resources not supported
@@ -652,13 +672,18 @@ base mixin FlutterInspector
         'count': count,
       });
 
-      final errors = jsonDecodeList(result.json?['errors']);
+      final errors = jsonDecodeListAs<Map<String, dynamic>>(
+        result.json?['errors'],
+      );
       final message = jsonDecodeString(
         result.json?['message'],
       ).whenEmptyUse('No errors found');
 
       return CallToolResult(
-        content: [TextContent(text: '$message\n${jsonEncode(errors)}')],
+        content: [
+          TextContent(text: message),
+          ...errors.map((final error) => TextContent(text: jsonEncode(error))),
+        ],
       );
     } catch (e) {
       return CallToolResult(
@@ -686,7 +711,7 @@ base mixin FlutterInspector
         {'compress': compress},
       );
 
-      final images = jsonDecodeList(result.json?['images']);
+      final images = jsonDecodeListAs<String>(result.json?['images']);
 
       return CallToolResult(
         content: [
@@ -718,13 +743,20 @@ base mixin FlutterInspector
         'ext.mcp.toolkit.view_details',
         {},
       );
-      final details = jsonDecodeString(result.json?['details']);
+      final details = jsonDecodeListAs<Map<String, dynamic>>(
+        result.json?['details'],
+      );
       final message = jsonDecodeString(
         result.json?['message'],
       ).whenEmptyUse('View details');
 
       return CallToolResult(
-        content: [TextContent(text: message), TextContent(text: details)],
+        content: [
+          TextContent(text: message),
+          ...details.map(
+            (final detail) => TextContent(text: jsonEncode(detail)),
+          ),
+        ],
       );
     } catch (e) {
       return CallToolResult(

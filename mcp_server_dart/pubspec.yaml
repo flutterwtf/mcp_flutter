@@ -33,6 +33,7 @@ dependencies:
 
 dev_dependencies:
   test: ^1.25.15
+  lints: ^5.0.0
   xsoulspace_lints: ^0.0.15
 # dependency_overrides:
 # Use local dart_mcp if available, otherwise use pub version

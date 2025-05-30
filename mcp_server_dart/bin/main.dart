@@ -10,16 +10,16 @@ import 'package:async/async.dart';
 import 'package:flutter_inspector_mcp_server/flutter_inspector_mcp_server.dart';
 import 'package:stream_channel/stream_channel.dart';
 
-void main(final List<String> args) async {
+void main(final List<String> args) {
   final parsedArgs = argParser.parse(args);
   if (parsedArgs.flag(help)) {
     print(argParser.usage);
     io.exit(0);
   }
 
-  await runZonedGuarded(
-    () async {
-      final VMServiceConfiguration configuration = (
+  runZonedGuarded(
+    () {
+      final VMServiceConfigurationRecord configuration = (
         vmHost:
             parsedArgs.option(dartVMHost) ??
             const String.fromEnvironment(
@@ -44,11 +44,11 @@ void main(final List<String> args) async {
         environment:
             parsedArgs.option(environment) ??
             const String.fromEnvironment(
-              'NODE_ENV',
+              'ENVIRONMENT',
               defaultValue: 'production',
             ),
       );
-      await MCPToolkitServer.connect(
+      MCPToolkitServer.connect(
         StreamChannel.withCloseGuarantee(io.stdin, io.stdout)
             .transform(StreamChannelTransformer.fromCodec(utf8))
             .transformStream(const LineSplitter())
@@ -105,10 +105,8 @@ final argParser =
       )
       ..addFlag(
         dumpsSupported,
-        defaultsTo: const bool.fromEnvironment(
-          'DUMPS_SUPPORTED',
-          defaultValue: true,
-        ),
+        // ignore: avoid_redundant_argument_values
+        defaultsTo: const bool.fromEnvironment('DUMPS_SUPPORTED'),
         help: 'Enable debug dump operations',
       )
       ..addOption(

@@ -5,20 +5,17 @@
 
 import 'dart:async';
 
-import 'package:dart_mcp/server.dart';
 import 'package:dtd/dtd.dart';
+import 'package:flutter_inspector_mcp_server/flutter_inspector_mcp_server.dart';
 import 'package:from_json_to_json/from_json_to_json.dart';
 import 'package:vm_service/vm_service.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 /// Mixin providing VM service connection and management capabilities
-base mixin VMServiceSupport on MCPServer {
+base mixin VMServiceSupport on BaseMCPToolkitServer {
   VmService? _vmService;
   WebSocketChannel? _vmChannel;
   DartToolingDaemon? _dartToolingDaemon;
-
-  late String vmHost;
-  late int vmPort;
 
   /// Get the current VM service instance
   VmService? get vmService => _vmService;
@@ -30,7 +27,7 @@ base mixin VMServiceSupport on MCPServer {
   /// Initialize VM service connection
   Future<void> initializeVMService() async {
     try {
-      final url = 'ws://$vmHost:$vmPort/ws';
+      final url = 'ws://${configuration.vmHost}:${configuration.vmPort}/ws';
       final uri = Uri.parse(url);
       _vmChannel = WebSocketChannel.connect(uri);
       _dartToolingDaemon = await DartToolingDaemon.connect(uri);
@@ -43,7 +40,10 @@ base mixin VMServiceSupport on MCPServer {
       // Test connection
       await _vmService!.getVM();
     } catch (e, s) {
-      print('Failed to connect to VM service at $vmHost:$vmPort: $e $s');
+      print(
+        'Failed to connect to VM service at '
+        '${configuration.vmHost}:${configuration.vmPort}: $e $s',
+      );
       await disconnectVMService();
     }
   }
