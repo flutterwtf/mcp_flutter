@@ -41,9 +41,9 @@ _For AI-Powered Development_
 >
 > Have a nice day!
 
-## 🎉 v2 released! 🎉
+## 🎉 v2.1.0 released! 🎉
 
-Now Flutter MCP server works without forwarding server and devtools extension. See more in [CHANGELOG.md](CHANGELOG.md).
+Added Dart MCP Server to replace in future Typescript one. Already working, will migrate to it in the future. See more about it in [CHANGELOG.md](CHANGELOG.md).
 
 ## ⚠️ WARNING
 
