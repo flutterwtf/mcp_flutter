@@ -75,7 +75,8 @@ base mixin VMServiceSupport on BaseMCPToolkitServer {
     } on Exception catch (e, s) {
       log(
         LoggingLevel.error,
-        'Failed to connect to VM service at ${configuration.vmHost}:${configuration.vmPort}: $e',
+        'Failed to connect to VM service at '
+        '${configuration.vmHost}:${configuration.vmPort}: $e',
         logger: 'VMService',
       );
       log(LoggingLevel.debug, () => 'Stack trace: $s', logger: 'VMService');
@@ -133,7 +134,8 @@ base mixin VMServiceSupport on BaseMCPToolkitServer {
     if (_vmService == null) {
       log(
         LoggingLevel.error,
-        'Attempted to call service extension $method but VM service not connected',
+        'Attempted to call service extension $method '
+        'but VM service not connected',
         logger: 'VMService',
       );
       throw StateError('VM service not connected');

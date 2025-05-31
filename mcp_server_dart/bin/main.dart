@@ -29,6 +29,7 @@ Future<void> main(final List<String> args) async {
         dumpsSupported: parsedArgs.flag(dumpsSupported),
         logLevel: parsedArgs.option(logLevel) ?? defaultLogLevel,
         environment: parsedArgs.option(environment) ?? defaultEnvironment,
+        dynamicRegistrySupported: parsedArgs.flag(dynamicRegistrySupported),
       );
       final server = MCPToolkitServer.connect(
         StreamChannel.withCloseGuarantee(io.stdin, io.stdout)
@@ -121,3 +122,4 @@ const dumpsSupported = 'dumps';
 const logLevel = 'log-level';
 const environment = 'environment';
 const help = 'help';
+const dynamicRegistrySupported = 'dynamics';

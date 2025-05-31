@@ -11,11 +11,13 @@ typedef VMServiceConfigurationRecord =
       bool resourcesSupported,
       bool imagesSupported,
       bool dumpsSupported,
+      bool dynamicRegistrySupported,
       String logLevel,
       String environment,
     });
 
-abstract base class BaseMCPToolkitServer extends MCPServer with LoggingSupport {
+abstract base class BaseMCPToolkitServer extends MCPServer
+    with LoggingSupport, ToolsSupport, ResourcesSupport {
   BaseMCPToolkitServer.fromStreamChannel(
     super.channel, {
     required this.configuration,
