@@ -5,11 +5,13 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:dart_mcp/server.dart';
+import 'package:equatable/equatable.dart';
+import 'package:from_json_to_json/from_json_to_json.dart';
 import 'package:meta/meta.dart';
 
 /// Entry for a dynamically registered tool - fully MCP compliant
 @immutable
-final class DynamicToolEntry {
+final class DynamicToolEntry with EquatableMixin {
   const DynamicToolEntry({
     required this.tool,
     required this.sourceApp,
@@ -25,23 +27,21 @@ final class DynamicToolEntry {
   final Map<String, dynamic> metadata;
 
   @override
-  bool operator ==(final Object other) =>
-      identical(this, other) ||
-      other is DynamicToolEntry &&
-          runtimeType == other.runtimeType &&
-          tool.name == other.tool.name &&
-          sourceApp == other.sourceApp;
+  bool? get stringify => true;
 
   @override
-  int get hashCode => Object.hash(tool.name, sourceApp);
-
-  @override
-  String toString() => 'DynamicToolEntry(${tool.name}, $sourceApp:$dartVmPort)';
+  List<Object?> get props => [
+    tool,
+    sourceApp,
+    dartVmPort,
+    registeredAt,
+    metadata,
+  ];
 }
 
 /// Entry for a dynamically registered resource - fully MCP compliant
 @immutable
-final class DynamicResourceEntry {
+final class DynamicResourceEntry with EquatableMixin {
   const DynamicResourceEntry({
     required this.resource,
     required this.sourceApp,
@@ -57,53 +57,63 @@ final class DynamicResourceEntry {
   final Map<String, dynamic> metadata;
 
   @override
-  bool operator ==(final Object other) =>
-      identical(this, other) ||
-      other is DynamicResourceEntry &&
-          runtimeType == other.runtimeType &&
-          resource.uri == other.resource.uri &&
-          sourceApp == other.sourceApp;
+  bool? get stringify => true;
 
   @override
-  int get hashCode => Object.hash(resource.uri, sourceApp);
-
-  @override
-  String toString() =>
-      'DynamicResourceEntry(${resource.uri}, $sourceApp:$dartVmPort)';
+  List<Object?> get props => [
+    resource,
+    sourceApp,
+    dartVmPort,
+    registeredAt,
+    metadata,
+  ];
 }
 
 /// Statistics for the dynamic registry
 @immutable
-final class DynamicRegistryStats {
+final class DynamicRegistryStats with EquatableMixin {
   const DynamicRegistryStats({
     required this.toolCount,
     required this.resourceCount,
-    required this.appCount,
-    required this.apps,
+    required this.app,
   });
 
   final int toolCount;
   final int resourceCount;
-  final int appCount;
-  final List<DynamicAppInfo> apps;
+  final DynamicAppInfo app;
+
+  @override
+  bool? get stringify => true;
+
+  @override
+  List<Object?> get props => [toolCount, resourceCount, app];
 }
 
 /// Information about a registered app
 @immutable
-final class DynamicAppInfo {
-  const DynamicAppInfo({
-    required this.name,
-    required this.port,
-    required this.toolCount,
-    required this.resourceCount,
-    required this.lastActivity,
+extension type const DynamicAppInfo._(Map<String, Object?> _value)
+    implements Map<String, Object?> {
+  factory DynamicAppInfo({
+    required final String name,
+    required final int port,
+    required final int toolCount,
+    required final int resourceCount,
+    required final DateTime lastActivity,
+  }) => DynamicAppInfo._({
+    'name': name,
+    'port': port,
+    'toolCount': toolCount,
+    'resourceCount': resourceCount,
+    'lastActivity': lastActivity.millisecondsSinceEpoch,
   });
 
-  final String name;
-  final int port;
-  final int toolCount;
-  final int resourceCount;
-  final DateTime lastActivity;
+  String get name => jsonDecodeString(_value['name']);
+  int get port => jsonDecodeInt(_value['port']);
+  int get toolCount => jsonDecodeInt(_value['toolCount']);
+  int get resourceCount => jsonDecodeInt(_value['resourceCount']);
+  DateTime get lastActivity => DateTime.fromMillisecondsSinceEpoch(
+    jsonDecodeInt(_value['lastActivity']),
+  );
 }
 
 /// Event emitted when registry changes
@@ -191,8 +201,23 @@ final class DynamicRegistry {
   // Storage - keyed for fast MCP protocol lookups
   final Map<String, DynamicToolEntry> _tools = {};
   final Map<String, DynamicResourceEntry> _resources = {};
-  final Map<String, int> _appConnections = {}; // appId -> dartVmPort
-  final Map<String, DateTime> _appActivity = {}; // appId -> lastActivity
+
+  // Single app connection tracking
+  String? _currentApp;
+  int? _currentPort;
+  DateTime? _lastActivity;
+
+  /// Get current connected app name
+  String get currentApp => _currentApp ?? 'No app connected';
+
+  /// Get current app port
+  int get currentPort => _currentPort ?? 0;
+
+  /// Get last activity timestamp
+  DateTime get lastActivity => _lastActivity ?? DateTime.now();
+
+  /// Check if there's a connected app
+  bool get hasConnectedApp => _currentApp != null;
 
   // Event streaming
   final _eventController = StreamController<DynamicRegistryEvent>.broadcast();
@@ -208,6 +233,17 @@ final class DynamicRegistry {
     final int dartVmPort, {
     final Map<String, dynamic> metadata = const {},
   }) {
+    // Handle app switching
+    if (_currentApp != null && _currentApp != sourceApp) {
+      logger.log(
+        LoggingLevel.info,
+        'Switching from app $_currentApp to $sourceApp, '
+        'clearing previous registrations',
+        logger: 'DynamicRegistry',
+      );
+      _clearCurrentRegistrations();
+    }
+
     final entry = DynamicToolEntry(
       tool: tool,
       sourceApp: sourceApp,
@@ -217,8 +253,9 @@ final class DynamicRegistry {
     );
 
     _tools[tool.name] = entry;
-    _appConnections[sourceApp] = dartVmPort;
-    _appActivity[sourceApp] = DateTime.now();
+    _currentApp = sourceApp;
+    _currentPort = dartVmPort;
+    _lastActivity = DateTime.now();
 
     logger.log(
       LoggingLevel.info,
@@ -239,6 +276,17 @@ final class DynamicRegistry {
     final int dartVmPort, {
     final Map<String, dynamic> metadata = const {},
   }) {
+    // Handle app switching
+    if (_currentApp != null && _currentApp != sourceApp) {
+      logger.log(
+        LoggingLevel.info,
+        'Switching from app $_currentApp to $sourceApp, '
+        'clearing previous registrations',
+        logger: 'DynamicRegistry',
+      );
+      _clearCurrentRegistrations();
+    }
+
     final entry = DynamicResourceEntry(
       resource: resource,
       sourceApp: sourceApp,
@@ -248,8 +296,9 @@ final class DynamicRegistry {
     );
 
     _resources[resource.uri] = entry;
-    _appConnections[sourceApp] = dartVmPort;
-    _appActivity[sourceApp] = DateTime.now();
+    _currentApp = sourceApp;
+    _currentPort = dartVmPort;
+    _lastActivity = DateTime.now();
 
     logger.log(
       LoggingLevel.info,
@@ -264,64 +313,70 @@ final class DynamicRegistry {
 
   /// Remove all tools and resources from a specific app
   void unregisterApp(final String sourceApp) {
-    var toolsRemoved = 0;
-    var resourcesRemoved = 0;
+    if (_currentApp != sourceApp) {
+      logger.log(
+        LoggingLevel.warning,
+        'Attempted to unregister $sourceApp but current app is $_currentApp',
+        logger: 'DynamicRegistry',
+      );
+      return;
+    }
 
-    // Remove tools
-    _tools.removeWhere((final toolName, final entry) {
-      if (entry.sourceApp == sourceApp) {
-        toolsRemoved++;
-        logger.log(
-          LoggingLevel.info,
-          'Unregistered MCP tool: $toolName from $sourceApp',
-          logger: 'DynamicRegistry',
-        );
-        _eventController.add(
-          ToolUnregisteredEvent(
-            timestamp: DateTime.now(),
-            toolName: toolName,
-            sourceApp: sourceApp,
-          ),
-        );
-        return true;
-      }
-      return false;
-    });
+    final toolsCount = _tools.length;
+    final resourcesCount = _resources.length;
 
-    // Remove resources
-    _resources.removeWhere((final resourceUri, final entry) {
-      if (entry.sourceApp == sourceApp) {
-        resourcesRemoved++;
-        logger.log(
-          LoggingLevel.info,
-          'Unregistered MCP resource: $resourceUri from $sourceApp',
-          logger: 'DynamicRegistry',
-        );
-        _eventController.add(
-          ResourceUnregisteredEvent(
-            timestamp: DateTime.now(),
-            resourceUri: resourceUri,
-            sourceApp: sourceApp,
-          ),
-        );
-        return true;
-      }
-      return false;
-    });
+    _clearCurrentRegistrations();
 
-    _appConnections.remove(sourceApp);
-    _appActivity.remove(sourceApp);
+    _eventController.add(
+      AppUnregisteredEvent(
+        timestamp: DateTime.now(),
+        sourceApp: sourceApp,
+        toolsRemoved: toolsCount,
+        resourcesRemoved: resourcesCount,
+      ),
+    );
+  }
 
-    if (toolsRemoved > 0 || resourcesRemoved > 0) {
+  /// Clear all current registrations
+  void _clearCurrentRegistrations() {
+    // Remove all tools
+    for (final entry in _tools.values) {
+      logger.log(
+        LoggingLevel.info,
+        'Unregistered MCP tool: ${entry.tool.name} from ${entry.sourceApp}',
+        logger: 'DynamicRegistry',
+      );
       _eventController.add(
-        AppUnregisteredEvent(
+        ToolUnregisteredEvent(
           timestamp: DateTime.now(),
-          sourceApp: sourceApp,
-          toolsRemoved: toolsRemoved,
-          resourcesRemoved: resourcesRemoved,
+          toolName: entry.tool.name,
+          sourceApp: entry.sourceApp,
         ),
       );
     }
+
+    // Remove all resources
+    for (final entry in _resources.values) {
+      logger.log(
+        LoggingLevel.info,
+        'Unregistered MCP resource: ${entry.resource.uri} from '
+        '${entry.sourceApp}',
+        logger: 'DynamicRegistry',
+      );
+      _eventController.add(
+        ResourceUnregisteredEvent(
+          timestamp: DateTime.now(),
+          resourceUri: entry.resource.uri,
+          sourceApp: entry.sourceApp,
+        ),
+      );
+    }
+
+    _tools.clear();
+    _resources.clear();
+    _currentApp = null;
+    _currentPort = null;
+    _lastActivity = null;
   }
 
   /// Clear all registrations for a specific app (alias for unregisterApp)
@@ -330,16 +385,15 @@ final class DynamicRegistry {
 
   /// Handle port change - treat as new app registration
   void handlePortChange(final String sourceApp, final int newPort) {
-    final oldPort = _appConnections[sourceApp];
-    if (oldPort != null && oldPort != newPort) {
+    if (_currentApp == sourceApp && _currentPort != newPort) {
       logger.log(
         LoggingLevel.info,
-        'Port changed for $sourceApp: $oldPort -> $newPort',
+        'Port changed for $sourceApp: $_currentPort -> $newPort',
         logger: 'DynamicRegistry',
       );
-      unregisterApp(sourceApp);
+      _currentPort = newPort;
+      _lastActivity = DateTime.now();
     }
-    _appActivity[sourceApp] = DateTime.now();
   }
 
   /// Get all dynamically registered tools for MCP ListToolsResult
@@ -388,13 +442,13 @@ final class DynamicRegistry {
         content: [
           TextContent(
             text:
-                'Tool forwarded to ${entry.sourceApp} on port ${entry.dartVmPort}. '
-                'Arguments: ${jsonEncode(arguments)}',
+                'Tool forwarded to ${entry.sourceApp} on port '
+                '${entry.dartVmPort}. Arguments: ${jsonEncode(arguments)}',
           ),
         ],
         isError: false,
       );
-    } catch (e, stackTrace) {
+    } on Exception catch (e) {
       logger.log(
         LoggingLevel.error,
         'Failed to forward tool call to ${entry.sourceApp}: $e',
@@ -410,7 +464,9 @@ final class DynamicRegistry {
 
   /// Forward MCP resource read to the appropriate Flutter app
   /// Returns null if resource not found, otherwise forwards the read
-  Future<List<Content>?> forwardResourceRead(final String resourceUri) async {
+  Future<ReadResourceResult?> forwardResourceRead(
+    final String resourceUri,
+  ) async {
     final entry = getResourceEntry(resourceUri);
     if (entry == null) {
       return null;
@@ -419,90 +475,75 @@ final class DynamicRegistry {
     updateAppActivity(entry.sourceApp);
 
     try {
-      // Here you would implement the actual communication to the Flutter app
-      // For now, return a placeholder indicating where the read should go
-      return [
-        TextContent(
-          text:
-              'Resource read forwarded to ${entry.sourceApp} on port ${entry.dartVmPort} '
-              'for resource: $resourceUri',
-        ),
-      ];
-    } catch (e, stackTrace) {
+      // TODO(arenuvern): forward call to the Dart VM -> Flutter App
+
+      return ReadResourceResult(
+        contents: [
+          TextResourceContents(
+            uri: resourceUri,
+            text:
+                'Resource read forwarded to ${entry.sourceApp} on port '
+                '${entry.dartVmPort} for resource: $resourceUri',
+          ),
+        ],
+      );
+    } on Exception catch (e) {
       logger.log(
         LoggingLevel.error,
         'Failed to forward resource read to ${entry.sourceApp}: $e',
         logger: 'DynamicRegistry',
       );
 
-      return [TextContent(text: 'Error forwarding resource read: $e')];
+      return ReadResourceResult(
+        contents: [
+          TextResourceContents(
+            uri: resourceUri,
+            text: 'Error forwarding resource read: $e',
+          ),
+        ],
+      );
     }
   }
 
   /// Get registry statistics
   DynamicRegistryStats getStats() {
-    // Calculate per-app statistics
-    final appStats = <String, ({int toolCount, int resourceCount})>{};
-
-    // Count tools per app
-    for (final entry in _tools.values) {
-      final stats =
-          appStats[entry.sourceApp] ?? (toolCount: 0, resourceCount: 0);
-      appStats[entry.sourceApp] = (
-        toolCount: stats.toolCount + 1,
-        resourceCount: stats.resourceCount,
-      );
-    }
-
-    // Count resources per app
-    for (final entry in _resources.values) {
-      final stats =
-          appStats[entry.sourceApp] ?? (toolCount: 0, resourceCount: 0);
-      appStats[entry.sourceApp] = (
-        toolCount: stats.toolCount,
-        resourceCount: stats.resourceCount + 1,
-      );
-    }
-
-    final apps =
-        appStats.entries.map((final entry) {
-          final appName = entry.key;
-          final stats = entry.value;
-          return DynamicAppInfo(
-            name: appName,
-            port: _appConnections[appName] ?? 0,
-            toolCount: stats.toolCount,
-            resourceCount: stats.resourceCount,
-            lastActivity: _appActivity[appName] ?? DateTime.now(),
-          );
-        }).toList();
+    // Create app info for current connection
+    final app = DynamicAppInfo(
+      name: currentApp,
+      port: currentPort,
+      toolCount: _tools.length,
+      resourceCount: _resources.length,
+      lastActivity: lastActivity,
+    );
 
     return DynamicRegistryStats(
       toolCount: _tools.length,
       resourceCount: _resources.length,
-      appCount: _appConnections.length,
-      apps: apps,
+      app: app,
     );
   }
 
-  /// Get tools and resources for a specific app
+  /// Get tools and resources for the current app
+  ({List<DynamicToolEntry> tools, List<DynamicResourceEntry> resources})
+  getCurrentAppEntries() => (
+    tools: _tools.values.toList(),
+    resources: _resources.values.toList(),
+  );
+
+  /// Get tools and resources for a specific app (for backward compatibility)
   ({List<DynamicToolEntry> tools, List<DynamicResourceEntry> resources})
   getAppEntries(final String sourceApp) {
-    final tools =
-        _tools.values
-            .where((final entry) => entry.sourceApp == sourceApp)
-            .toList();
-    final resources =
-        _resources.values
-            .where((final entry) => entry.sourceApp == sourceApp)
-            .toList();
-
-    return (tools: tools, resources: resources);
+    if (_currentApp == sourceApp) {
+      return getCurrentAppEntries();
+    }
+    return (tools: <DynamicToolEntry>[], resources: <DynamicResourceEntry>[]);
   }
 
   /// Update app activity timestamp
   void updateAppActivity(final String sourceApp) {
-    _appActivity[sourceApp] = DateTime.now();
+    if (_currentApp == sourceApp) {
+      _lastActivity = DateTime.now();
+    }
   }
 
   /// Cleanup and dispose
@@ -510,12 +551,10 @@ final class DynamicRegistry {
     unawaited(_eventController.close());
     _tools.clear();
     _resources.clear();
-    _appConnections.clear();
-    _appActivity.clear();
   }
 
   @override
   String toString() =>
       'DynamicRegistry(${_tools.length} tools, '
-      '${_resources.length} resources, ${_appConnections.length} apps)';
+      '${_resources.length} resources)';
 }

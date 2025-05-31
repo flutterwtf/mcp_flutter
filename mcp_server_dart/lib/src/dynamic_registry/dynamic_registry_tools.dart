@@ -1,10 +1,13 @@
 // Copyright (c) 2025, Flutter Inspector MCP Server authors.
 // Licensed under the MIT License.
 
+// ignore_for_file: lines_longer_than_80_chars
+
 import 'dart:convert';
 
 import 'package:dart_mcp/server.dart';
-import 'package:flutter_inspector_mcp_server/src/services/dynamic_registry.dart';
+import 'package:flutter_inspector_mcp_server/src/dynamic_registry/dynamic_registry.dart';
+import 'package:from_json_to_json/from_json_to_json.dart';
 import 'package:meta/meta.dart';
 
 /// MCP tools for managing dynamic registry
@@ -24,9 +27,6 @@ final class DynamicRegistryTools {
       properties: {
         'includeMetadata': Schema.bool(
           description: 'Include registration metadata (default: false)',
-        ),
-        'filterByApp': Schema.string(
-          description: 'Filter by specific app name (optional)',
         ),
       },
     ),
@@ -114,66 +114,46 @@ final class DynamicRegistryTools {
   Future<CallToolResult> _handleListClientToolsAndResources(
     final Map<String, Object?>? arguments,
   ) async {
-    final includeMetadata = arguments?['includeMetadata'] as bool? ?? false;
-    final filterByApp = arguments?['filterByApp'] as String?;
+    final includeMetadata = jsonDecodeBool(arguments?['includeMetadata']);
+
+    // TODO(arenuvern): verify Dart VM connection.
+    // make sure, the registry is requested tools and resources
+    // from the Dart VM.
 
     final toolEntries = registry.getToolEntries();
     final resourceEntries = registry.getResourceEntries();
 
-    // Apply filtering
-    final filteredTools =
-        filterByApp != null
-            ? toolEntries
-                .where((final e) => e.sourceApp == filterByApp)
-                .toList()
-            : toolEntries;
-    final filteredResources =
-        filterByApp != null
-            ? resourceEntries
-                .where((final e) => e.sourceApp == filterByApp)
-                .toList()
-            : resourceEntries;
-
     final result = <String, dynamic>{
       'tools':
-          filteredTools.map((final entry) {
+          toolEntries.map((final entry) {
             final toolData = <String, dynamic>{
-              'name': entry.tool.name,
-              'description': entry.tool.description,
-              'sourceApp': entry.sourceApp,
-              'dartVmPort': entry.dartVmPort,
-              'registeredAt': entry.registeredAt.toIso8601String(),
+              ...entry.tool as Map<String, dynamic>,
+              if (includeMetadata) ...{
+                'metadata': entry.metadata,
+                'inputSchema': _schemaToMap(entry.tool.inputSchema),
+                'dartVmPort': entry.dartVmPort,
+                'registeredAt': entry.registeredAt.toIso8601String(),
+              },
             };
-
-            if (includeMetadata) {
-              toolData['metadata'] = entry.metadata;
-              toolData['inputSchema'] = _schemaToMap(entry.tool.inputSchema);
-            }
 
             return toolData;
           }).toList(),
       'resources':
-          filteredResources.map((final entry) {
+          resourceEntries.map((final entry) {
             final resourceData = <String, dynamic>{
-              'uri': entry.resource.uri,
-              'name': entry.resource.name,
-              'description': entry.resource.description,
-              'mimeType': entry.resource.mimeType,
-              'sourceApp': entry.sourceApp,
-              'dartVmPort': entry.dartVmPort,
-              'registeredAt': entry.registeredAt.toIso8601String(),
+              ...entry.resource as Map<String, dynamic>,
+              if (includeMetadata) ...{
+                'metadata': entry.metadata,
+                'dartVmPort': entry.dartVmPort,
+                'registeredAt': entry.registeredAt.toIso8601String(),
+              },
             };
-
-            if (includeMetadata) {
-              resourceData['metadata'] = entry.metadata;
-            }
 
             return resourceData;
           }).toList(),
       'summary': {
-        'totalTools': filteredTools.length,
-        'totalResources': filteredResources.length,
-        'filteredByApp': filterByApp,
+        'totalTools': toolEntries.length,
+        'totalResources': resourceEntries.length,
       },
     };
 
@@ -186,15 +166,17 @@ final class DynamicRegistryTools {
   Future<CallToolResult> _handleRunClientTool(
     final Map<String, Object?>? arguments,
   ) async {
-    final toolName = arguments?['toolName'] as String?;
-    if (toolName == null) {
+    final toolName = jsonDecodeString(arguments?['toolName']);
+    if (toolName.isEmpty) {
       return CallToolResult(
         content: [TextContent(text: 'Missing required parameter: toolName')],
         isError: true,
       );
     }
 
-    final toolArguments = arguments?['arguments'] as Map<String, Object?>?;
+    final toolArguments = jsonDecodeMapAs<String, Object?>(
+      arguments?['arguments'],
+    );
 
     // Forward to the dynamic registry
     final result = await registry.forwardToolCall(toolName, toolArguments);
@@ -218,8 +200,8 @@ final class DynamicRegistryTools {
   Future<CallToolResult> _handleRunClientResource(
     final Map<String, Object?>? arguments,
   ) async {
-    final resourceUri = arguments?['resourceUri'] as String?;
-    if (resourceUri == null) {
+    final resourceUri = jsonDecodeString(arguments?['resourceUri']);
+    if (resourceUri.isEmpty) {
       return CallToolResult(
         content: [TextContent(text: 'Missing required parameter: resourceUri')],
         isError: true,
@@ -242,35 +224,23 @@ final class DynamicRegistryTools {
       );
     }
 
-    return CallToolResult(content: content, isError: false);
+    return CallToolResult(
+      content: content.contents.map((final c) => c.toContent()).toList(),
+      isError: false,
+    );
   }
 
   Future<CallToolResult> _handleGetRegistryStats(
     final Map<String, Object?>? arguments,
   ) async {
-    final includeAppDetails = arguments?['includeAppDetails'] as bool? ?? true;
+    final includeAppDetails = jsonDecodeBool(arguments?['includeAppDetails']);
     final stats = registry.getStats();
 
     final result = <String, dynamic>{
       'toolCount': stats.toolCount,
       'resourceCount': stats.resourceCount,
-      'appCount': stats.appCount,
+      if (includeAppDetails) ...stats.app,
     };
-
-    if (includeAppDetails) {
-      result['apps'] =
-          stats.apps
-              .map(
-                (final app) => {
-                  'name': app.name,
-                  'port': app.port,
-                  'toolCount': app.toolCount,
-                  'resourceCount': app.resourceCount,
-                  'lastActivity': app.lastActivity.toIso8601String(),
-                },
-              )
-              .toList();
-    }
 
     return CallToolResult(
       content: [TextContent(text: jsonEncode(result))],
@@ -283,20 +253,39 @@ final class DynamicRegistryTools {
   Map<String, dynamic> _schemaToMap(final ObjectSchema schema) {
     // Since ObjectSchema is an extension type, we'll create a simplified representation
     try {
-      return {
-        'type': 'object',
-        'description': schema.description,
-        'title': schema.title,
-        'required': schema.required,
-        // Note: We can't easily access all properties without reflection
-        // This is a simplified representation for JSON output
-      };
-    } catch (e) {
+      return {'type': 'object', ...schema as Map};
+    } on Exception catch (e, stackTrace) {
       // Fallback if access fails
       return {
         'type': 'object',
         'description': 'Schema serialization not available',
+        'error': e.toString(),
+        'stackTrace': stackTrace.toString(),
       };
+    }
+  }
+}
+
+extension on ResourceContents {
+  Content toContent() {
+    final mimeType = this.mimeType;
+    if (mimeType == null ||
+        mimeType.startsWith('text/') ||
+        mimeType.startsWith('application/')) {
+      final textContent = this as TextResourceContents;
+      return TextContent(text: textContent.text);
+    } else if (mimeType.startsWith('image/')) {
+      return ImageContent(
+        data: (this as BlobResourceContents).blob,
+        mimeType: mimeType,
+      );
+    } else if (mimeType.startsWith('audio/')) {
+      return AudioContent(
+        data: (this as BlobResourceContents).blob,
+        mimeType: mimeType,
+      );
+    } else {
+      return TextContent(text: 'Unsupported resource contents type: $this');
     }
   }
 }

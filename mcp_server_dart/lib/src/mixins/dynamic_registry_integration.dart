@@ -1,12 +1,14 @@
 // Copyright (c) 2025, Flutter Inspector MCP Server authors.
 // Licensed under the MIT License.
 
+// ignore_for_file: lines_longer_than_80_chars
+
 import 'dart:async';
 
 import 'package:dart_mcp/server.dart';
 import 'package:flutter_inspector_mcp_server/src/base_server.dart';
-import 'package:flutter_inspector_mcp_server/src/services/dynamic_registry.dart';
-import 'package:flutter_inspector_mcp_server/src/services/dynamic_registry_tools.dart';
+import 'package:flutter_inspector_mcp_server/src/dynamic_registry/dynamic_registry.dart';
+import 'package:flutter_inspector_mcp_server/src/dynamic_registry/dynamic_registry_tools.dart';
 import 'package:meta/meta.dart';
 
 /// Mixin that integrates dynamic registry with MCP server infrastructure
@@ -39,7 +41,7 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
 
   /// Override initialize to register dynamic registry management tools
   @override
-  FutureOr<InitializeResult> initialize(final InitializeRequest request) async {
+  FutureOr<InitializeResult> initialize(final InitializeRequest request) {
     if (_dynamicRegistrySupported) {
       // Register the dynamic registry management tools using standard MCP approach
       _registerDynamicRegistryTools();
@@ -68,16 +70,18 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
         if (this case final ToolsSupport toolsSupport) {
           toolsSupport.registerTool(
             tool,
+            // ignore: unnecessary_async
             (final request) async => _dynamicRegistryTools.handleToolCall(
               request.name,
               request.arguments,
             ),
           );
         }
-      } catch (e) {
+      } on Exception catch (e, stackTrace) {
         log(
           LoggingLevel.warning,
-          'Failed to register dynamic registry tool ${tool.name}: $e',
+          'Failed to register dynamic registry tool ${tool.name}: $e '
+          'stackTrace: $stackTrace',
           logger: 'DynamicRegistryIntegration',
         );
       }
@@ -89,8 +93,7 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
   @protected
   void registerDynamicTool(
     final Tool tool,
-    final String sourceApp,
-    final int dartVmPort, {
+    final String sourceApp, {
     final Map<String, dynamic> metadata = const {},
   }) {
     if (!_dynamicRegistrySupported) {
@@ -106,7 +109,7 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
     _dynamicRegistry.registerTool(
       tool,
       sourceApp,
-      dartVmPort,
+      configuration.vmPort,
       metadata: metadata,
     );
 
@@ -135,10 +138,11 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
           'Registered dynamic tool as MCP tool: ${tool.name}',
           logger: 'DynamicRegistryIntegration',
         );
-      } catch (e) {
+      } on Exception catch (e, stackTrace) {
         log(
           LoggingLevel.warning,
-          'Failed to register dynamic tool ${tool.name} as MCP tool: $e',
+          'Failed to register dynamic tool ${tool.name} as MCP tool: $e '
+          'stackTrace: $stackTrace',
           logger: 'DynamicRegistryIntegration',
         );
       }
@@ -150,8 +154,7 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
   @protected
   void registerDynamicResource(
     final Resource resource,
-    final String sourceApp,
-    final int dartVmPort, {
+    final String sourceApp, {
     final Map<String, dynamic> metadata = const {},
   }) {
     if (!_dynamicRegistrySupported) {
@@ -167,7 +170,7 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
     _dynamicRegistry.registerResource(
       resource,
       sourceApp,
-      dartVmPort,
+      configuration.vmPort,
       metadata: metadata,
     );
 
@@ -178,27 +181,7 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
           final content = await _dynamicRegistry.forwardResourceRead(
             request.uri,
           );
-          if (content != null) {
-            return ReadResourceResult(
-              contents:
-                  content
-                      .map(
-                        (final c) =>
-                            c is TextContent
-                                ? TextResourceContents(
-                                  uri: request.uri,
-                                  text: c.text,
-                                  mimeType: 'text/plain',
-                                )
-                                : BlobResourceContents(
-                                  uri: request.uri,
-                                  blob: '',
-                                  mimeType: 'application/octet-stream',
-                                ),
-                      )
-                      .toList(),
-            );
-          }
+          if (content != null) return content;
 
           return ReadResourceResult(
             contents: [
@@ -215,10 +198,11 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
           'Registered dynamic resource as MCP resource: ${resource.uri}',
           logger: 'DynamicRegistryIntegration',
         );
-      } catch (e) {
+      } on Exception catch (e, stackTrace) {
         log(
           LoggingLevel.warning,
-          'Failed to register dynamic resource ${resource.uri} as MCP resource: $e',
+          'Failed to register dynamic resource ${resource.uri} as MCP resource: $e '
+          'stackTrace: $stackTrace',
           logger: 'DynamicRegistryIntegration',
         );
       }
@@ -237,10 +221,11 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
       for (final entry in hadContent.tools) {
         try {
           toolsSupport.unregisterTool(entry.tool.name);
-        } catch (e) {
+        } on Exception catch (e, stackTrace) {
           log(
             LoggingLevel.warning,
-            'Failed to unregister MCP tool ${entry.tool.name}: $e',
+            'Failed to unregister MCP tool ${entry.tool.name}: $e '
+            'stackTrace: $stackTrace',
             logger: 'DynamicRegistryIntegration',
           );
         }
@@ -251,10 +236,11 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
       for (final entry in hadContent.resources) {
         try {
           resourcesSupport.removeResource(entry.resource.uri);
-        } catch (e) {
+        } on Exception catch (e, stackTrace) {
           log(
             LoggingLevel.warning,
-            'Failed to unregister MCP resource ${entry.resource.uri}: $e',
+            'Failed to unregister MCP resource ${entry.resource.uri}: $e '
+            'stackTrace: $stackTrace',
             logger: 'DynamicRegistryIntegration',
           );
         }
