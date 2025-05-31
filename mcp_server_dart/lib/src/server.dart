@@ -126,6 +126,7 @@ Connect to a running Flutter app on debug mode to use these features.
 
     try {
       await initializeVMService();
+      await startRegistryDiscovery(mcpToolkitServer: this);
       log(
         LoggingLevel.info,
         'VM service initialization completed',

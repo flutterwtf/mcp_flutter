@@ -1,15 +1,13 @@
 // Copyright (c) 2025, Flutter Inspector MCP Server authors.
 // Licensed under the MIT License.
 
-// ignore_for_file: avoid_catches_without_on_clauses
+// ignore_for_file: avoid_catches_without_on_clauses, lines_longer_than_80_chars
 
 import 'dart:async';
 
 import 'package:dart_mcp/server.dart';
 import 'package:dtd/dtd.dart';
-import 'package:flutter_inspector_mcp_server/src/base_server.dart';
-import 'package:flutter_inspector_mcp_server/src/mixins/dynamic_registry_integration.dart';
-import 'package:flutter_inspector_mcp_server/src/services/simplified_discovery_service.dart';
+import 'package:flutter_inspector_mcp_server/flutter_inspector_mcp_server.dart';
 import 'package:from_json_to_json/from_json_to_json.dart';
 import 'package:vm_service/vm_service.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -75,11 +73,6 @@ base mixin VMServiceSupport on BaseMCPToolkitServer {
         'VM service connection established successfully',
         logger: 'VMService',
       );
-
-      // Start simplified discovery if dynamic registry is supported
-      if (configuration.dynamicRegistrySupported) {
-        await _startSimplifiedDiscovery();
-      }
     } on Exception catch (e, s) {
       log(
         LoggingLevel.error,
@@ -90,55 +83,6 @@ base mixin VMServiceSupport on BaseMCPToolkitServer {
       log(LoggingLevel.debug, () => 'Stack trace: $s', logger: 'VMService');
       await disconnectVMService();
       rethrow;
-    }
-  }
-
-  /// Start simplified discovery that immediately registers and listens for changes
-  Future<void> _startSimplifiedDiscovery() async {
-    // Only start if we have dynamic registry integration
-    if (this is! DynamicRegistryIntegration) {
-      log(
-        LoggingLevel.warning,
-        'Cannot start simplified discovery: DynamicRegistryIntegration not available',
-        logger: 'VMService',
-      );
-      return;
-    }
-
-    final registryIntegration = this as DynamicRegistryIntegration;
-    final dynamicRegistry = registryIntegration.dynamicRegistry;
-    
-    if (dynamicRegistry == null) {
-      log(
-        LoggingLevel.warning,
-        'Cannot start simplified discovery: Dynamic registry not initialized',
-        logger: 'VMService',
-      );
-      return;
-    }
-
-    final discoveryService = SimplifiedDiscoveryService(
-      dynamicRegistry: dynamicRegistry,
-      logger: this,
-      vmServiceGetter: () => _vmService,
-      dtdGetter: () => _dartToolingDaemon,
-    );
-
-    try {
-      _discoverySubscription = await discoveryService.startDiscovery();
-      
-      log(
-        LoggingLevel.info,
-        'Simplified Flutter app discovery started successfully',
-        logger: 'VMService',
-      );
-    } on Exception catch (e, s) {
-      log(
-        LoggingLevel.warning,
-        'Failed to start simplified discovery: $e',
-        logger: 'VMService',
-      );
-      log(LoggingLevel.debug, () => 'Stack trace: $s', logger: 'VMService');
     }
   }
 
@@ -184,6 +128,40 @@ base mixin VMServiceSupport on BaseMCPToolkitServer {
       );
       log(LoggingLevel.debug, () => 'Stack trace: $s', logger: 'VMService');
     }
+  }
+
+  /// Call a Flutter extension method
+  Future<Response> callFlutterExtension(
+    final String method, {
+    final Map<String, dynamic>? args,
+  }) async {
+    final isolate = await getFlutterIsolate();
+    final isolateId = isolate?.id;
+    if (isolateId == null) {
+      log(
+        LoggingLevel.error,
+        'Cannot call Flutter extension $method: No isolate found',
+        logger: 'VMService',
+      );
+      throw StateError('No isolate found');
+    }
+
+    final response = await callServiceExtension(
+      method,
+      isolateId: isolateId,
+      args: args,
+    );
+
+    if (response == null) {
+      log(
+        LoggingLevel.error,
+        'Flutter extension $method returned null response',
+        logger: 'FlutterInspector',
+      );
+      throw StateError('Extension call returned null');
+    }
+
+    return response;
   }
 
   /// Call a service extension method
@@ -265,11 +243,11 @@ base mixin VMServiceSupport on BaseMCPToolkitServer {
     }
   }
 
-  /// Get the main isolate (Flutter app isolate)
-  Future<IsolateRef?> getMainIsolate() async {
+  /// Get the Flutter isolate
+  Future<IsolateRef?> getFlutterIsolate() async {
     log(
       LoggingLevel.debug,
-      'Searching for main Flutter isolate',
+      'Searching for Flutter isolate',
       logger: 'VMService',
     );
 
@@ -294,7 +272,7 @@ base mixin VMServiceSupport on BaseMCPToolkitServer {
         if (extensionRPCs.any((final ext) => ext.startsWith('ext.flutter'))) {
           log(
             LoggingLevel.info,
-            'Found main Flutter isolate: ${isolate.id}',
+            'Found Flutter isolate: ${isolate.id}',
             logger: 'VMService',
           );
           log(
@@ -413,7 +391,7 @@ base mixin VMServiceSupport on BaseMCPToolkitServer {
         await vmService.streamCancel(EventStreams.kService);
       }
 
-      final isolate = await getMainIsolate();
+      final isolate = await getFlutterIsolate();
       if (isolate?.id == null) {
         log(
           LoggingLevel.error,
@@ -502,7 +480,7 @@ base mixin VMServiceSupport on BaseMCPToolkitServer {
   Future<Map<String, dynamic>?> getExtensionRPCs() async {
     log(LoggingLevel.debug, 'Getting extension RPCs', logger: 'VMService');
 
-    final isolate = await getMainIsolate();
+    final isolate = await getFlutterIsolate();
     if (isolate?.id == null) {
       log(
         LoggingLevel.error,
@@ -554,7 +532,8 @@ base mixin VMServiceSupport on BaseMCPToolkitServer {
 
     log(
       LoggingLevel.info,
-      'Attempting to ensure VM service connection (timeout: ${timeout.inSeconds}s)',
+      'Attempting to ensure VM service connection '
+      '(timeout: ${timeout.inSeconds}s)',
       logger: 'VMService',
     );
 

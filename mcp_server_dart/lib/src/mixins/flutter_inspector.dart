@@ -88,55 +88,6 @@ base mixin FlutterInspector
     return super.initialize(request);
   }
 
-  /// Call a Flutter extension method
-  Future<Response> callFlutterExtension(
-    final String method,
-    final Map<String, dynamic> args,
-  ) async {
-    log(
-      LoggingLevel.debug,
-      'Calling Flutter extension: $method',
-      logger: 'FlutterInspector',
-    );
-    log(
-      LoggingLevel.debug,
-      () => 'Extension arguments: $args',
-      logger: 'FlutterInspector',
-    );
-
-    final isolate = await getMainIsolate();
-    if (isolate?.id == null) {
-      log(
-        LoggingLevel.error,
-        'Cannot call Flutter extension $method: No isolate found',
-        logger: 'FlutterInspector',
-      );
-      throw StateError('No isolate found');
-    }
-
-    final response = await callServiceExtension(
-      method,
-      isolateId: isolate!.id,
-      args: args,
-    );
-
-    if (response == null) {
-      log(
-        LoggingLevel.error,
-        'Flutter extension $method returned null response',
-        logger: 'FlutterInspector',
-      );
-      throw StateError('Extension call returned null');
-    }
-
-    log(
-      LoggingLevel.debug,
-      'Flutter extension $method completed successfully',
-      logger: 'FlutterInspector',
-    );
-    return response;
-  }
-
   /// Register resources for widget tree, screenshots, and app errors.
   void _registerResources() {
     log(
@@ -413,9 +364,10 @@ base mixin FlutterInspector
         logger: 'FlutterInspector',
       );
 
-      final result = await callFlutterExtension('ext.mcp.toolkit.app_errors', {
-        'count': requestedCount,
-      });
+      final result = await callFlutterExtension(
+        'ext.mcp.toolkit.app_errors',
+        args: {'count': requestedCount},
+      );
       final json = result.json;
       if (json == null) {
         log(
@@ -488,7 +440,7 @@ base mixin FlutterInspector
     try {
       final result = await callFlutterExtension(
         'ext.mcp.toolkit.view_screenshots',
-        {'compress': true},
+        args: {'compress': true},
       );
 
       final images = jsonDecodeListAs<String>(result.json?['images']);
@@ -540,7 +492,7 @@ base mixin FlutterInspector
     try {
       final result = await callFlutterExtension(
         'ext.mcp.toolkit.view_details',
-        {},
+        args: {},
       );
 
       final details = jsonDecodeListAs<Map<String, dynamic>>(
@@ -771,7 +723,7 @@ base mixin FlutterInspector
     try {
       final result = await callFlutterExtension(
         'ext.flutter.debugDumpLayerTree',
-        {},
+        args: {},
       );
       log(
         LoggingLevel.info,
@@ -820,7 +772,6 @@ base mixin FlutterInspector
     try {
       final result = await callFlutterExtension(
         'ext.flutter.debugDumpSemanticsTreeInTraversalOrder',
-        {},
       );
       log(
         LoggingLevel.info,
@@ -869,7 +820,6 @@ base mixin FlutterInspector
     try {
       final result = await callFlutterExtension(
         'ext.flutter.debugDumpRenderTree',
-        {},
       );
       log(
         LoggingLevel.info,
@@ -918,7 +868,7 @@ base mixin FlutterInspector
     try {
       final result = await callFlutterExtension(
         'ext.flutter.debugDumpFocusTree',
-        {},
+        args: {},
       );
       log(
         LoggingLevel.info,
@@ -1046,9 +996,10 @@ base mixin FlutterInspector
         logger: 'FlutterInspector',
       );
 
-      final result = await callFlutterExtension('ext.mcp.toolkit.app_errors', {
-        'count': count,
-      });
+      final result = await callFlutterExtension(
+        'ext.mcp.toolkit.app_errors',
+        args: {'count': count},
+      );
 
       final errors = jsonDecodeListAs<Map<String, dynamic>>(
         result.json?['errors'],
@@ -1114,7 +1065,7 @@ base mixin FlutterInspector
 
       final result = await callFlutterExtension(
         'ext.mcp.toolkit.view_screenshots',
-        {'compress': compress},
+        args: {'compress': compress},
       );
 
       final images = jsonDecodeListAs<String>(result.json?['images']);
@@ -1166,10 +1117,7 @@ base mixin FlutterInspector
     }
 
     try {
-      final result = await callFlutterExtension(
-        'ext.mcp.toolkit.view_details',
-        {},
-      );
+      final result = await callFlutterExtension('ext.mcp.toolkit.view_details');
       final details = jsonDecodeListAs<Map<String, dynamic>>(
         result.json?['details'],
       );

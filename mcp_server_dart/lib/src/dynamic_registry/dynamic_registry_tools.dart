@@ -23,13 +23,7 @@ final class DynamicRegistryTools {
     name: 'listClientToolsAndResources',
     description:
         'List all dynamically registered tools and resources from Flutter clients',
-    inputSchema: ObjectSchema(
-      properties: {
-        'includeMetadata': Schema.bool(
-          description: 'Include registration metadata (default: false)',
-        ),
-      },
-    ),
+    inputSchema: ObjectSchema(properties: {}),
   );
 
   /// Tool to run a client tool
@@ -114,43 +108,13 @@ final class DynamicRegistryTools {
   Future<CallToolResult> _handleListClientToolsAndResources(
     final Map<String, Object?>? arguments,
   ) async {
-    final includeMetadata = jsonDecodeBool(arguments?['includeMetadata']);
-
-    // TODO(arenuvern): verify Dart VM connection.
-    // make sure, the registry is requested tools and resources
-    // from the Dart VM.
-
     final toolEntries = registry.getToolEntries();
     final resourceEntries = registry.getResourceEntries();
 
     final result = <String, dynamic>{
-      'tools':
-          toolEntries.map((final entry) {
-            final toolData = <String, dynamic>{
-              ...entry.tool as Map<String, dynamic>,
-              if (includeMetadata) ...{
-                'metadata': entry.metadata,
-                'inputSchema': _schemaToMap(entry.tool.inputSchema),
-                'dartVmPort': entry.dartVmPort,
-                'registeredAt': entry.registeredAt.toIso8601String(),
-              },
-            };
-
-            return toolData;
-          }).toList(),
+      'tools': toolEntries.map((final entry) => entry.tool).toList(),
       'resources':
-          resourceEntries.map((final entry) {
-            final resourceData = <String, dynamic>{
-              ...entry.resource as Map<String, dynamic>,
-              if (includeMetadata) ...{
-                'metadata': entry.metadata,
-                'dartVmPort': entry.dartVmPort,
-                'registeredAt': entry.registeredAt.toIso8601String(),
-              },
-            };
-
-            return resourceData;
-          }).toList(),
+          resourceEntries.map((final entry) => entry.resource).toList(),
       'summary': {
         'totalTools': toolEntries.length,
         'totalResources': resourceEntries.length,
@@ -234,35 +198,24 @@ final class DynamicRegistryTools {
     final Map<String, Object?>? arguments,
   ) async {
     final includeAppDetails = jsonDecodeBool(arguments?['includeAppDetails']);
-    final stats = registry.getStats();
+    final info = registry.appInfo;
+    if (info == null) {
+      return CallToolResult(
+        content: [TextContent(text: 'No app info available')],
+        isError: true,
+      );
+    }
 
     final result = <String, dynamic>{
-      'toolCount': stats.toolCount,
-      'resourceCount': stats.resourceCount,
-      if (includeAppDetails) ...stats.app,
+      'toolCount': info.toolCount,
+      'resourceCount': info.resourceCount,
+      if (includeAppDetails) ...info,
     };
 
     return CallToolResult(
       content: [TextContent(text: jsonEncode(result))],
       isError: false,
     );
-  }
-
-  /// Convert ObjectSchema to a map for JSON serialization
-  /// Handle this carefully since ObjectSchema is an extension type
-  Map<String, dynamic> _schemaToMap(final ObjectSchema schema) {
-    // Since ObjectSchema is an extension type, we'll create a simplified representation
-    try {
-      return {'type': 'object', ...schema as Map};
-    } on Exception catch (e, stackTrace) {
-      // Fallback if access fails
-      return {
-        'type': 'object',
-        'description': 'Schema serialization not available',
-        'error': e.toString(),
-        'stackTrace': stackTrace.toString(),
-      };
-    }
   }
 }
 

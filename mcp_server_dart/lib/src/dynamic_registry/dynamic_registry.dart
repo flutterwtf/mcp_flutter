@@ -6,109 +6,59 @@ import 'dart:convert';
 
 import 'package:dart_mcp/server.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter_inspector_mcp_server/flutter_inspector_mcp_server.dart';
 import 'package:from_json_to_json/from_json_to_json.dart';
+import 'package:is_dart_empty_or_not/is_dart_empty_or_not.dart';
 import 'package:meta/meta.dart';
 import 'package:vm_service/vm_service.dart';
 
 /// Entry for a dynamically registered tool - fully MCP compliant
 @immutable
 final class DynamicToolEntry with EquatableMixin {
-  const DynamicToolEntry({
-    required this.tool,
-    required this.sourceApp,
-    required this.dartVmPort,
-    required this.registeredAt,
-    this.metadata = const {},
-  });
+  const DynamicToolEntry({required this.tool});
 
   final Tool tool;
-  final String sourceApp;
-  final int dartVmPort;
-  final DateTime registeredAt;
-  final Map<String, dynamic> metadata;
-
   @override
   bool? get stringify => true;
 
   @override
-  List<Object?> get props => [
-    tool,
-    sourceApp,
-    dartVmPort,
-    registeredAt,
-    metadata,
-  ];
+  List<Object?> get props => [tool];
 }
 
 /// Entry for a dynamically registered resource - fully MCP compliant
 @immutable
 final class DynamicResourceEntry with EquatableMixin {
-  const DynamicResourceEntry({
-    required this.resource,
-    required this.sourceApp,
-    required this.dartVmPort,
-    required this.registeredAt,
-    this.metadata = const {},
-  });
+  const DynamicResourceEntry({required this.resource});
 
   final Resource resource;
-  final String sourceApp;
-  final int dartVmPort;
-  final DateTime registeredAt;
-  final Map<String, dynamic> metadata;
 
   @override
   bool? get stringify => true;
 
   @override
-  List<Object?> get props => [
-    resource,
-    sourceApp,
-    dartVmPort,
-    registeredAt,
-    metadata,
-  ];
+  List<Object?> get props => [resource];
 }
 
-/// Statistics for the dynamic registry
-@immutable
-final class DynamicRegistryStats with EquatableMixin {
-  const DynamicRegistryStats({
-    required this.toolCount,
-    required this.resourceCount,
-    required this.app,
-  });
-
-  final int toolCount;
-  final int resourceCount;
-  final DynamicAppInfo app;
-
-  @override
-  bool? get stringify => true;
-
-  @override
-  List<Object?> get props => [toolCount, resourceCount, app];
-}
+/// A string that represents a dynamic app id.
+extension type const DynamicAppId(String _value) implements String {}
 
 /// Information about a registered app
 @immutable
 extension type const DynamicAppInfo._(Map<String, Object?> _value)
     implements Map<String, Object?> {
   factory DynamicAppInfo({
-    required final String name,
-    required final int port,
+    required final DynamicAppId id,
     required final int toolCount,
     required final int resourceCount,
     required final DateTime lastActivity,
   }) => DynamicAppInfo._({
-    'name': name,
-    'port': port,
+    'id': id,
     'toolCount': toolCount,
     'resourceCount': resourceCount,
     'lastActivity': lastActivity.millisecondsSinceEpoch,
   });
 
-  String get name => jsonDecodeString(_value['name']);
+  DynamicAppId get id => DynamicAppId(jsonDecodeString(_value['id']));
   int get port => jsonDecodeInt(_value['port']);
   int get toolCount => jsonDecodeInt(_value['toolCount']);
   int get resourceCount => jsonDecodeInt(_value['resourceCount']);
@@ -135,11 +85,11 @@ final class ToolUnregisteredEvent extends DynamicRegistryEvent {
   const ToolUnregisteredEvent({
     required super.timestamp,
     required this.toolName,
-    required this.sourceApp,
+    required this.appId,
   });
 
   final String toolName;
-  final String sourceApp;
+  final DynamicAppId appId;
 }
 
 final class ResourceRegisteredEvent extends DynamicRegistryEvent {
@@ -155,72 +105,65 @@ final class ResourceUnregisteredEvent extends DynamicRegistryEvent {
   const ResourceUnregisteredEvent({
     required super.timestamp,
     required this.resourceUri,
-    required this.sourceApp,
+    required this.appId,
   });
 
   final String resourceUri;
-  final String sourceApp;
+  final DynamicAppId appId;
 }
 
 final class AppUnregisteredEvent extends DynamicRegistryEvent {
   const AppUnregisteredEvent({
     required super.timestamp,
-    required this.sourceApp,
+    required this.appId,
     required this.toolsRemoved,
     required this.resourcesRemoved,
   });
 
-  final String sourceApp;
+  final DynamicAppId appId;
   final int toolsRemoved;
   final int resourcesRemoved;
 }
 
 /// Tool call forwarding result for dynamic tools
-final class DynamicToolCallResult {
-  const DynamicToolCallResult({required this.entry, required this.result});
-
-  final DynamicToolEntry entry;
-  final CallToolResult result;
-}
+typedef DynamicToolResult = ({Tool tool, List<Content> content});
 
 /// Resource read forwarding result for dynamic resources
-final class DynamicResourceResult {
-  const DynamicResourceResult({required this.entry, required this.content});
-
-  final DynamicResourceEntry entry;
-  final List<Content> content;
-}
+typedef DynamicResourceResult = ({Resource resource, List<Content> content});
 
 /// Dynamic registry for tools and resources registered by Flutter applications
 /// Manages runtime registration and cleanup with event-driven architecture
 /// Fully compatible with MCP protocol defined in tools.dart
 final class DynamicRegistry {
-  DynamicRegistry({required this.logger, this.vmServiceGetter});
+  DynamicRegistry({required this.server});
 
-  final LoggingSupport logger;
-  final VmService? Function()? vmServiceGetter;
+  final MCPToolkitServer server;
+  LoggingSupport get logger => server;
+  VmService? get vmService => server.vmService;
 
   // Storage - keyed for fast MCP protocol lookups
   final Map<String, DynamicToolEntry> _tools = {};
   final Map<String, DynamicResourceEntry> _resources = {};
 
   // Single app connection tracking
-  String? _currentApp;
-  int? _currentPort;
+  DynamicAppId? _appId;
+  DynamicAppInfo? get appInfo => DynamicAppInfo(
+    id: appId,
+    toolCount: _tools.length,
+    resourceCount: _resources.length,
+    lastActivity: lastActivity,
+  );
+
   DateTime? _lastActivity;
-  String? _currentIsolateId; // Track current isolate for service extension calls
 
-  /// Get current connected app name
-  String get currentApp => _currentApp ?? 'No app connected';
-
-  /// Get current app port
-  int get currentPort => _currentPort ?? 0;
+  /// Get current connected app id
+  DynamicAppId get appId => _appId ?? const DynamicAppId('');
 
   /// Get last activity timestamp
   DateTime get lastActivity => _lastActivity ?? DateTime.now();
 
   /// Check if there's a connected app
-  bool get hasConnectedApp => _currentApp != null;
+  bool get hasConnectedApp => _appId != null;
 
   // Event streaming
   final _eventController = StreamController<DynamicRegistryEvent>.broadcast();
@@ -230,44 +173,17 @@ final class DynamicRegistry {
 
   /// Register a new tool from a Flutter application
   /// Tool must be MCP-compliant with proper name, description, and inputSchema
-  void registerTool(
-    final Tool tool,
-    final String sourceApp,
-    final int dartVmPort, {
-    final Map<String, dynamic> metadata = const {},
-  }) {
-    // Handle app switching
-    if (_currentApp != null && _currentApp != sourceApp) {
-      logger.log(
-        LoggingLevel.info,
-        'Switching from app $_currentApp to $sourceApp, '
-        'clearing previous registrations',
-        logger: 'DynamicRegistry',
-      );
-      _clearCurrentRegistrations();
-    }
+  void registerTool(final Tool tool, final DynamicAppId appId) {
+    verifyAppConnection(appId);
 
-    final entry = DynamicToolEntry(
-      tool: tool,
-      sourceApp: sourceApp,
-      dartVmPort: dartVmPort,
-      registeredAt: DateTime.now(),
-      metadata: metadata,
-    );
+    final entry = DynamicToolEntry(tool: tool);
 
     _tools[tool.name] = entry;
-    _currentApp = sourceApp;
-    _currentPort = dartVmPort;
     _lastActivity = DateTime.now();
-    
-    // Store isolate ID if provided in metadata
-    if (metadata['isolateId'] != null) {
-      _currentIsolateId = metadata['isolateId'] as String;
-    }
 
     logger.log(
       LoggingLevel.info,
-      'Registered MCP tool: ${tool.name} from $sourceApp:$dartVmPort',
+      'Registered MCP tool: ${tool.name} for app $appId',
       logger: 'DynamicRegistry',
     );
 
@@ -276,46 +192,32 @@ final class DynamicRegistry {
     );
   }
 
-  /// Register a new resource from a Flutter application
-  /// Resource must be MCP-compliant with proper uri, name, description
-  void registerResource(
-    final Resource resource,
-    final String sourceApp,
-    final int dartVmPort, {
-    final Map<String, dynamic> metadata = const {},
-  }) {
-    // Handle app switching
-    if (_currentApp != null && _currentApp != sourceApp) {
+  /// Verify that the current app is the same as the appId.
+  /// If not, clear the current registrations.
+  void verifyAppConnection(final DynamicAppId appId) {
+    if (_appId != null && _appId != appId) {
       logger.log(
         LoggingLevel.info,
-        'Switching from app $_currentApp to $sourceApp, '
+        'Switching from app $_appId to $appId, '
         'clearing previous registrations',
         logger: 'DynamicRegistry',
       );
       _clearCurrentRegistrations();
     }
+  }
 
-    final entry = DynamicResourceEntry(
-      resource: resource,
-      sourceApp: sourceApp,
-      dartVmPort: dartVmPort,
-      registeredAt: DateTime.now(),
-      metadata: metadata,
-    );
+  /// Register a new resource from a Flutter application
+  /// Resource must be MCP-compliant with proper uri, name, description
+  void registerResource(final Resource resource, final DynamicAppId appId) {
+    verifyAppConnection(appId);
+
+    final entry = DynamicResourceEntry(resource: resource);
 
     _resources[resource.uri] = entry;
-    _currentApp = sourceApp;
-    _currentPort = dartVmPort;
-    _lastActivity = DateTime.now();
-    
-    // Store isolate ID if provided in metadata
-    if (metadata['isolateId'] != null) {
-      _currentIsolateId = metadata['isolateId'] as String;
-    }
 
     logger.log(
       LoggingLevel.info,
-      'Registered MCP resource: ${resource.uri} from $sourceApp:$dartVmPort',
+      'Registered MCP resource: ${resource.uri} for app $appId',
       logger: 'DynamicRegistry',
     );
 
@@ -324,17 +226,8 @@ final class DynamicRegistry {
     );
   }
 
-  /// Remove all tools and resources from a specific app
-  void unregisterApp(final String sourceApp) {
-    if (_currentApp != sourceApp) {
-      logger.log(
-        LoggingLevel.warning,
-        'Attempted to unregister $sourceApp but current app is $_currentApp',
-        logger: 'DynamicRegistry',
-      );
-      return;
-    }
-
+  /// Remove all tools and resources for the current app
+  void unregisterApp() {
     final toolsCount = _tools.length;
     final resourcesCount = _resources.length;
 
@@ -343,7 +236,7 @@ final class DynamicRegistry {
     _eventController.add(
       AppUnregisteredEvent(
         timestamp: DateTime.now(),
-        sourceApp: sourceApp,
+        appId: appId,
         toolsRemoved: toolsCount,
         resourcesRemoved: resourcesCount,
       ),
@@ -356,14 +249,14 @@ final class DynamicRegistry {
     for (final entry in _tools.values) {
       logger.log(
         LoggingLevel.info,
-        'Unregistered MCP tool: ${entry.tool.name} from ${entry.sourceApp}',
+        'Unregistered MCP tool: ${entry.tool.name} from $_appId',
         logger: 'DynamicRegistry',
       );
       _eventController.add(
         ToolUnregisteredEvent(
           timestamp: DateTime.now(),
           toolName: entry.tool.name,
-          sourceApp: entry.sourceApp,
+          appId: _appId ?? const DynamicAppId(''),
         ),
       );
     }
@@ -373,40 +266,22 @@ final class DynamicRegistry {
       logger.log(
         LoggingLevel.info,
         'Unregistered MCP resource: ${entry.resource.uri} from '
-        '${entry.sourceApp}',
+        '$_appId',
         logger: 'DynamicRegistry',
       );
       _eventController.add(
         ResourceUnregisteredEvent(
           timestamp: DateTime.now(),
           resourceUri: entry.resource.uri,
-          sourceApp: entry.sourceApp,
+          appId: _appId ?? const DynamicAppId(''),
         ),
       );
     }
 
     _tools.clear();
     _resources.clear();
-    _currentApp = null;
-    _currentPort = null;
+    _appId = null;
     _lastActivity = null;
-  }
-
-  /// Clear all registrations for a specific app (alias for unregisterApp)
-  void clearAppRegistrations(final String sourceApp) =>
-      unregisterApp(sourceApp);
-
-  /// Handle port change - treat as new app registration
-  void handlePortChange(final String sourceApp, final int newPort) {
-    if (_currentApp == sourceApp && _currentPort != newPort) {
-      logger.log(
-        LoggingLevel.info,
-        'Port changed for $sourceApp: $_currentPort -> $newPort',
-        logger: 'DynamicRegistry',
-      );
-      _currentPort = newPort;
-      _lastActivity = DateTime.now();
-    }
   }
 
   /// Get all dynamically registered tools for MCP ListToolsResult
@@ -446,10 +321,10 @@ final class DynamicRegistry {
       return null;
     }
 
-    updateAppActivity(entry.sourceApp);
+    updateAppActivity();
 
     try {
-      final vmService = vmServiceGetter?.call();
+      final vmService = this.vmService;
       if (vmService == null) {
         logger.log(
           LoggingLevel.warning,
@@ -457,40 +332,24 @@ final class DynamicRegistry {
           logger: 'DynamicRegistry',
         );
         return CallToolResult(
-          content: [TextContent(text: 'VM service not available for tool forwarding')],
+          content: [
+            TextContent(text: 'VM service not available for tool forwarding'),
+          ],
           isError: true,
         );
       }
-
-      final isolateId = entry.metadata['isolateId'] as String?;
-      if (isolateId == null) {
-        logger.log(
-          LoggingLevel.warning,
-          'Cannot forward tool call: Isolate ID not available for ${entry.tool.name}',
-          logger: 'DynamicRegistry',
-        );
-        return CallToolResult(
-          content: [TextContent(text: 'Isolate ID not available for tool forwarding')],
-          isError: true,
-        );
-      }
-
-      logger.log(
-        LoggingLevel.info,
-        'Forwarding tool call ${entry.tool.name} to isolate $isolateId',
-        logger: 'DynamicRegistry',
-      );
 
       // Call the tool's specific service extension
-      final response = await vmService.callServiceExtension(
+      final response = await server.callFlutterExtension(
         'ext.mcp.toolkit.${entry.tool.name}',
-        isolateId: isolateId,
         args: arguments ?? {},
       );
 
       // Parse the response from the Flutter app
       final data = jsonDecodeMap(response.json);
-      final message = jsonDecodeString(data['message'], fallback: 'Tool executed successfully');
+      final message = jsonDecodeString(
+        data['message'],
+      ).whenEmptyUse('Tool executed successfully');
       final resultParameters = jsonDecodeMap(data['parameters']);
 
       return CallToolResult(
@@ -501,10 +360,11 @@ final class DynamicRegistry {
         ],
         isError: false,
       );
-    } on Exception catch (e) {
+    } on Exception catch (e, stackTrace) {
       logger.log(
         LoggingLevel.error,
-        'Failed to forward tool call to ${entry.sourceApp}: $e',
+        'Failed to forward tool call to ${entry.tool.name}: $e'
+        'stackTrace: $stackTrace',
         logger: 'DynamicRegistry',
       );
 
@@ -525,10 +385,10 @@ final class DynamicRegistry {
       return null;
     }
 
-    updateAppActivity(entry.sourceApp);
+    updateAppActivity();
 
     try {
-      final vmService = vmServiceGetter?.call();
+      final vmService = this.vmService;
       if (vmService == null) {
         logger.log(
           LoggingLevel.warning,
@@ -545,43 +405,29 @@ final class DynamicRegistry {
         );
       }
 
-      final isolateId = entry.metadata['isolateId'] as String?;
-      if (isolateId == null) {
-        logger.log(
-          LoggingLevel.warning,
-          'Cannot forward resource read: Isolate ID not available for ${entry.resource.uri}',
-          logger: 'DynamicRegistry',
-        );
-        return ReadResourceResult(
-          contents: [
-            TextResourceContents(
-              uri: resourceUri,
-              text: 'Isolate ID not available for resource forwarding',
-            ),
-          ],
-        );
-      }
-
       logger.log(
         LoggingLevel.info,
-        'Forwarding resource read ${entry.resource.uri} to isolate $isolateId',
+        'Forwarding resource read ${entry.resource.uri} to Flutter app',
         logger: 'DynamicRegistry',
       );
 
       // Extract resource name from URI for service extension call
       final resourceName = entry.resource.uri.split('/').last;
-      
+
       // Call the resource's specific service extension
-      final response = await vmService.callServiceExtension(
+      final response = await server.callFlutterExtension(
         'ext.mcp.toolkit.$resourceName',
-        isolateId: isolateId,
         args: {'uri': resourceUri},
       );
 
       // Parse the response from the Flutter app
       final data = jsonDecodeMap(response.json);
-      final content = jsonDecodeString(data['content'], fallback: 'Resource content not available');
-      final mimeType = jsonDecodeString(data['mimeType'], fallback: entry.resource.mimeType ?? 'text/plain');
+      final content = jsonDecodeString(
+        data['content'],
+      ).whenEmptyUse('Resource content not available');
+      final mimeType = jsonDecodeString(
+        data['mimeType'],
+      ).whenEmptyUse(entry.resource.mimeType ?? 'text/plain');
 
       return ReadResourceResult(
         contents: [
@@ -592,10 +438,11 @@ final class DynamicRegistry {
           ),
         ],
       );
-    } on Exception catch (e) {
+    } on Exception catch (e, stackTrace) {
       logger.log(
         LoggingLevel.error,
-        'Failed to forward resource read to ${entry.sourceApp}: $e',
+        'Failed to forward resource read to ${entry.resource.uri}: $e'
+        'stackTrace: $stackTrace',
         logger: 'DynamicRegistry',
       );
 
@@ -610,45 +457,16 @@ final class DynamicRegistry {
     }
   }
 
-  /// Get registry statistics
-  DynamicRegistryStats getStats() {
-    // Create app info for current connection
-    final app = DynamicAppInfo(
-      name: currentApp,
-      port: currentPort,
-      toolCount: _tools.length,
-      resourceCount: _resources.length,
-      lastActivity: lastActivity,
-    );
-
-    return DynamicRegistryStats(
-      toolCount: _tools.length,
-      resourceCount: _resources.length,
-      app: app,
-    );
-  }
-
   /// Get tools and resources for the current app
   ({List<DynamicToolEntry> tools, List<DynamicResourceEntry> resources})
-  getCurrentAppEntries() => (
+  getAppEntries() => (
     tools: _tools.values.toList(),
     resources: _resources.values.toList(),
   );
 
-  /// Get tools and resources for a specific app (for backward compatibility)
-  ({List<DynamicToolEntry> tools, List<DynamicResourceEntry> resources})
-  getAppEntries(final String sourceApp) {
-    if (_currentApp == sourceApp) {
-      return getCurrentAppEntries();
-    }
-    return (tools: <DynamicToolEntry>[], resources: <DynamicResourceEntry>[]);
-  }
-
   /// Update app activity timestamp
-  void updateAppActivity(final String sourceApp) {
-    if (_currentApp == sourceApp) {
-      _lastActivity = DateTime.now();
-    }
+  void updateAppActivity() {
+    _lastActivity = DateTime.now();
   }
 
   /// Cleanup and dispose

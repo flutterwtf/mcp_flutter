@@ -9,7 +9,8 @@ import 'package:dart_mcp/server.dart';
 import 'package:flutter_inspector_mcp_server/src/base_server.dart';
 import 'package:flutter_inspector_mcp_server/src/dynamic_registry/dynamic_registry.dart';
 import 'package:flutter_inspector_mcp_server/src/dynamic_registry/dynamic_registry_tools.dart';
-import 'package:flutter_inspector_mcp_server/src/mixins/vm_service_support.dart';
+import 'package:flutter_inspector_mcp_server/src/dynamic_registry/registry_discovery_service.dart';
+import 'package:flutter_inspector_mcp_server/src/server.dart';
 import 'package:meta/meta.dart';
 
 /// Mixin that integrates dynamic registry with MCP server infrastructure
@@ -22,22 +23,16 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
   @protected
   late final DynamicRegistryTools _dynamicRegistryTools;
 
-  bool get _dynamicRegistrySupported => configuration.dynamicRegistrySupported;
+  /// Check if dynamic registry is enabled
+  @protected
+  bool get isDynamicRegistrySupported => configuration.dynamicRegistrySupported;
 
   /// Initialize the dynamic registry integration
   @protected
-  void initializeDynamicRegistry() {
-    // Get VM service reference if available
-    VmService? Function()? vmServiceGetter;
-    if (this is VMServiceSupport) {
-      final vmSupport = this as VMServiceSupport;
-      vmServiceGetter = () => vmSupport.vmService;
-    }
-
-    _dynamicRegistry = DynamicRegistry(
-      logger: this,
-      vmServiceGetter: vmServiceGetter,
-    );
+  void initializeDynamicRegistry({
+    required final MCPToolkitServer mcpToolkitServer,
+  }) {
+    _dynamicRegistry = DynamicRegistry(server: mcpToolkitServer);
     _dynamicRegistryTools = DynamicRegistryTools(registry: _dynamicRegistry);
 
     log(
@@ -50,13 +45,43 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
     _dynamicRegistry.events.listen(_logRegistryEvent);
   }
 
+  late RegistryDiscoveryService _discoveryService;
+
+  /// Start registry discovery that immediately registers and listens for changes
+  Future<void> startRegistryDiscovery({
+    required final MCPToolkitServer mcpToolkitServer,
+  }) async {
+    _discoveryService = RegistryDiscoveryService(
+      dynamicRegistry: _dynamicRegistry,
+      server: mcpToolkitServer,
+    );
+
+    try {
+      await _discoveryService.startDiscovery();
+
+      log(
+        LoggingLevel.info,
+        'Simplified Flutter app discovery started successfully',
+        logger: 'VMService',
+      );
+    } on Exception catch (e, s) {
+      log(
+        LoggingLevel.warning,
+        'Failed to start simplified discovery: $e',
+        logger: 'VMService',
+      );
+      log(LoggingLevel.debug, () => 'Stack trace: $s', logger: 'VMService');
+    }
+  }
+
   /// Override initialize to register dynamic registry management tools
   @override
   FutureOr<InitializeResult> initialize(final InitializeRequest request) {
-    if (_dynamicRegistrySupported) {
+    if (isDynamicRegistrySupported) {
+      final mcpToolkitServer = this as MCPToolkitServer;
       // Initialize the dynamic registry first
-      initializeDynamicRegistry();
-      
+      initializeDynamicRegistry(mcpToolkitServer: mcpToolkitServer);
+
       // Register the dynamic registry management tools using standard MCP approach
       _registerDynamicRegistryTools();
     }
@@ -67,14 +92,13 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
   /// Dispose dynamic registry resources
   @protected
   void disposeDynamicRegistry() {
-    if (_dynamicRegistrySupported) {
-      _dynamicRegistry.dispose();
-      log(
-        LoggingLevel.info,
-        'Dynamic registry disposed',
-        logger: 'DynamicRegistryIntegration',
-      );
-    }
+    _dynamicRegistry.dispose();
+    log(
+      LoggingLevel.info,
+      'Dynamic registry disposed',
+      logger: 'DynamicRegistryIntegration',
+    );
+    _discoveryService.dispose();
   }
 
   /// Register the dynamic registry management tools
@@ -110,7 +134,7 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
     final String sourceApp, {
     final Map<String, dynamic> metadata = const {},
   }) {
-    if (!_dynamicRegistrySupported) {
+    if (!isDynamicRegistrySupported) {
       log(
         LoggingLevel.warning,
         'Attempted to register dynamic tool but registry is disabled',
@@ -119,13 +143,10 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
       return;
     }
 
+    final appId = DynamicAppId(sourceApp);
+
     // Register in the dynamic registry
-    _dynamicRegistry.registerTool(
-      tool,
-      sourceApp,
-      configuration.vmPort,
-      metadata: metadata,
-    );
+    _dynamicRegistry.registerTool(tool, appId);
 
     // Register as a standard MCP tool that forwards to the dynamic registry
     if (this case final ToolsSupport toolsSupport) {
@@ -171,7 +192,7 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
     final String sourceApp, {
     final Map<String, dynamic> metadata = const {},
   }) {
-    if (!_dynamicRegistrySupported) {
+    if (!isDynamicRegistrySupported) {
       log(
         LoggingLevel.warning,
         'Attempted to register dynamic resource but registry is disabled',
@@ -180,13 +201,10 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
       return;
     }
 
+    final appId = DynamicAppId(sourceApp);
+
     // Register in the dynamic registry
-    _dynamicRegistry.registerResource(
-      resource,
-      sourceApp,
-      configuration.vmPort,
-      metadata: metadata,
-    );
+    _dynamicRegistry.registerResource(resource, appId);
 
     // Register as a standard MCP resource that forwards to the dynamic registry
     if (this case final ResourcesSupport resourcesSupport) {
@@ -226,9 +244,9 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
   /// Unregister all tools and resources from a Flutter client
   @protected
   void unregisterDynamicApp(final String sourceApp) {
-    if (!_dynamicRegistrySupported) return;
+    if (!isDynamicRegistrySupported) return;
 
-    final hadContent = _dynamicRegistry.getAppEntries(sourceApp);
+    final hadContent = _dynamicRegistry.getAppEntries();
 
     // Unregister from MCP framework first
     if (this case final ToolsSupport toolsSupport) {
@@ -263,64 +281,60 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
 
     // Then unregister from dynamic registry
     if (hadContent.tools.isNotEmpty || hadContent.resources.isNotEmpty) {
-      _dynamicRegistry.unregisterApp(sourceApp);
+      _dynamicRegistry.unregisterApp();
     }
   }
 
   /// Get dynamic registry statistics
   @protected
-  DynamicRegistryStats? getDynamicRegistryStats() {
-    if (!_dynamicRegistrySupported) return null;
-    return _dynamicRegistry.getStats();
+  DynamicAppInfo? getDynamicRegistryStats() {
+    if (!isDynamicRegistrySupported) return null;
+    return _dynamicRegistry.appInfo;
   }
-
-  /// Check if dynamic registry is enabled
-  @protected
-  bool get isDynamicRegistryEnabled => _dynamicRegistrySupported;
 
   /// Get the dynamic registry instance (for advanced usage)
   @protected
   DynamicRegistry? get dynamicRegistry =>
-      _dynamicRegistrySupported ? _dynamicRegistry : null;
+      isDynamicRegistrySupported ? _dynamicRegistry : null;
 
   void _logRegistryEvent(final DynamicRegistryEvent event) {
     switch (event) {
       case ToolRegisteredEvent(:final entry):
         log(
           LoggingLevel.debug,
-          'Dynamic tool registered: ${entry.tool.name} from ${entry.sourceApp}',
+          'Dynamic tool registered: ${entry.tool.name}',
           logger: 'DynamicRegistryIntegration',
         );
 
-      case ToolUnregisteredEvent(:final toolName, :final sourceApp):
+      case ToolUnregisteredEvent(:final toolName, :final appId):
         log(
           LoggingLevel.debug,
-          'Dynamic tool unregistered: $toolName from $sourceApp',
+          'Dynamic tool unregistered: $toolName from $appId',
           logger: 'DynamicRegistryIntegration',
         );
 
       case ResourceRegisteredEvent(:final entry):
         log(
           LoggingLevel.debug,
-          'Dynamic resource registered: ${entry.resource.uri} from ${entry.sourceApp}',
+          'Dynamic resource registered: ${entry.resource.uri}',
           logger: 'DynamicRegistryIntegration',
         );
 
-      case ResourceUnregisteredEvent(:final resourceUri, :final sourceApp):
+      case ResourceUnregisteredEvent(:final resourceUri, :final appId):
         log(
           LoggingLevel.debug,
-          'Dynamic resource unregistered: $resourceUri from $sourceApp',
+          'Dynamic resource unregistered: $resourceUri from $appId',
           logger: 'DynamicRegistryIntegration',
         );
 
       case AppUnregisteredEvent(
-        :final sourceApp,
+        :final appId,
         :final toolsRemoved,
         :final resourcesRemoved,
       ):
         log(
           LoggingLevel.info,
-          'Dynamic app unregistered: $sourceApp ($toolsRemoved tools, $resourcesRemoved resources)',
+          'Dynamic app unregistered: $appId ($toolsRemoved tools, $resourcesRemoved resources)',
           logger: 'DynamicRegistryIntegration',
         );
     }
