@@ -9,6 +9,7 @@ import 'package:dart_mcp/server.dart';
 import 'package:flutter_inspector_mcp_server/src/base_server.dart';
 import 'package:flutter_inspector_mcp_server/src/dynamic_registry/dynamic_registry.dart';
 import 'package:flutter_inspector_mcp_server/src/dynamic_registry/dynamic_registry_tools.dart';
+import 'package:flutter_inspector_mcp_server/src/mixins/vm_service_support.dart';
 import 'package:meta/meta.dart';
 
 /// Mixin that integrates dynamic registry with MCP server infrastructure
@@ -26,7 +27,17 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
   /// Initialize the dynamic registry integration
   @protected
   void initializeDynamicRegistry() {
-    _dynamicRegistry = DynamicRegistry(logger: this);
+    // Get VM service reference if available
+    VmService? Function()? vmServiceGetter;
+    if (this is VMServiceSupport) {
+      final vmSupport = this as VMServiceSupport;
+      vmServiceGetter = () => vmSupport.vmService;
+    }
+
+    _dynamicRegistry = DynamicRegistry(
+      logger: this,
+      vmServiceGetter: vmServiceGetter,
+    );
     _dynamicRegistryTools = DynamicRegistryTools(registry: _dynamicRegistry);
 
     log(
@@ -43,6 +54,9 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
   @override
   FutureOr<InitializeResult> initialize(final InitializeRequest request) {
     if (_dynamicRegistrySupported) {
+      // Initialize the dynamic registry first
+      initializeDynamicRegistry();
+      
       // Register the dynamic registry management tools using standard MCP approach
       _registerDynamicRegistryTools();
     }

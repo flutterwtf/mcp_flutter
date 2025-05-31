@@ -80,7 +80,7 @@ mixin MCPToolkitExtensions on MCPToolkitBindingBase {
   }
 
   /// Post an event to the Dart VM when new tools are registered
-  /// This allows the MCP server to detect tool changes in real-time
+  /// This allows the MCP server to detect tool changes in real-time via DTD
   void _postToolRegistrationEvent(final Set<MCPCallEntry> newEntries) {
     if (newEntries.isEmpty) return;
 
@@ -96,19 +96,31 @@ mixin MCPToolkitExtensions on MCPToolkitBindingBase {
             .map((final entry) => entry.resourceUri)
             .toList();
 
-    // Post event to Dart VM that MCP server can listen to
+    // Post event to Dart VM for DTD/MCP server consumption
     developer.postEvent('MCPToolkit.ToolRegistration', {
+      'kind': 'ToolRegistration',
       'timestamp': DateTime.now().toIso8601String(),
       'toolCount': toolNames.length,
       'resourceCount': resourceUris.length,
       'toolNames': toolNames,
       'resourceUris': resourceUris,
       'appId': _getAppId(),
+      'totalEntries': _allEntries.length,
     });
+
+    // Also post individual events for immediate responsiveness
+    for (final toolName in toolNames) {
+      developer.postEvent('MCPToolkit.ServiceExtensionStateChanged', {
+        'kind': 'ServiceExtensionStateChanged',
+        'extension': 'ext.mcp.toolkit.$toolName',
+        'value': 'registered',
+        'timestamp': DateTime.now().toIso8601String(),
+      });
+    }
 
     if (kDebugMode) {
       debugPrint(
-        '[MCPToolkit] Posted tool registration event: ${toolNames.length} tools, ${resourceUris.length} resources',
+        '[MCPToolkit] Posted tool registration events: ${toolNames.length} tools, ${resourceUris.length} resources',
       );
     }
   }

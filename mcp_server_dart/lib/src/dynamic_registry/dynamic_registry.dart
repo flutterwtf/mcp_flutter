@@ -8,6 +8,7 @@ import 'package:dart_mcp/server.dart';
 import 'package:equatable/equatable.dart';
 import 'package:from_json_to_json/from_json_to_json.dart';
 import 'package:meta/meta.dart';
+import 'package:vm_service/vm_service.dart';
 
 /// Entry for a dynamically registered tool - fully MCP compliant
 @immutable
@@ -194,9 +195,10 @@ final class DynamicResourceResult {
 /// Manages runtime registration and cleanup with event-driven architecture
 /// Fully compatible with MCP protocol defined in tools.dart
 final class DynamicRegistry {
-  DynamicRegistry({required this.logger});
+  DynamicRegistry({required this.logger, this.vmServiceGetter});
 
   final LoggingSupport logger;
+  final VmService? Function()? vmServiceGetter;
 
   // Storage - keyed for fast MCP protocol lookups
   final Map<String, DynamicToolEntry> _tools = {};
@@ -206,6 +208,7 @@ final class DynamicRegistry {
   String? _currentApp;
   int? _currentPort;
   DateTime? _lastActivity;
+  String? _currentIsolateId; // Track current isolate for service extension calls
 
   /// Get current connected app name
   String get currentApp => _currentApp ?? 'No app connected';
@@ -256,6 +259,11 @@ final class DynamicRegistry {
     _currentApp = sourceApp;
     _currentPort = dartVmPort;
     _lastActivity = DateTime.now();
+    
+    // Store isolate ID if provided in metadata
+    if (metadata['isolateId'] != null) {
+      _currentIsolateId = metadata['isolateId'] as String;
+    }
 
     logger.log(
       LoggingLevel.info,
@@ -299,6 +307,11 @@ final class DynamicRegistry {
     _currentApp = sourceApp;
     _currentPort = dartVmPort;
     _lastActivity = DateTime.now();
+    
+    // Store isolate ID if provided in metadata
+    if (metadata['isolateId'] != null) {
+      _currentIsolateId = metadata['isolateId'] as String;
+    }
 
     logger.log(
       LoggingLevel.info,
@@ -436,14 +449,54 @@ final class DynamicRegistry {
     updateAppActivity(entry.sourceApp);
 
     try {
-      // Here you would implement the actual communication to the Flutter app
-      // For now, return a placeholder indicating where the call should go
+      final vmService = vmServiceGetter?.call();
+      if (vmService == null) {
+        logger.log(
+          LoggingLevel.warning,
+          'Cannot forward tool call: VM service not available',
+          logger: 'DynamicRegistry',
+        );
+        return CallToolResult(
+          content: [TextContent(text: 'VM service not available for tool forwarding')],
+          isError: true,
+        );
+      }
+
+      final isolateId = entry.metadata['isolateId'] as String?;
+      if (isolateId == null) {
+        logger.log(
+          LoggingLevel.warning,
+          'Cannot forward tool call: Isolate ID not available for ${entry.tool.name}',
+          logger: 'DynamicRegistry',
+        );
+        return CallToolResult(
+          content: [TextContent(text: 'Isolate ID not available for tool forwarding')],
+          isError: true,
+        );
+      }
+
+      logger.log(
+        LoggingLevel.info,
+        'Forwarding tool call ${entry.tool.name} to isolate $isolateId',
+        logger: 'DynamicRegistry',
+      );
+
+      // Call the tool's specific service extension
+      final response = await vmService.callServiceExtension(
+        'ext.mcp.toolkit.${entry.tool.name}',
+        isolateId: isolateId,
+        args: arguments ?? {},
+      );
+
+      // Parse the response from the Flutter app
+      final data = jsonDecodeMap(response.json);
+      final message = jsonDecodeString(data['message'], fallback: 'Tool executed successfully');
+      final resultParameters = jsonDecodeMap(data['parameters']);
+
       return CallToolResult(
         content: [
           TextContent(
-            text:
-                'Tool forwarded to ${entry.sourceApp} on port '
-                '${entry.dartVmPort}. Arguments: ${jsonEncode(arguments)}',
+            text: '$message\n\nResult: ${jsonEncode(resultParameters)}',
           ),
         ],
         isError: false,
@@ -475,15 +528,67 @@ final class DynamicRegistry {
     updateAppActivity(entry.sourceApp);
 
     try {
-      // TODO(arenuvern): forward call to the Dart VM -> Flutter App
+      final vmService = vmServiceGetter?.call();
+      if (vmService == null) {
+        logger.log(
+          LoggingLevel.warning,
+          'Cannot forward resource read: VM service not available',
+          logger: 'DynamicRegistry',
+        );
+        return ReadResourceResult(
+          contents: [
+            TextResourceContents(
+              uri: resourceUri,
+              text: 'VM service not available for resource forwarding',
+            ),
+          ],
+        );
+      }
+
+      final isolateId = entry.metadata['isolateId'] as String?;
+      if (isolateId == null) {
+        logger.log(
+          LoggingLevel.warning,
+          'Cannot forward resource read: Isolate ID not available for ${entry.resource.uri}',
+          logger: 'DynamicRegistry',
+        );
+        return ReadResourceResult(
+          contents: [
+            TextResourceContents(
+              uri: resourceUri,
+              text: 'Isolate ID not available for resource forwarding',
+            ),
+          ],
+        );
+      }
+
+      logger.log(
+        LoggingLevel.info,
+        'Forwarding resource read ${entry.resource.uri} to isolate $isolateId',
+        logger: 'DynamicRegistry',
+      );
+
+      // Extract resource name from URI for service extension call
+      final resourceName = entry.resource.uri.split('/').last;
+      
+      // Call the resource's specific service extension
+      final response = await vmService.callServiceExtension(
+        'ext.mcp.toolkit.$resourceName',
+        isolateId: isolateId,
+        args: {'uri': resourceUri},
+      );
+
+      // Parse the response from the Flutter app
+      final data = jsonDecodeMap(response.json);
+      final content = jsonDecodeString(data['content'], fallback: 'Resource content not available');
+      final mimeType = jsonDecodeString(data['mimeType'], fallback: entry.resource.mimeType ?? 'text/plain');
 
       return ReadResourceResult(
         contents: [
           TextResourceContents(
             uri: resourceUri,
-            text:
-                'Resource read forwarded to ${entry.sourceApp} on port '
-                '${entry.dartVmPort} for resource: $resourceUri',
+            text: content,
+            mimeType: mimeType,
           ),
         ],
       );
