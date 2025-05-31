@@ -4,44 +4,15 @@
 import 'dart:async';
 
 import 'package:dart_mcp/server.dart';
-import 'package:flutter_inspector_mcp_server/src/mixins/flutter_inspector.dart';
+import 'package:flutter_inspector_mcp_server/src/base_server.dart';
 import 'package:flutter_inspector_mcp_server/src/mixins/vm_service_support.dart';
 import 'package:stream_channel/stream_channel.dart';
-
-/// Interface for accessing VM service configuration.
-typedef VMServiceConfigurationRecord =
-    ({
-      String vmHost,
-      int vmPort,
-      bool resourcesSupported,
-      bool imagesSupported,
-      bool dumpsSupported,
-      String logLevel,
-      String environment,
-    });
-
-abstract base class BaseMCPToolkitServer extends MCPServer {
-  BaseMCPToolkitServer.fromStreamChannel(
-    super.channel, {
-    required this.configuration,
-    required super.implementation,
-    required super.instructions,
-    super.protocolLogSink,
-  }) : super.fromStreamChannel();
-
-  final VMServiceConfigurationRecord configuration;
-}
 
 /// Flutter Inspector MCP Server
 ///
 /// Provides tools and resources for Flutter app inspection and debugging
 final class MCPToolkitServer extends BaseMCPToolkitServer
-    with
-        LoggingSupport,
-        ToolsSupport,
-        ResourcesSupport,
-        VMServiceSupport,
-        FlutterInspector {
+    with ToolsSupport, ResourcesSupport, VMServiceSupport {
   MCPToolkitServer.fromStreamChannel(
     super.channel, {
     required super.configuration,
