@@ -8,6 +8,8 @@ import 'dart:async';
 import 'package:dart_mcp/server.dart';
 import 'package:dtd/dtd.dart';
 import 'package:flutter_inspector_mcp_server/src/base_server.dart';
+import 'package:flutter_inspector_mcp_server/src/mixins/dynamic_registry_integration.dart';
+import 'package:flutter_inspector_mcp_server/src/services/simplified_discovery_service.dart';
 import 'package:from_json_to_json/from_json_to_json.dart';
 import 'package:vm_service/vm_service.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -17,6 +19,7 @@ base mixin VMServiceSupport on BaseMCPToolkitServer {
   VmService? _vmService;
   WebSocketChannel? _vmChannel;
   DartToolingDaemon? _dartToolingDaemon;
+  StreamSubscription<DTDEvent>? _discoverySubscription;
 
   /// Get the current VM service instance
   VmService? get vmService => _vmService;
@@ -72,6 +75,11 @@ base mixin VMServiceSupport on BaseMCPToolkitServer {
         'VM service connection established successfully',
         logger: 'VMService',
       );
+
+      // Start simplified discovery if dynamic registry is supported
+      if (configuration.dynamicRegistrySupported) {
+        await _startSimplifiedDiscovery();
+      }
     } on Exception catch (e, s) {
       log(
         LoggingLevel.error,
@@ -85,6 +93,55 @@ base mixin VMServiceSupport on BaseMCPToolkitServer {
     }
   }
 
+  /// Start simplified discovery that immediately registers and listens for changes
+  Future<void> _startSimplifiedDiscovery() async {
+    // Only start if we have dynamic registry integration
+    if (this is! DynamicRegistryIntegration) {
+      log(
+        LoggingLevel.warning,
+        'Cannot start simplified discovery: DynamicRegistryIntegration not available',
+        logger: 'VMService',
+      );
+      return;
+    }
+
+    final registryIntegration = this as DynamicRegistryIntegration;
+    final dynamicRegistry = registryIntegration.dynamicRegistry;
+    
+    if (dynamicRegistry == null) {
+      log(
+        LoggingLevel.warning,
+        'Cannot start simplified discovery: Dynamic registry not initialized',
+        logger: 'VMService',
+      );
+      return;
+    }
+
+    final discoveryService = SimplifiedDiscoveryService(
+      dynamicRegistry: dynamicRegistry,
+      logger: this,
+      vmServiceGetter: () => _vmService,
+      dtdGetter: () => _dartToolingDaemon,
+    );
+
+    try {
+      _discoverySubscription = await discoveryService.startDiscovery();
+      
+      log(
+        LoggingLevel.info,
+        'Simplified Flutter app discovery started successfully',
+        logger: 'VMService',
+      );
+    } on Exception catch (e, s) {
+      log(
+        LoggingLevel.warning,
+        'Failed to start simplified discovery: $e',
+        logger: 'VMService',
+      );
+      log(LoggingLevel.debug, () => 'Stack trace: $s', logger: 'VMService');
+    }
+  }
+
   /// Disconnect from VM service
   Future<void> disconnectVMService() async {
     log(
@@ -94,6 +151,10 @@ base mixin VMServiceSupport on BaseMCPToolkitServer {
     );
 
     try {
+      // Stop discovery
+      await _discoverySubscription?.cancel();
+      _discoverySubscription = null;
+
       if (_vmService != null) {
         log(LoggingLevel.debug, 'Disposing VM service', logger: 'VMService');
         await _vmService?.dispose();
