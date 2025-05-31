@@ -6,6 +6,7 @@ import 'dart:async';
 import 'package:dart_mcp/server.dart';
 import 'package:flutter_inspector_mcp_server/src/base_server.dart';
 import 'package:flutter_inspector_mcp_server/src/mixins/dynamic_registry_integration.dart';
+import 'package:flutter_inspector_mcp_server/src/mixins/flutter_inspector.dart';
 import 'package:flutter_inspector_mcp_server/src/mixins/vm_service_support.dart';
 import 'package:stream_channel/stream_channel.dart';
 
@@ -13,7 +14,7 @@ import 'package:stream_channel/stream_channel.dart';
 ///
 /// Provides tools and resources for Flutter app inspection and debugging
 final class MCPToolkitServer extends BaseMCPToolkitServer
-    with VMServiceSupport, DynamicRegistryIntegration {
+    with VMServiceSupport, DynamicRegistryIntegration, FlutterInspector {
   MCPToolkitServer.fromStreamChannel(
     super.channel, {
     required super.configuration,
@@ -153,6 +154,7 @@ Connect to a running Flutter app on debug mode to use these features.
 
     try {
       await disconnectVMService();
+      disposeDynamicRegistry();
       log(LoggingLevel.debug, 'VM service disconnected', logger: 'VMService');
     } on Exception catch (e) {
       log(

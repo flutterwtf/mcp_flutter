@@ -17,12 +17,9 @@ import 'package:vm_service/vm_service.dart';
 
 /// Mix this in to any MCPServer to add Flutter Inspector functionality.
 base mixin FlutterInspector
-    on
-        BaseMCPToolkitServer,
-        PortScanner,
-        ToolsSupport,
-        ResourcesSupport,
-        VMServiceSupport {
+    on BaseMCPToolkitServer, ToolsSupport, ResourcesSupport, VMServiceSupport {
+  late final _portScanner = PortScanner(server: this);
+
   @override
   FutureOr<InitializeResult> initialize(final InitializeRequest request) {
     log(
@@ -900,8 +897,7 @@ base mixin FlutterInspector
     );
 
     try {
-      // Use the new PortScanner class
-      final ports = await scanForFlutterPorts();
+      final ports = await _portScanner.scanForFlutterPorts();
       log(
         LoggingLevel.info,
         'Get active ports completed: found ${ports.length} ports',

@@ -350,13 +350,12 @@ final class DynamicRegistry {
       final message = jsonDecodeString(
         data['message'],
       ).whenEmptyUse('Tool executed successfully');
-      final resultParameters = jsonDecodeMap(data['parameters']);
+      final resultParameters = jsonDecodeMap(data);
 
       return CallToolResult(
         content: [
-          TextContent(
-            text: '$message\n\nResult: ${jsonEncode(resultParameters)}',
-          ),
+          TextContent(text: message),
+          TextContent(text: jsonEncode(resultParameters..remove('message'))),
         ],
         isError: false,
       );

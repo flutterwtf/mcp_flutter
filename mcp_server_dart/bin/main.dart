@@ -95,6 +95,10 @@ final argParser =
         defaultsTo: true,
         help: 'Enable images support for screenshots',
       )
+      ..addFlag(
+        dynamicRegistrySupported,
+        help: 'Enable dynamic registry support',
+      )
       ..addFlag(dumpsSupported, help: 'Enable debug dump operations')
       ..addOption(
         logLevel,
