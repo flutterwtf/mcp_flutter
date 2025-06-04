@@ -3,6 +3,7 @@
 
 // ignore_for_file: lines_longer_than_80_chars
 
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:dart_mcp/server.dart';
@@ -70,44 +71,17 @@ final class DynamicRegistryTools {
   );
 
   /// Get all management tools
-  static List<Tool> get allTools => [
-    listClientToolsAndResources,
-    runClientTool,
-    runClientResource,
-    getRegistryStats,
-  ];
+  Map<Tool, FutureOr<CallToolResult> Function(CallToolRequest)> get allTools =>
+      {
+        listClientToolsAndResources: _handleListClientToolsAndResources,
+        runClientTool: _handleRunClientTool,
+        runClientResource: _handleRunClientResource,
+        getRegistryStats: _handleGetRegistryStats,
+      };
 
-  /// Handle tool calls for dynamic registry management
-  Future<CallToolResult> handleToolCall(
-    final String toolName,
-    final Map<String, Object?>? arguments,
-  ) async {
-    switch (toolName) {
-      case 'listClientToolsAndResources':
-        return _handleListClientToolsAndResources(arguments);
-
-      case 'runClientTool':
-        return _handleRunClientTool(arguments);
-
-      case 'runClientResource':
-        return _handleRunClientResource(arguments);
-
-      case 'getRegistryStats':
-        return _handleGetRegistryStats(arguments);
-
-      default:
-        return CallToolResult(
-          content: [
-            TextContent(text: 'Unknown dynamic registry tool: $toolName'),
-          ],
-          isError: true,
-        );
-    }
-  }
-
-  Future<CallToolResult> _handleListClientToolsAndResources(
-    final Map<String, Object?>? arguments,
-  ) async {
+  FutureOr<CallToolResult> _handleListClientToolsAndResources(
+    final CallToolRequest request,
+  ) {
     final toolEntries = registry.getToolEntries();
     final resourceEntries = registry.getResourceEntries();
 
@@ -121,15 +95,20 @@ final class DynamicRegistryTools {
       },
     };
 
+    if (resourceEntries.isEmpty) {
+      result['resources'] = [];
+    }
+
     return CallToolResult(
       content: [TextContent(text: jsonEncode(result))],
       isError: false,
     );
   }
 
-  Future<CallToolResult> _handleRunClientTool(
-    final Map<String, Object?>? arguments,
+  FutureOr<CallToolResult> _handleRunClientTool(
+    final CallToolRequest request,
   ) async {
+    final arguments = request.arguments;
     final toolName = jsonDecodeString(arguments?['toolName']);
     if (toolName.isEmpty) {
       return CallToolResult(
@@ -161,9 +140,10 @@ final class DynamicRegistryTools {
     return result;
   }
 
-  Future<CallToolResult> _handleRunClientResource(
-    final Map<String, Object?>? arguments,
+  FutureOr<CallToolResult> _handleRunClientResource(
+    final CallToolRequest request,
   ) async {
+    final arguments = request.arguments;
     final resourceUri = jsonDecodeString(arguments?['resourceUri']);
     if (resourceUri.isEmpty) {
       return CallToolResult(
@@ -194,9 +174,10 @@ final class DynamicRegistryTools {
     );
   }
 
-  Future<CallToolResult> _handleGetRegistryStats(
-    final Map<String, Object?>? arguments,
-  ) async {
+  FutureOr<CallToolResult> _handleGetRegistryStats(
+    final CallToolRequest request,
+  ) {
+    final arguments = request.arguments;
     final includeAppDetails = jsonDecodeBool(arguments?['includeAppDetails']);
     final info = registry.appInfo;
     if (info == null) {

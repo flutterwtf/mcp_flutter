@@ -103,18 +103,10 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
 
   /// Register the dynamic registry management tools
   void _registerDynamicRegistryTools() {
-    for (final tool in DynamicRegistryTools.allTools) {
+    for (final MapEntry(key: tool, value: handler)
+        in _dynamicRegistryTools.allTools.entries) {
       try {
-        if (this case final ToolsSupport toolsSupport) {
-          toolsSupport.registerTool(
-            tool,
-            // ignore: unnecessary_async
-            (final request) async => _dynamicRegistryTools.handleToolCall(
-              request.name,
-              request.arguments,
-            ),
-          );
-        }
+        registerTool(tool, handler);
       } on Exception catch (e, stackTrace) {
         log(
           LoggingLevel.warning,
@@ -149,38 +141,41 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
     _dynamicRegistry.registerTool(tool, appId);
 
     // Register as a standard MCP tool that forwards to the dynamic registry
-    if (this case final ToolsSupport toolsSupport) {
-      try {
-        toolsSupport.registerTool(
-          tool,
-          (final request) async =>
-              await _dynamicRegistry.forwardToolCall(
-                request.name,
-                request.arguments,
-              ) ??
-              CallToolResult(
-                content: [
-                  TextContent(
-                    text: 'Dynamic tool not available: ${request.name}',
-                  ),
-                ],
-                isError: true,
-              ),
-        );
+    try {
+      registerTool(
+        tool,
+        (final request) async =>
+            await _dynamicRegistry.forwardToolCall(
+              request.name,
+              request.arguments,
+            ) ??
+            CallToolResult(
+              content: [
+                TextContent(
+                  text: 'Dynamic tool not available: ${request.name}',
+                ),
+              ],
+              isError: true,
+            ),
+      );
 
-        log(
-          LoggingLevel.info,
-          'Registered dynamic tool as MCP tool: ${tool.name}',
-          logger: 'DynamicRegistryIntegration',
-        );
-      } on Exception catch (e, stackTrace) {
-        log(
-          LoggingLevel.warning,
-          'Failed to register dynamic tool ${tool.name} as MCP tool: $e '
-          'stackTrace: $stackTrace',
-          logger: 'DynamicRegistryIntegration',
-        );
-      }
+      sendNotification(
+        ToolListChangedNotification.methodName,
+        ToolListChangedNotification(),
+      );
+
+      log(
+        LoggingLevel.info,
+        'Registered dynamic tool as MCP tool: ${tool.name}',
+        logger: 'DynamicRegistryIntegration',
+      );
+    } on Exception catch (e, stackTrace) {
+      log(
+        LoggingLevel.warning,
+        'Failed to register dynamic tool ${tool.name} as MCP tool: $e '
+        'stackTrace: $stackTrace',
+        logger: 'DynamicRegistryIntegration',
+      );
     }
   }
 
@@ -207,37 +202,33 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
     _dynamicRegistry.registerResource(resource, appId);
 
     // Register as a standard MCP resource that forwards to the dynamic registry
-    if (this case final ResourcesSupport resourcesSupport) {
-      try {
-        resourcesSupport.addResource(resource, (final request) async {
-          final content = await _dynamicRegistry.forwardResourceRead(
-            request.uri,
-          );
-          if (content != null) return content;
+    try {
+      addResource(resource, (final request) async {
+        final content = await _dynamicRegistry.forwardResourceRead(request.uri);
+        if (content != null) return content;
 
-          return ReadResourceResult(
-            contents: [
-              TextResourceContents(
-                uri: request.uri,
-                text: 'Dynamic resource not available: ${request.uri}',
-              ),
-            ],
-          );
-        });
+        return ReadResourceResult(
+          contents: [
+            TextResourceContents(
+              uri: request.uri,
+              text: 'Dynamic resource not available: ${request.uri}',
+            ),
+          ],
+        );
+      });
 
-        log(
-          LoggingLevel.info,
-          'Registered dynamic resource as MCP resource: ${resource.uri}',
-          logger: 'DynamicRegistryIntegration',
-        );
-      } on Exception catch (e, stackTrace) {
-        log(
-          LoggingLevel.warning,
-          'Failed to register dynamic resource ${resource.uri} as MCP resource: $e '
-          'stackTrace: $stackTrace',
-          logger: 'DynamicRegistryIntegration',
-        );
-      }
+      log(
+        LoggingLevel.info,
+        'Registered dynamic resource as MCP resource: ${resource.uri}',
+        logger: 'DynamicRegistryIntegration',
+      );
+    } on Exception catch (e, stackTrace) {
+      log(
+        LoggingLevel.warning,
+        'Failed to register dynamic resource ${resource.uri} as MCP resource: $e '
+        'stackTrace: $stackTrace',
+        logger: 'DynamicRegistryIntegration',
+      );
     }
   }
 
