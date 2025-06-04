@@ -163,11 +163,6 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
             ),
       );
 
-      sendNotification(
-        ToolListChangedNotification.methodName,
-        ToolListChangedNotification(),
-      );
-
       log(
         LoggingLevel.info,
         'Registered dynamic tool as MCP tool: ${tool.name}',
