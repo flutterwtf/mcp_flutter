@@ -106,6 +106,10 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
     for (final MapEntry(key: tool, value: handler)
         in _dynamicRegistryTools.allTools.entries) {
       try {
+        // it should register the tool and send a notification when the
+        // tool is registered. However most client doesn't support it yet.
+        //
+        // https://github.com/orgs/modelcontextprotocol/discussions/76
         registerTool(tool, handler);
       } on Exception catch (e, stackTrace) {
         log(
