@@ -61,7 +61,7 @@ ${configuration.resourcesSupported ? '''
 - get_screenshots: Get screenshots of all views for visual debugging
 '''}
 
-${configuration.dynamicRegistrySupported ? '''
+${configuration.dynamicRegistrySupported ? r'''
 
 ## Dynamic Runtime Tools - AI Agent Workflow
 
@@ -101,44 +101,117 @@ Example: Get current app state
 }
 ```
 
-### 2.5. Creating Custom Tools (AI Agent Code Generation)
+### 2.5. Creating Custom Tools (AI Agent Generates Dart Code for the Flutter App)
 
-**When working with a Flutter codebase, AI agents can create custom debugging tools:**
+**As an AI Agent, you can design custom debugging tools by generating the necessary Dart code. This Dart code, defining an `MCPCallEntry` and registering it with `addMcpTool()`, must then be integrated into the target Flutter application's source code (e.g., by a developer, or by you using file editing tools if available and appropriate).**
 
-Example: Create a custom widget inspector tool
+**Step-by-step AI Workflow for Creating and Using a New Dynamic Tool:**
+1.  **Design & Generate Dart Code:**
+    *   Identify a need for a custom tool.
+    *   Generate the Dart code snippet that defines an `MCPCallEntry.tool(...)`. This includes its unique `name`, `description`, `inputSchema`, and the `handler` function (the tool's logic).
+    *   The generated code must also include the `addMcpTool(yourToolEntry)` call to register it with the `mcp_toolkit`.
+    *   *Example AI-Generated Dart Code Snippet (ensure necessary imports like `package:mcp_toolkit/mcp_toolkit.dart` are handled):*
+      ```dart
+      // This Dart code defines and registers a new dynamic tool.
+      // It needs to be added to a relevant Dart file within the Flutter application's source
+      // (e.g., inside main.dart during initialization, or a dedicated debug utilities file)
+      // and ensured it runs when the app starts or when dynamic tools are set up.
+
+      // Ensure necessary imports from mcp_toolkit:
+      // import 'package:mcp_toolkit/mcp_toolkit.dart';
+
+      final MCPCallEntry myAICustomTool = MCPCallEntry.tool(
+        handler: (request_params) {
+          // Tool logic: access request_params['argument_name']
+          // Perform actions, gather data...
+          return MCPCallResult(
+            message: 'AI custom tool executed successfully!',
+            parameters: {'result_key': 'some_value_from_tool'},
+          );
+        },
+        definition: MCPToolDefinition(
+          name: 'ai_custom_tool_unique_name', // IMPORTANT: Must be unique
+          description: 'An AI-generated tool that performs a specific debug action.',
+          inputSchema: {
+            'type': 'object',
+            'properties': {
+              'argument_name': {'type': 'string', 'description': 'Description of argument'},
+              // Add other arguments as needed
+            },
+            // 'required': ['argument_name'], // If arguments are required
+          },
+        ),
+      );
+
+      // This line makes the tool discoverable by the MCP server:
+      addMcpTool(myAICustomTool);
+      ```
+2.  **Integrate and Ensure Execution:**
+    *   **Option A (AI integrates via `edit_file` - Preferred if capable):**
+        *   Use the `edit_file` tool to add the generated Dart code snippet into an appropriate file in the Flutter application's source code (e.g., `lib/main.dart` before `runApp()`, or a dedicated debug utilities file like `lib/debug_tools.dart` which is then imported and called during app initialization).
+        *   **Crucially, ensure the placement guarantees that the `addMcpTool(myAICustomTool);` line (or the function containing it) will be executed by the Flutter app *after* `MCPToolkitBinding.instance.initialize()` and (if used) `MCPToolkitBinding.instance.initializeFlutterToolkit()` have been called, and typically within a `if (kDebugMode) { ... }` block.**
+        *   You may need to define a new function in the Flutter code (e.g., `void registerMyAICustomTools() { ... }`) that contains your `MCPCallEntry` definitions and `addMcpTool` calls, and then use `edit_file` to ensure this new function is called from an existing part of the app's initialization sequence.
+    *   **Option B (Present for manual integration by a developer):**
+        *   Present the generated Dart code snippet to the user.
+        *   Clearly instruct the user where to add this code (e.g., `lib/main.dart` or a debug utilities file) and how to ensure it's called during app initialization, respecting the order relative to `MCPToolkitBinding` initialization and preferably within a `kDebugMode` check.
+3.  **Activate via Hot Reload:**
+    *   Once the code is integrated into the Flutter app (either by you via `edit_file` or manually by a developer), call the `hot_reload_flutter` tool. This allows the running Flutter app to execute the new `addMcpTool()` call, making the tool available to the server.
+4.  **Verify Registration:**
+    *   Use `listClientToolsAndResources` to check if your newly defined tool (e.g., 'ai_custom_tool_unique_name') now appears in the list of available dynamic tools.
+5.  **Execute the New Tool:**
+    *   Use `runClientTool` with the `toolName` matching your tool's definition and provide any necessary `arguments` according to its `inputSchema`.
+
+**Example Scenario: AI creates a simple widget property inspector**
+*AI generates the following Dart code and instructs it to be added to the Flutter app (e.g., in `main.dart` before `runApp` or in a debug initialization function):*
 ```dart
-// Add this code to your Flutter app
-final customInspectorTool = MCPCallEntry.tool(
-  handler: (request) {
-    final widgetKey = request['widgetKey'] ?? '';
-    final widget = findWidgetByKey(widgetKey);
-    return MCPCallResult(
-      message: 'Widget inspection complete',
-      parameters: {
-        'widgetType': widget.runtimeType.toString(),
-        'properties': widget.debugDescribeChildren(),
-        'renderObject': widget.createRenderObject().toString(),
-      },
-    );
-  },
-  definition: MCPToolDefinition(
-    name: 'inspect_custom_widget',
-    description: 'Custom widget inspector for specific debugging needs',
-    inputSchema: {
-      'type': 'object',
-      'properties': {
-        'widgetKey': {'type': 'string', 'description': 'Widget key to inspect'},
-      },
-      'required': ['widgetKey'],
+// In the Flutter app's Dart code:
+// import 'package:mcp_toolkit/mcp_toolkit.dart';
+// import 'package:flutter/widgets.dart'; // For Element, BuildContext etc. if needed for complex tools
+
+void registerAIWidgetInspector() { // Helper function for organization
+  final aiWidgetInspector = MCPCallEntry.tool(
+    handler: (request_params) {
+      // final String widgetKeyString = request_params['widgetKey'] as String? ?? '';
+      // In a real scenario, you'd use the widgetKeyString to find a widget
+      // and inspect its properties. This is a placeholder.
+      // IMPORTANT: Accessing widget tree details might require context or specific Flutter knowledge.
+      return MCPCallResult(
+        message: 'AI Inspector: Info for widget key "${request_params['widgetKey'] ?? ''}". (Actual inspection logic TBD)',
+        parameters: {'widgetKey': request_params['widgetKey'] ?? '', 'details': 'Placeholder details'},
+      );
     },
-  ),
-);
+    definition: MCPToolDefinition(
+      name: 'ai_inspect_widget_properties',
+      description: 'AI-generated tool to inspect basic properties of a widget by its key.',
+      inputSchema: {
+        'type': 'object',
+        'properties': {
+          'widgetKey': {'type': 'string', 'description': 'The string representation of the widget Key to inspect.'},
+        },
+        'required': ['widgetKey'],
+      },
+    ),
+  );
+  addMcpTool(aiWidgetInspector);
+  debugPrint('AI Widget Inspector tool registered with MCP toolkit.');
+}
 
-// Register the tool
-addMcpTool(customInspectorTool);
+// This function (registerAIWidgetInspector) would need to be called from somewhere
+// in the Flutter app's initialization sequence, for example:
+// void main() {
+//   WidgetsFlutterBinding.ensureInitialized();
+//   MCPToolkitBinding.instance
+//    ..initialize()
+//    ..initializeFlutterToolkit(); // Includes standard Flutter tools
+//
+//   if (kDebugMode) { // Good practice to only register debug tools in debug mode
+//     registerAIWidgetInspector();
+//   }
+//
+//   runApp(const MyApp());
+// }
 ```
-
-Then use `hot_reload_flutter` and execute with `runClientTool`
+*After the developer (or AI via `edit_file`) adds this to the Flutter app, the AI uses `hot_reload_flutter`, then `listClientToolsAndResources` to verify, then `runClientTool` to use `ai_inspect_widget_properties`.*
 
 ### 3. AI Agent Best Practices
 
