@@ -6,6 +6,13 @@ import { Logger } from "../logger.js";
 import { execAsync, RpcUtilities } from "../servers/rpc_utilities.js";
 import { FlutterPort, IsolateInfo } from "../types/types.js";
 
+interface FlutterExtensionResponse {
+  data: {
+    message: string;
+    [key: string]: unknown;
+  };
+}
+
 // Define a type for the handler function
 export type RpcHandler = (request: any) => Promise<CallToolResult>;
 
@@ -37,6 +44,65 @@ export function createCustomRpcHandlerMap(
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
       };
     },
+
+    tap_by_text: async (request: CallToolRequest) => {
+      const port = handlePortParam(request);
+      const searchText = request.params.arguments?.text || "Text";
+
+      const result = await rpcUtils.callFlutterExtension("ext.mcp.call", {
+        dartVmPort: port,
+        params: {
+          method: "tap_by_text",
+          arguments: {
+            text: searchText,
+          },
+        },
+      });
+
+      return {
+          content: [
+              {
+                  type: "text",
+                  text: `The click was performed by Text('${searchText}').\n\nResult:\n${JSON.stringify(
+                      result,
+                      null,
+                      2
+                  )}`,
+              },
+          ],
+      };
+    },
+
+    enter_text_by_hint: async (request: CallToolRequest) => {
+      const port = handlePortParam(request);
+      const searchHint = request.params.arguments?.hint || "Email";
+      const inputText = request.params.arguments?.text || "example@example.com";
+
+      const result = await rpcUtils.callFlutterExtension("ext.mcp.call", {
+        dartVmPort: port,
+        params: {
+          method: "enter_text_by_hint",
+          arguments: {
+            hint: request.params.arguments?.hint || "Email",
+            text: request.params.arguments?.text || "example@example.com",
+          },
+        },
+      });
+
+      return {
+          content: [
+              {
+                  type: "text",
+                  text: `TextField with hint '${searchHint}' updated.\nText inserted: '${inputText}'.\n\nResult:\n${JSON.stringify(
+                      result,
+                      null,
+                      2
+                  )}`,
+              },
+          ],
+      };
+    },
+
 
     get_vm: async (request: CallToolRequest) => {
       const port = handlePortParam(request);

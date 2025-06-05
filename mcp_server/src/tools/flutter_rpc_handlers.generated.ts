@@ -324,6 +324,16 @@ export const rpcToolConfigs = {
     rpcMethod: 'ext.flutter.inspector.setFlexProperties',
     needsDebugVerification: true,
     needsDartProxy: true
+  },
+  tap_by_text: {
+    rpcMethod: 'ext.mcp.toolkit.tap_by_text',
+    needsDebugVerification: true,
+    needsDartProxy: true
+  },
+  enter_text_by_hint: {
+    rpcMethod: 'ext.mcp.toolkit.enter_text_by_hint',
+    needsDebugVerification: true,
+    needsDartProxy: false
   }
 } as const;
 

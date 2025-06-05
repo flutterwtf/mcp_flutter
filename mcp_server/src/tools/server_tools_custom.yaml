@@ -60,3 +60,30 @@ tools:
           description: "If true, returns the raw response from the VM service without processing"
           default: false
       required: []
+  - name: tap_by_text
+    description: "Taps a widget containing the specified text in the Flutter app."
+    inputSchema:
+      type: object
+      properties:
+        text:
+          type: string
+          description: "The text to search for in the widget tree"
+        port:
+          type: number
+          description: "Optional: Custom port number if not using default Flutter debug port 8181"
+      required: ["text"]
+  - name: enter_text_by_hint
+    description: "Enters text into a text field identified by its hint text in the Flutter app."
+    inputSchema:
+      type: object
+      properties:
+        hint:
+          type: string
+          description: "The hint text to identify the text field"
+        text:
+          type: string
+          description: "The text to enter into the field"
+        port:
+          type: number
+          description: "Optional: Custom port number if not using default Flutter debug port 8181"
+      required: ["hint", "text"]

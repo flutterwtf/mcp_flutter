@@ -463,3 +463,21 @@ handlers:
       objectId: "arg.objectId"
       flexFactor: "arg.flexFactor"
       flexFit: "arg.flexFit"
+
+  - name: tap_by_text
+    description: Taps a widget containing the specified text.
+    rpcMethod: "ext.mcp.toolkit.tap_by_text"
+    needsDartServiceExtensionProxy: true
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters:
+      text: "arg.text"
+
+  - name: enter_text_by_hint
+    description: Enters text into a text field identified by its hint text.
+    rpcMethod: "ext.mcp.toolkit.enter_text_by_hint"
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters:
+      hint: "arg.hint"
+      text: "arg.text"
