@@ -474,8 +474,8 @@ final class DynamicRegistry {
   }
 
   /// Cleanup and dispose
-  void dispose() {
-    unawaited(_eventController.close());
+  Future<void> dispose() async {
+    await _eventController.close();
     _tools.clear();
     _resources.clear();
   }

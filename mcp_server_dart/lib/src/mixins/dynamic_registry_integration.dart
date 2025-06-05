@@ -91,14 +91,14 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
 
   /// Dispose dynamic registry resources
   @protected
-  void disposeDynamicRegistry() {
-    _dynamicRegistry.dispose();
+  Future<void> disposeDynamicRegistry() async {
+    await _dynamicRegistry.dispose();
     log(
       LoggingLevel.info,
       'Dynamic registry disposed',
       logger: 'DynamicRegistryIntegration',
     );
-    _discoveryService.dispose();
+    await _discoveryService.dispose();
   }
 
   /// Register the dynamic registry management tools

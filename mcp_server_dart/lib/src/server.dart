@@ -294,7 +294,7 @@ Connect to a running Flutter app on debug mode to use these features.
 
     try {
       await disconnectVMService();
-      disposeDynamicRegistry();
+      await disposeDynamicRegistry();
       log(LoggingLevel.debug, 'VM service disconnected', logger: 'VMService');
     } on Exception catch (e) {
       log(

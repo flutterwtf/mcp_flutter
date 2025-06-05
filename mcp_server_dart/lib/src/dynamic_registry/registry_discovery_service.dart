@@ -28,9 +28,9 @@ final class RegistryDiscoveryService {
   static const _loggerName = 'RegistryDiscovery';
   StreamSubscription<DTDEvent>? _discoverySubscription;
 
-  void dispose() {
+  Future<void> dispose() async {
     try {
-      unawaited(_discoverySubscription?.cancel());
+      await _discoverySubscription?.cancel();
       // ignore: avoid_catches_without_on_clauses
     } catch (e, stackTrace) {
       logger.log(
