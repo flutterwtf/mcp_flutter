@@ -20,24 +20,53 @@ final class DynamicRegistryTools {
 
   final DynamicRegistry registry;
 
+  // Reusable text constants for setup instructions
+  static const _setupWorkflowText =
+      'To create new tools/resources: 1) Generate MCPCallEntry.tool() or MCPCallEntry.resource() with handler and definition, '
+      '2) Add to Flutter app use addMcpTool() '
+      '3) Hot reload the app to activate. ';
+
+  static const _exactMatchingText =
+      'Names/URIs must match exactly what appears in listClientToolsAndResources. ';
+
+  static const _schemaComplianceText =
+      "Arguments should conform to the tool's inputSchema requirements. ";
+  static const _listClientToolsAndResourcesDescription =
+      'Discover all dynamically registered tools and resources from the connected Flutter application. '
+      'Use this as your first step to understand what debugging and inspection capabilities are available. '
+      'Returns tool definitions with names, descriptions, and input schemas, plus available resources with URIs. '
+      "Essential for planning your debugging workflow and understanding the app's current MCP toolkit setup. "
+      '\n\n$_setupWorkflowText'
+      'See server instructions for detailed examples of creating custom MCPCallEntry definitions.';
+
   /// Tool to list all client tools and resources
   static final listClientToolsAndResources = Tool(
     name: 'listClientToolsAndResources',
-    description:
-        'List all dynamically registered tools and resources from Flutter clients',
+    description: _listClientToolsAndResourcesDescription,
     inputSchema: ObjectSchema(properties: {}),
   );
 
   /// Tool to run a client tool
   static final runClientTool = Tool(
     name: 'runClientTool',
-    description: 'Execute a dynamically registered tool from a Flutter client',
+    description:
+        'Execute a specific dynamically registered tool from the Flutter application. '
+        'Use this to run debugging tools, inspect app state, take screenshots, analyze errors, or execute custom tools. '
+        '$_exactMatchingText'
+        '$_schemaComplianceText'
+        'This is your primary way to interact with Flutter app functionality beyond static MCP server tools. '
+        '\n\nFor custom tools: $_setupWorkflowText'
+        'Example: Create MCPCallEntry.tool() with handler: (params) => MCPCallResult(...), then register and hot reload.',
     inputSchema: ObjectSchema(
       required: ['toolName'],
       properties: {
-        'toolName': Schema.string(description: 'Name of the tool to execute'),
+        'toolName': Schema.string(
+          description:
+              'Exact name of the tool to execute (from listClientToolsAndResources)',
+        ),
         'arguments': Schema.object(
-          description: 'Arguments to pass to the tool',
+          description:
+              'Arguments to pass to the tool, matching its inputSchema requirements',
           additionalProperties: true,
         ),
       },
@@ -47,12 +76,20 @@ final class DynamicRegistryTools {
   /// Tool to read a client resource
   static final runClientResource = Tool(
     name: 'runClientResource',
-    description: 'Read content from a dynamically registered resource',
+    description:
+        'Read content from a dynamically registered resource in the Flutter application. '
+        'Resources provide structured data like app state, view details, or configuration information. '
+        "Use this to access read-only information that doesn't require tool execution. "
+        '$_exactMatchingText'
+        'Typically used for getting current app state snapshots or accessing structured data. '
+        '\n\nFor custom resources: $_setupWorkflowText'
+        'Example: Create MCPCallEntry.resource() with handler: (uri) => MCPCallResult(...), then register and hot reload.',
     inputSchema: ObjectSchema(
       required: ['resourceUri'],
       properties: {
         'resourceUri': Schema.string(
-          description: 'URI of the resource to read',
+          description:
+              'Exact URI of the resource to read (from listClientToolsAndResources)',
         ),
       },
     ),
@@ -101,7 +138,10 @@ final class DynamicRegistryTools {
     }
 
     return CallToolResult(
-      content: [TextContent(text: jsonEncode(result))],
+      content: [
+        TextContent(text: _setupWorkflowText),
+        TextContent(text: jsonEncode(result)),
+      ],
       isError: false,
     );
   }
