@@ -14,7 +14,9 @@ import '../services/screenshot_service.dart';
 /// view screenshots, and view details.
 ///
 /// [binding] is the MCP toolkit binding instance.
-Set<MCPCallEntry> getFlutterMcpToolkitEntries({required final MCPToolkitBinding binding}) => {
+Set<MCPCallEntry> getFlutterMcpToolkitEntries({
+  required final MCPToolkitBinding binding,
+}) => {
   OnAppErrorsEntry(errorMonitor: binding),
   OnViewScreenshotsEntry(),
   OnViewDetailsEntry(),
@@ -25,7 +27,8 @@ Set<MCPCallEntry> getFlutterMcpToolkitEntries({required final MCPToolkitBinding 
 /// Extension on [MCPToolkitBinding] to initialize the Flutter MCP Toolkit.
 extension MCPToolkitBindingExtension on MCPToolkitBinding {
   /// Initializes the Flutter MCP Toolkit.
-  void initializeFlutterToolkit() => addEntries(entries: getFlutterMcpToolkitEntries(binding: this));
+  void initializeFlutterToolkit() =>
+      addEntries(entries: getFlutterMcpToolkitEntries(binding: this));
 }
 
 /// {@template on_app_errors_entry}
@@ -34,7 +37,9 @@ extension MCPToolkitBindingExtension on MCPToolkitBinding {
 extension type OnAppErrorsEntry._(MCPCallEntry entry) implements MCPCallEntry {
   /// {@macro on_app_errors_entry}
   factory OnAppErrorsEntry({required final ErrorMonitor errorMonitor}) {
-    final entry = MCPCallEntry(const MCPMethodName('app_errors'), (final parameters) {
+    final entry = MCPCallEntry(const MCPMethodName('app_errors'), (
+      final parameters,
+    ) {
       final count = jsonDecodeInt(parameters['count'] ?? '').whenZeroUse(10);
       final reversedErrors = errorMonitor.errors.take(count).toList();
       final errors = reversedErrors.map((final e) => e.toJson()).toList();
@@ -65,12 +70,17 @@ extension type OnAppErrorsEntry._(MCPCallEntry entry) implements MCPCallEntry {
 /// {@template on_view_screenshots_entry}
 /// MCPCallEntry for handling view screenshots.
 /// {@endtemplate}
-extension type OnViewScreenshotsEntry._(MCPCallEntry entry) implements MCPCallEntry {
+extension type OnViewScreenshotsEntry._(MCPCallEntry entry)
+    implements MCPCallEntry {
   /// {@macro on_view_screenshots_entry}
   factory OnViewScreenshotsEntry() {
-    final entry = MCPCallEntry(const MCPMethodName('view_screenshots'), (final parameters) async {
+    final entry = MCPCallEntry(const MCPMethodName('view_screenshots'), (
+      final parameters,
+    ) async {
       final compress = jsonDecodeBool(parameters['compress']);
-      final images = await ScreenshotService.takeScreenshots(compress: compress);
+      final images = await ScreenshotService.takeScreenshots(
+        compress: compress,
+      );
       return MCPCallResult(
         message:
             'Screenshots taken for each view. '
@@ -86,13 +96,19 @@ extension type OnViewScreenshotsEntry._(MCPCallEntry entry) implements MCPCallEn
 /// {@template on_view_details_entry}
 /// MCPCallEntry for handling view details.
 /// {@endtemplate}
-extension type const OnViewDetailsEntry._(MCPCallEntry entry) implements MCPCallEntry {
+extension type const OnViewDetailsEntry._(MCPCallEntry entry)
+    implements MCPCallEntry {
   /// {@macro on_view_details_entry}
   factory OnViewDetailsEntry() {
-    final entry = MCPCallEntry(const MCPMethodName('view_details'), (final parameters) {
+    final entry = MCPCallEntry(const MCPMethodName('view_details'), (
+      final parameters,
+    ) {
       final details = ApplicationInfo.getViewsInformation();
       final json = details.map((final e) => e.toJson()).toList();
-      return MCPCallResult(message: 'Information about each view. ', parameters: {'details': json});
+      return MCPCallResult(
+        message: 'Information about each view. ',
+        parameters: {'details': json},
+      );
     });
     return OnViewDetailsEntry._(entry);
   }
@@ -104,7 +120,9 @@ extension type const OnViewDetailsEntry._(MCPCallEntry entry) implements MCPCall
 extension type TapByTextEntry._(MCPCallEntry entry) implements MCPCallEntry {
   /// {@macro tap_by_text_entry}
   factory TapByTextEntry() {
-    final entry = MCPCallEntry(const MCPMethodName('tap_by_text'), (final parameters) async {
+    final entry = MCPCallEntry(const MCPMethodName('tap_by_text'), (
+      final parameters,
+    ) async {
       final searchText = parameters['text'];
       var found = false;
 
@@ -115,21 +133,24 @@ extension type TapByTextEntry._(MCPCallEntry entry) implements MCPCallEntry {
         if (widget is Text && widget.data == searchText) {
           final context = element;
 
-          final elevatedButton = context.findAncestorWidgetOfExactType<ElevatedButton>();
+          final elevatedButton =
+              context.findAncestorWidgetOfExactType<ElevatedButton>();
           if (elevatedButton?.onPressed != null) {
             elevatedButton!.onPressed!();
             found = true;
             return;
           }
 
-          final textButton = context.findAncestorWidgetOfExactType<TextButton>();
+          final textButton =
+              context.findAncestorWidgetOfExactType<TextButton>();
           if (textButton?.onPressed != null) {
             textButton!.onPressed!();
             found = true;
             return;
           }
 
-          final gestureDetector = context.findAncestorWidgetOfExactType<GestureDetector>();
+          final gestureDetector =
+              context.findAncestorWidgetOfExactType<GestureDetector>();
           if (gestureDetector?.onTap != null) {
             gestureDetector!.onTap!();
             found = true;
@@ -159,10 +180,13 @@ extension type TapByTextEntry._(MCPCallEntry entry) implements MCPCallEntry {
 /// {@template enter_text_by_hint_entry}
 /// MCPCallEntry for entering text into text fields by their hint text.
 /// {@endtemplate}
-extension type EnterTextByHintEntry._(MCPCallEntry entry) implements MCPCallEntry {
+extension type EnterTextByHintEntry._(MCPCallEntry entry)
+    implements MCPCallEntry {
   /// {@macro enter_text_by_hint_entry}
   factory EnterTextByHintEntry() {
-    final entry = MCPCallEntry(const MCPMethodName('enter_text_by_hint'), (final parameters) async {
+    final entry = MCPCallEntry(const MCPMethodName('enter_text_by_hint'), (
+      final parameters,
+    ) async {
       final hintText = parameters['hint'] ?? '';
       final textToEnter = parameters['text'] ?? '';
       var found = false;
