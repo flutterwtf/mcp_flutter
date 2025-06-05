@@ -124,7 +124,6 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
 
   /// Register a dynamic tool from a Flutter client
   /// This creates a wrapper that forwards calls to the dynamic registry
-  @protected
   void registerDynamicTool(
     final Tool tool,
     final String sourceApp, {
@@ -180,7 +179,6 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
 
   /// Register a dynamic resource from a Flutter client
   /// This creates a wrapper that forwards calls to the dynamic registry
-  @protected
   void registerDynamicResource(
     final Resource resource,
     final String sourceApp, {
@@ -232,47 +230,40 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
   }
 
   /// Unregister all tools and resources from a Flutter client
-  @protected
   void unregisterDynamicApp(final String sourceApp) {
     if (!isDynamicRegistrySupported) return;
 
     final hadContent = _dynamicRegistry.getAppEntries();
 
     // Unregister from MCP framework first
-    if (this case final ToolsSupport toolsSupport) {
-      for (final entry in hadContent.tools) {
-        try {
-          toolsSupport.unregisterTool(entry.tool.name);
-        } on Exception catch (e, stackTrace) {
-          log(
-            LoggingLevel.warning,
-            'Failed to unregister MCP tool ${entry.tool.name}: $e '
-            'stackTrace: $stackTrace',
-            logger: 'DynamicRegistryIntegration',
-          );
-        }
+    for (final entry in hadContent.tools) {
+      try {
+        unregisterTool(entry.tool.name);
+      } on Exception catch (e, stackTrace) {
+        log(
+          LoggingLevel.warning,
+          'Failed to unregister MCP tool ${entry.tool.name}: $e '
+          'stackTrace: $stackTrace',
+          logger: 'DynamicRegistryIntegration',
+        );
       }
     }
 
-    if (this case final ResourcesSupport resourcesSupport) {
-      for (final entry in hadContent.resources) {
-        try {
-          resourcesSupport.removeResource(entry.resource.uri);
-        } on Exception catch (e, stackTrace) {
-          log(
-            LoggingLevel.warning,
-            'Failed to unregister MCP resource ${entry.resource.uri}: $e '
-            'stackTrace: $stackTrace',
-            logger: 'DynamicRegistryIntegration',
-          );
-        }
+    for (final entry in hadContent.resources) {
+      try {
+        removeResource(entry.resource.uri);
+      } on Exception catch (e, stackTrace) {
+        log(
+          LoggingLevel.warning,
+          'Failed to unregister MCP resource ${entry.resource.uri}: $e '
+          'stackTrace: $stackTrace',
+          logger: 'DynamicRegistryIntegration',
+        );
       }
     }
 
     // Then unregister from dynamic registry
-    if (hadContent.tools.isNotEmpty || hadContent.resources.isNotEmpty) {
-      _dynamicRegistry.unregisterApp();
-    }
+    _dynamicRegistry.unregisterApp();
   }
 
   /// Get dynamic registry statistics

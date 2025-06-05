@@ -196,13 +196,13 @@ final class RegistryDiscoveryService {
       );
 
       // Clear existing registrations for this app
-      dynamicRegistry.unregisterApp();
+      server.unregisterDynamicApp(appId);
 
       // Register tools
       for (final toolData in tools) {
         try {
           final tool = Tool.fromMap(toolData);
-          dynamicRegistry.registerTool(tool, appId);
+          server.registerDynamicTool(tool, appId);
         } on Exception catch (e) {
           logger.log(
             LoggingLevel.warning,
@@ -216,7 +216,7 @@ final class RegistryDiscoveryService {
       for (final resourceData in resources) {
         try {
           final resource = Resource.fromMap(resourceData);
-          dynamicRegistry.registerResource(resource, appId);
+          server.registerDynamicResource(resource, appId);
         } on Exception catch (e) {
           logger.log(
             LoggingLevel.warning,

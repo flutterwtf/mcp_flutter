@@ -278,6 +278,11 @@ final class DynamicRegistry {
       );
     }
 
+    server.sendNotification(
+      ToolListChangedNotification.methodName,
+      ToolListChangedNotification(),
+    );
+
     _tools.clear();
     _resources.clear();
     _appId = null;
@@ -411,7 +416,7 @@ final class DynamicRegistry {
       );
 
       // Extract resource name from URI for service extension call
-      final resourceName = entry.resource.uri.split('/').last;
+      final resourceName = Uri.parse(entry.resource.uri).pathSegments.last;
 
       // Call the resource's specific service extension
       final response = await server.callFlutterExtension(

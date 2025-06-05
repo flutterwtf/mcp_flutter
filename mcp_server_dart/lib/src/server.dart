@@ -10,6 +10,9 @@ import 'package:flutter_inspector_mcp_server/src/mixins/flutter_inspector.dart';
 import 'package:flutter_inspector_mcp_server/src/mixins/vm_service_support.dart';
 import 'package:stream_channel/stream_channel.dart';
 
+// ignore: do_not_use_environment
+const kDebugMode = bool.fromEnvironment('kDebugMode');
+
 /// Flutter Inspector MCP Server
 ///
 /// Provides tools and resources for Flutter app inspection and debugging

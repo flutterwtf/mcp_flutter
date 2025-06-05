@@ -37,8 +37,7 @@ extension MCPToolkitBindingExtension on MCPToolkitBinding {
 extension type OnAppErrorsEntry._(MCPCallEntry entry) implements MCPCallEntry {
   /// {@macro on_app_errors_entry}
   factory OnAppErrorsEntry({required final ErrorMonitor errorMonitor}) {
-    final entry = MCPCallEntry(
-      methodName: const MCPMethodName('app_errors'),
+    final entry = MCPCallEntry.tool(
       handler: (final parameters) {
         final count = jsonDecodeInt(parameters['count'] ?? '').whenZeroUse(10);
         final reversedErrors = errorMonitor.errors.take(count).toList();
@@ -63,7 +62,7 @@ extension type OnAppErrorsEntry._(MCPCallEntry entry) implements MCPCallEntry {
 
         return MCPCallResult(message: message, parameters: {'errors': errors});
       },
-      toolDefinition: MCPToolDefinition(
+      definition: MCPToolDefinition(
         name: 'app_errors',
         description:
             'Get application errors and diagnostics information. '
@@ -94,8 +93,7 @@ extension type OnViewScreenshotsEntry._(MCPCallEntry entry)
     implements MCPCallEntry {
   /// {@macro on_view_screenshots_entry}
   factory OnViewScreenshotsEntry() {
-    final entry = MCPCallEntry(
-      methodName: const MCPMethodName('view_screenshots'),
+    final entry = MCPCallEntry.tool(
       handler: (final parameters) async {
         final compress = jsonDecodeBool(parameters['compress']);
         final images = await ScreenshotService.takeScreenshots(
@@ -109,7 +107,7 @@ extension type OnViewScreenshotsEntry._(MCPCallEntry entry)
           parameters: {'images': images},
         );
       },
-      toolDefinition: MCPToolDefinition(
+      definition: MCPToolDefinition(
         name: 'view_screenshots',
         description:
             'Take screenshots of all Flutter views/screens. '
@@ -137,8 +135,7 @@ extension type const OnViewDetailsEntry._(MCPCallEntry entry)
     implements MCPCallEntry {
   /// {@macro on_view_details_entry}
   factory OnViewDetailsEntry() {
-    final entry = MCPCallEntry(
-      methodName: const MCPMethodName('view_details'),
+    final entry = MCPCallEntry.tool(
       handler: (final parameters) {
         final details = ApplicationInfo.getViewsInformation();
         final json = details.map((final e) => e.toJson()).toList();
@@ -147,7 +144,7 @@ extension type const OnViewDetailsEntry._(MCPCallEntry entry)
           parameters: {'details': json},
         );
       },
-      toolDefinition: MCPToolDefinition(
+      definition: MCPToolDefinition(
         name: 'view_details',
         description:
             'Get detailed information about Flutter views and widgets. '

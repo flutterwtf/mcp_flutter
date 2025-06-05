@@ -55,7 +55,7 @@ Future<void> main(final List<String> args) async {
             'critical' => LoggingLevel.critical,
             'alert' => LoggingLevel.alert,
             'emergency' => LoggingLevel.emergency,
-            _ => LoggingLevel.info,
+            _ => LoggingLevel.critical,
           },
         ),
       );
@@ -98,6 +98,7 @@ final argParser =
       ..addFlag(
         dynamicRegistrySupported,
         help: 'Enable dynamic registry support',
+        defaultsTo: true,
       )
       ..addFlag(dumpsSupported, help: 'Enable debug dump operations')
       ..addOption(

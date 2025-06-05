@@ -189,16 +189,26 @@ extension type const MCPResourceDefinition._(MCPDefinition _definition)
 extension type const MCPCallEntry._(_MCPCallEntryRecord entry)
     implements _MCPCallEntryRecord {
   /// {@macro mcp_call_entry}
-  factory MCPCallEntry({
-    required final MCPMethodName methodName,
+  factory MCPCallEntry.resource({
     required final MCPCallHandler handler,
-    final MCPToolDefinition? toolDefinition,
-    final MCPResourceDefinition? resourceDefinition,
+    required final MCPResourceDefinition definition,
   }) => MCPCallEntry._(
-    _MCPCallEntryRecord(methodName, (
+    _MCPCallEntryRecord(MCPMethodName(definition.name), (
       handler: handler,
-      toolDefinition: toolDefinition,
-      resourceDefinition: resourceDefinition,
+      toolDefinition: null,
+      resourceDefinition: definition,
+    )),
+  );
+
+  /// {@macro mcp_call_entry}
+  factory MCPCallEntry.tool({
+    required final MCPCallHandler handler,
+    required final MCPToolDefinition definition,
+  }) => MCPCallEntry._(
+    _MCPCallEntryRecord(MCPMethodName(definition.name), (
+      handler: handler,
+      toolDefinition: definition,
+      resourceDefinition: null,
     )),
   );
 

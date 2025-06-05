@@ -19,18 +19,33 @@ Future<void> main() async {
 
 /// Register the Fibonacci calculator tool with the MCP toolkit
 Future<void> _registerFibonacciTool() async {
-  final fibonacciEntry = MCPCallEntry(
-    methodName: const MCPMethodName('calculate_fibonacci'),
+  final fibonacciEntry = MCPCallEntry.tool(
+    definition: MCPToolDefinition(
+      name: 'calculate_fibonacci',
+      description: 'Calculate the nth Fibonacci number and return the sequence',
+      inputSchema: {
+        'type': 'object',
+        'properties': {
+          'n': {
+            'type': 'integer',
+            'description': 'The position in the Fibonacci sequence (0-100)',
+            'minimum': 0,
+            'maximum': 100,
+          },
+        },
+        'required': ['n'],
+      },
+    ),
     handler: (final request) {
       final n = int.tryParse(request['n'] ?? '0') ?? 0;
-      
+
       if (n < 0) {
         return MCPCallResult(
           message: 'Error: Fibonacci position must be non-negative',
           parameters: {'error': 'Invalid input: $n'},
         );
       }
-      
+
       if (n > 100) {
         return MCPCallResult(
           message: 'Error: Fibonacci position too large (max 100)',
@@ -48,28 +63,10 @@ Future<void> _registerFibonacciTool() async {
         },
       );
     },
-    toolDefinition: MCPToolDefinition(
-      name: 'calculate_fibonacci',
-      description: 'Calculate the nth Fibonacci number and return the sequence',
-      inputSchema: {
-        'type': 'object',
-        'properties': {
-          'n': {
-            'type': 'integer',
-            'description': 'The position in the Fibonacci sequence (0-100)',
-            'minimum': 0,
-            'maximum': 100,
-          },
-        },
-        'required': ['n'],
-      },
-    ),
   );
 
   // Register the tool - it will be automatically discovered by the MCP server
-  await MCPToolkitBinding.instance.addEntries(
-    entries: {fibonacciEntry},
-  );
+  await MCPToolkitBinding.instance.addEntries(entries: {fibonacciEntry});
 
   debugPrint('✅ Fibonacci calculator tool registered with MCP toolkit');
 }
@@ -77,16 +74,16 @@ Future<void> _registerFibonacciTool() async {
 /// Calculate the nth Fibonacci number
 int _calculateFibonacci(final int n) {
   if (n <= 1) return n;
-  
+
   var a = 0;
   var b = 1;
-  
+
   for (var i = 2; i <= n; i++) {
     final temp = a + b;
     a = b;
     b = temp;
   }
-  
+
   return b;
 }
 
@@ -94,13 +91,13 @@ int _calculateFibonacci(final int n) {
 List<int> _getFibonacciSequence(final int n) {
   if (n < 0) return [];
   if (n == 0) return [0];
-  
+
   final sequence = <int>[0, 1];
-  
+
   for (var i = 2; i <= n; i++) {
     sequence.add(sequence[i - 1] + sequence[i - 2]);
   }
-  
+
   return sequence;
 }
 
@@ -111,10 +108,7 @@ class FibonacciApp extends StatelessWidget {
   @override
   Widget build(final BuildContext context) => MaterialApp(
     title: 'Fibonacci MCP Tool',
-    theme: ThemeData(
-      primarySwatch: Colors.blue,
-      useMaterial3: true,
-    ),
+    theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
     home: const FibonacciHomePage(),
   );
 }
@@ -133,11 +127,7 @@ class FibonacciHomePage extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.functions,
-            size: 64,
-            color: Colors.blue,
-          ),
+          Icon(Icons.functions, size: 64, color: Colors.blue),
           SizedBox(height: 16),
           Text(
             'Fibonacci Calculator Tool',

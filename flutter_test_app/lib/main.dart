@@ -36,8 +36,7 @@ Future<void> _registerCustomTools() async {
   await Future.delayed(const Duration(seconds: 1));
 
   // Create MCPCallEntry objects with proper handlers
-  final fibonacciEntry = MCPCallEntry(
-    methodName: const MCPMethodName('calculate_fibonacci'),
+  final fibonacciEntry = MCPCallEntry.tool(
     handler: (request) {
       final n = int.tryParse(request['n'] ?? '0') ?? 0;
       final result = _calculateFibonacci(n);
@@ -46,7 +45,7 @@ Future<void> _registerCustomTools() async {
         parameters: {'result': result, 'position': n},
       );
     },
-    toolDefinition: MCPToolDefinition(
+    definition: MCPToolDefinition(
       name: 'calculate_fibonacci',
       description: 'Calculate the nth Fibonacci number',
       inputSchema: {
@@ -65,8 +64,12 @@ Future<void> _registerCustomTools() async {
   );
 
   // Create app state resource entry
-  final appStateEntry = MCPCallEntry(
-    methodName: const MCPMethodName('app_state'),
+  final appStateEntry = MCPCallEntry.resource(
+    definition: MCPResourceDefinition(
+      name: 'app_state',
+      description: 'Current application state and configuration',
+      mimeType: 'application/json',
+    ),
     handler: (request) {
       return MCPCallResult(
         message: 'Current application state and configuration',
@@ -77,11 +80,6 @@ Future<void> _registerCustomTools() async {
         },
       );
     },
-    resourceDefinition: MCPResourceDefinition(
-      name: 'App State',
-      description: 'Current application state and configuration',
-      mimeType: 'application/json',
-    ),
   );
 
   // Register all entries
@@ -95,8 +93,7 @@ Future<void> _registerAdditionalTools() async {
   final binding = MCPToolkitBinding.instance;
 
   // Create user preferences tool entry
-  final preferencesEntry = MCPCallEntry(
-    methodName: const MCPMethodName('get_user_preferences'),
+  final preferencesEntry = MCPCallEntry.tool(
     handler: (request) {
       final category = request['category'] ?? 'all';
       final preferences = _getUserPreferences(category);
@@ -105,7 +102,7 @@ Future<void> _registerAdditionalTools() async {
         parameters: {'preferences': preferences, 'category': category},
       );
     },
-    toolDefinition: MCPToolDefinition(
+    definition: MCPToolDefinition(
       name: 'get_user_preferences',
       description: 'Get user preferences and settings',
       inputSchema: {
@@ -122,8 +119,7 @@ Future<void> _registerAdditionalTools() async {
   );
 
   // Create system info tool
-  final systemInfoEntry = MCPCallEntry(
-    methodName: const MCPMethodName('get_system_info'),
+  final systemInfoEntry = MCPCallEntry.tool(
     handler: (request) {
       return MCPCallResult(
         message: 'System information',
@@ -135,7 +131,7 @@ Future<void> _registerAdditionalTools() async {
         },
       );
     },
-    toolDefinition: MCPToolDefinition(
+    definition: MCPToolDefinition(
       name: 'get_system_info',
       description: 'Get system and app information',
       inputSchema: {'type': 'object', 'properties': {}},
@@ -204,15 +200,22 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
     _checkConnectionStatus();
     // Check connection status periodically
-    Timer.periodic(const Duration(seconds: 5), (timer) {
+    _timer = Timer.periodic(const Duration(seconds: 5), (timer) {
       _checkConnectionStatus();
     });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
   }
 
   void _incrementCounter() {
@@ -230,8 +233,12 @@ class _MyHomePageState extends State<MyHomePage> {
 
     try {
       final toolName = 'counter_value_${DateTime.now().millisecondsSinceEpoch}';
-      final counterEntry = MCPCallEntry(
-        methodName: MCPMethodName(toolName),
+      final counterEntry = MCPCallEntry.tool(
+        definition: MCPToolDefinition(
+          name: toolName,
+          description: 'Get the current counter value from the Flutter app',
+          inputSchema: const {'type': 'object', 'properties': {}},
+        ),
         handler: (request) {
           return MCPCallResult(
             message: 'Current counter value from Flutter app',
@@ -241,11 +248,6 @@ class _MyHomePageState extends State<MyHomePage> {
             },
           );
         },
-        toolDefinition: MCPToolDefinition(
-          name: toolName,
-          description: 'Get the current counter value from the Flutter app',
-          inputSchema: const {'type': 'object', 'properties': {}},
-        ),
       );
 
       await binding.addEntries(entries: {counterEntry});

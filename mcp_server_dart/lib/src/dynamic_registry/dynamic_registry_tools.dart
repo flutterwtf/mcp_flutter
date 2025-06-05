@@ -8,6 +8,7 @@ import 'dart:convert';
 
 import 'package:dart_mcp/server.dart';
 import 'package:flutter_inspector_mcp_server/src/dynamic_registry/dynamic_registry.dart';
+import 'package:flutter_inspector_mcp_server/src/server.dart';
 import 'package:from_json_to_json/from_json_to_json.dart';
 import 'package:meta/meta.dart';
 
@@ -76,7 +77,7 @@ final class DynamicRegistryTools {
         listClientToolsAndResources: _handleListClientToolsAndResources,
         runClientTool: _handleRunClientTool,
         runClientResource: _handleRunClientResource,
-        getRegistryStats: _handleGetRegistryStats,
+        if (kDebugMode) getRegistryStats: _handleGetRegistryStats,
       };
 
   FutureOr<CallToolResult> _handleListClientToolsAndResources(
