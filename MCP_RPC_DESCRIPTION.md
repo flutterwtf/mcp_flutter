@@ -40,6 +40,31 @@ The whole server is now divided into two parts:
 
 - `get_view_details` [Resource|Tool] - size of screen, pixel ratio. May unlock ability for an Agent to use widget selection.
 
+### Testing Tools
+
+- `tap_by_text` [Tool] - Find TextButton, ElevatedButton or GestureDetector with child widget Text with the passed string
+  **Usage**:
+
+  - Write the AI agent the text that is on the button and wait.
+  - Write action instructions to the AI agent, telling it to call `view_screenshots` after each action so that it continues to follow the script itself by clicking buttons.
+
+  **Tested on**:
+  ✅ Android
+  **Not tested on**:
+  🤔 iOS, 🤔 macOs 🤔 Windows, 🤔 Linux, ❌ Web
+
+
+- `enter_text_by_hint` [Tool] - Looks for a TextField that has `hintText` equal to the `hint` parameter. If found and if TextField has controller, sets `text` to controller. If there is no controller but element is a StatefulElement, tries to reach EditableTextState and manually update TextEditingValue. If onChanged is set, manually calls it.
+  **Usage**:
+
+  - Write the AI agent the hint text of TextField and text that you want to write in it and wait.
+  - Write input data as well as action instructions to the AI agent, instructing it to call 'view_screenshots' after each action so that it continues to follow the script and determine its next step.
+
+  **Tested on**:
+  ✅ Android
+  **Not tested on**:
+  🤔 iOS, 🤔 macOs 🤔 Windows, 🤔 Linux, ❌ Web
+
 ### Work in progress
 
 - [Resource|Tool] **Selection tool**:
