@@ -66,7 +66,7 @@ Future<void> _registerFibonacciTool() async {
   );
 
   // Register the tool - it will be automatically discovered by the MCP server
-  await MCPToolkitBinding.instance.addEntries(entries: {fibonacciEntry});
+  addMcpTool(fibonacciEntry);
 
   debugPrint('✅ Fibonacci calculator tool registered with MCP toolkit');
 }

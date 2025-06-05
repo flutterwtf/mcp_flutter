@@ -9,6 +9,14 @@ import 'mcp_toolkit_binding_base.dart';
 import 'mcp_toolkit_extensions.dart';
 import 'services/error_monitor.dart';
 
+/// Add a single MCP tool to the MCP toolkit.
+///
+/// This is a shortcut for [MCPToolkitBinding.addEntries] method.
+///
+/// Should be called only after [MCPToolkitBinding.initialize] is called.
+void addMcpTool(final MCPCallEntry entry) =>
+    unawaited(MCPToolkitBinding.instance.addEntries(entries: {entry}));
+
 /// The binding for the MCP Toolkit.
 ///
 /// Run init, before calling [addEntries].
