@@ -203,7 +203,7 @@ void registerAIWidgetInspector() { // Helper function for organization
 //   MCPToolkitBinding.instance
 //    ..initialize()
 //    ..initializeFlutterToolkit(); // Includes standard Flutter tools
-//
+//   c
 //   if (kDebugMode) { // Good practice to only register debug tools in debug mode
 //     registerAIWidgetInspector();
 //   }

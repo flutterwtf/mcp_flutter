@@ -23,8 +23,10 @@ final class DynamicRegistryTools {
   // Reusable text constants for setup instructions
   static const _setupWorkflowText =
       'To create new tools/resources: 1) Generate MCPCallEntry.tool() or MCPCallEntry.resource() with handler and definition, '
-      '2) Add to Flutter app use addMcpTool() '
-      '3) Hot reload the app to activate. ';
+      '2) Add to Flutter app (in main.dart, widget tree, or state management like provider/riverpod) using addMcpTool(), '
+      '3) Use listClientToolsAndResources to verify the tool is registered, '
+      '4) Hot reload the app to activate. '
+      '5) Use runClientTool to execute the tool. ';
 
   static const _exactMatchingText =
       'Names/URIs must match exactly what appears in listClientToolsAndResources. ';
