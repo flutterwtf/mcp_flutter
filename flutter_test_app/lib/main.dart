@@ -210,6 +210,22 @@ class _MyHomePageState extends State<MyHomePage> {
     _timer = Timer.periodic(const Duration(seconds: 5), (timer) {
       _checkConnectionStatus();
     });
+
+    addMcpTool(
+      MCPCallEntry.tool(
+        definition: MCPToolDefinition(
+          name: 'stare',
+          description: 'Get the current my_home_state from the Flutter app',
+          inputSchema: const {'type': 'object', 'properties': {}},
+        ),
+        handler: (request) {
+          return MCPCallResult(
+            message: 'Current counter value from Flutter app',
+            parameters: {'counter': _counter},
+          );
+        },
+      ),
+    );
   }
 
   @override
@@ -325,6 +341,12 @@ class _MyHomePageState extends State<MyHomePage> {
                     const Text(
                       'Registered Service Extensions:',
                       style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    Row(
+                      children: List.generate(
+                        100,
+                        (index) => Text('hello world'),
+                      ),
                     ),
                     const SizedBox(height: 8),
                     ...MCPToolkitBinding.instance.allEntries.map(

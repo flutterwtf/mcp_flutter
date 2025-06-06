@@ -48,10 +48,20 @@ mixin MCPToolkitExtensions on MCPToolkitBindingBase {
       );
     }
 
-    // Accumulate entries from this call
-    _allEntries.addAll(entries);
-
     assert(() {
+      // Accumulate entries from this call
+      final allEntries = {..._allEntries, ...entries};
+      // Filter out duplicate entries based on their key
+      final uniqueEntries = <MCPCallEntry>{};
+      for (final entry in allEntries) {
+        if (!uniqueEntries.any((final e) => e.key == entry.key)) {
+          uniqueEntries.add(entry);
+        }
+      }
+      _allEntries
+        ..clear()
+        ..addAll(uniqueEntries);
+
       // Register individual service extensions for each entry in this batch
       for (final entry in entries) {
         registerServiceExtension(

@@ -76,9 +76,8 @@ final class RegistryDiscoveryService {
     );
 
     dtd.onEvent(EventStreams.kService).listen((final e) {
-      final method = e.data['method'];
-      if (e.kind == EventKind.kServiceRegistered &&
-          method == 'registerDynamics') {
+      // final method = e.data['method'];
+      if (e.kind == EventKind.kServiceRegistered) {
         logger.log(
           LoggingLevel.info,
           'Service registered: $e',
@@ -91,7 +90,7 @@ final class RegistryDiscoveryService {
     try {
       // Listen to the MCPToolkit stream for tool registration events
       return dtd
-          .onEvent('MCPToolkit')
+          .onEvent(EventStreams.kExtension)
           .listen(
             _handleMCPToolkitEvent,
             onError:
