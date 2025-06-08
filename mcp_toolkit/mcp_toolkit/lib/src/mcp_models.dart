@@ -217,7 +217,18 @@ extension type const MCPCallEntry._(_MCPCallEntryRecord entry)
   /// Check if this entry has a resource definition
   bool get hasResource => value.resourceDefinition != null;
 
-  /// Get the resource URI for this entry
-  String get resourceUri =>
-      'visual://localhost/${entry.key.split('_').join('/')}';
+  /// Get the resource URI for this entry.
+  ///
+  /// Converts an underscore-separated name into a URL path.
+  /// For example, 'my_resource_name' becomes 'visual://localhost/my/resource/name'.
+  ///
+  /// The entry key must match the pattern of lowercase letters, digits, and underscores.
+  String get resourceUri {
+    final keyPattern = RegExp(r'^[a-z0-9_]+$');
+    assert(
+      keyPattern.hasMatch(entry.key),
+      'Resource entry key "${entry.key}" must contain only lowercase letters, digits, and underscores',
+    );
+    return 'visual://localhost/${entry.key.split('_').join('/')}';
+  }
 }
