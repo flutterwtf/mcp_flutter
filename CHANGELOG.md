@@ -1,3 +1,94 @@
+## 2.2.0
+
+### 🎉 Dart Server + Dynamic Tools Registration
+
+### 🔄 BREAKING CHANGES.
+
+- **Server Migration**: The main server is now **`mcp_server_dart`** (Dart-based), replacing the previous TypeScript server (`mcp_server`)
+- **Configuration Changes**: Updated command-line arguments and removed environment variables
+- **Package Version**: Updated `mcp_toolkit` to `^0.2.0`
+
+### ✨ New Features
+
+1. 🆕 Dynamic Tools Registration
+   Flutter apps can now register custom tools at runtime.
+   See [video](https://www.youtube.com/watch?v=Qog3x2VcO98) of how it works and how to use it.
+
+2. MCP Tools for Dynamic Registry (part of Dynamic Tools Registration)
+
+- `listClientToolsAndResources` - Discover all dynamically registered tools and resources if they are not listed in the AI Assistant (Cursor, Cline, Copilot, Roo Code etc..)
+- `runClientTool` - Execute custom tools registered by Flutter applications
+- `runClientResource` - Read custom resources registered by Flutter applications
+- `getRegistryStats` - Get statistics about the dynamic registry (debug mode only)
+
+### 📦 Migration Guide
+
+1. **Update AI Assistant Configuration**:
+
+   ```json
+   {
+     "mcpServers": {
+       "flutter-inspector": {
+         "command": "/path/to/mcp_flutter/mcp_server_dart/build/flutter_inspector_mcp",
+         "args": [
+           "--dart-vm-host=localhost",
+           "--dart-vm-port=8181",
+           "--resources",
+           "--images",
+           "--dynamics"
+         ],
+         "env": {}
+       }
+     }
+   }
+   ```
+
+2. **Update Flutter App Dependencies**:
+   ```yaml
+   dependencies:
+     mcp_toolkit: ^0.2.0
+   ```
+
+#### For New Users
+
+Follow the updated [Quick Start Guide](QUICK_START.md) for complete setup instructions.
+
+### 🔧 Technical Changes
+
+1. Command Line Interface
+
+- Instead of environment variables, now you can use command-line flags: `--resources`, `--no-resources`, `--images`, `--dumps`, `--dynamics`
+- Improved logging with `--log-level` option
+
+2. MCPToolkit API Updates
+
+- New `addEntries()` method to register tools and resources from Flutter app.
+- New `MCPCallEntry.tool()` and `MCPCallEntry.resource()` constructors
+- Improved error handling with `MCPCallResult`
+
+### 🐛 Bug Fixes
+
+- Fixed connection stability issues
+- Improved error handling for VM service disconnections
+- Enhanced port scanning reliability
+- Better resource cleanup on app restart
+
+### 🙏 Acknowledgments
+
+Special thanks to the community for feedback and testing, and to the Flutter team for the new Dart MCP Server which made Dart MCP Server possible.
+
+---
+
+## Code Rabbit Poem :)
+
+> In the warren of code, new features appear,
+> Dynamic tools hop in—now discovery is clear!
+> Registries and managers with event-driven flair,
+> Flutter and MCP, a seamless new pair.
+> With docs and examples, the future looks bright—
+> This bunny approves: the registry's just right!
+> 🐇✨
+
 ## 2.1.0
 
 This release adds experimental Dart MCP Server.
@@ -19,7 +110,7 @@ However, I found, that it's not ideal, because if you need to secure what inform
 
 So after experimenting with some ideas (the most of work is on branch feat/mcp-registry-try3), first:
 
-1. Removed extension and moved all logic for tools and resources to the client. (it's released alread as Dart MCPToolkit package)
+1. Removed extension and moved all logic for tools and resources to the client. (it's released already as Dart MCPToolkit package)
 2. Added ability to register new tools and resources on server from client side. (WIP).
 
 Hopefully, the idea will work and will be useful (but maybe not:))
