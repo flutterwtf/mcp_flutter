@@ -48,18 +48,16 @@ Future<void> _registerCustomTools() async {
     definition: MCPToolDefinition(
       name: 'calculate_fibonacci',
       description: 'Calculate the nth Fibonacci number',
-      inputSchema: {
-        'type': 'object',
-        'properties': {
-          'n': {
-            'type': 'integer',
-            'description': 'The position in the Fibonacci sequence',
-            'minimum': 0,
-            'maximum': 100,
-          },
+      inputSchema: ObjectSchema(
+        properties: {
+          'n': IntegerSchema(
+            description: 'The position in the Fibonacci sequence',
+            minimum: 0,
+            maximum: 100,
+          ),
         },
-        'required': ['n'],
-      },
+        required: ['n'],
+      ),
     ),
   );
 
@@ -105,41 +103,19 @@ Future<void> _registerAdditionalTools() async {
     definition: MCPToolDefinition(
       name: 'get_user_preferences',
       description: 'Get user preferences and settings',
-      inputSchema: {
-        'type': 'object',
-        'properties': {
-          'category': {
-            'type': 'string',
-            'description': 'Preference category to retrieve',
-            'enum': ['theme', 'notifications', 'privacy', 'all'],
-          },
+      inputSchema: ObjectSchema(
+        properties: {
+          'category': Schema.string(
+            description:
+                'Preference category to retrieve. (theme, notifications, privacy, all)',
+          ),
         },
-      },
-    ),
-  );
-
-  // Create system info tool
-  final systemInfoEntry = MCPCallEntry.tool(
-    handler: (request) {
-      return MCPCallResult(
-        message: 'System information',
-        parameters: {
-          'platform': 'Flutter',
-          'version': '3.0.0',
-          'buildMode': 'debug',
-          'timestamp': DateTime.now().toIso8601String(),
-        },
-      );
-    },
-    definition: MCPToolDefinition(
-      name: 'get_system_info',
-      description: 'Get system and app information',
-      inputSchema: {'type': 'object', 'properties': {}},
+      ),
     ),
   );
 
   // Register additional entries - this should trigger auto-registration
-  await binding.addEntries(entries: {preferencesEntry, systemInfoEntry});
+  await binding.addEntries(entries: {preferencesEntry});
 
   print(
     'Additional tools registration completed - should trigger auto-registration event',
@@ -222,7 +198,7 @@ class _MyHomePageState extends State<MyHomePage> {
         definition: MCPToolDefinition(
           name: 'get_counter',
           description: 'Get the current counter from the Flutter app',
-          inputSchema: const {'type': 'object', 'properties': {}},
+          inputSchema: ObjectSchema(properties: {}),
         ),
       ),
     );
@@ -253,7 +229,7 @@ class _MyHomePageState extends State<MyHomePage> {
         definition: MCPToolDefinition(
           name: toolName,
           description: 'Get the current counter value from the Flutter app',
-          inputSchema: const {'type': 'object', 'properties': {}},
+          inputSchema: ObjectSchema(properties: {}),
         ),
         handler: (request) {
           return MCPCallResult(
