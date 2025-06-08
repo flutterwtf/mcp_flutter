@@ -17,7 +17,6 @@ base mixin VMServiceSupport on BaseMCPToolkitServer {
   VmService? _vmService;
   WebSocketChannel? _vmChannel;
   DartToolingDaemon? _dartToolingDaemon;
-  StreamSubscription<DTDEvent>? _discoverySubscription;
 
   /// Get the current VM service instance
   VmService? get vmService => _vmService;
@@ -95,10 +94,6 @@ base mixin VMServiceSupport on BaseMCPToolkitServer {
     );
 
     try {
-      // Stop discovery
-      await _discoverySubscription?.cancel();
-      _discoverySubscription = null;
-
       if (_vmService != null) {
         log(LoggingLevel.debug, 'Disposing VM service', logger: 'VMService');
         await _vmService?.dispose();
