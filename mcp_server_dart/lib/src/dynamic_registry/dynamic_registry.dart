@@ -60,7 +60,6 @@ extension type const DynamicAppInfo._(Map<String, Object?> _value)
   });
 
   DynamicAppId get id => DynamicAppId(jsonDecodeString(_value['id']));
-  int get port => jsonDecodeInt(_value['port']);
   int get toolCount => jsonDecodeInt(_value['toolCount']);
   int get resourceCount => jsonDecodeInt(_value['resourceCount']);
   DateTime get lastActivity => DateTime.fromMillisecondsSinceEpoch(
