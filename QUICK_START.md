@@ -4,14 +4,14 @@ This guide walks you through setting up the MCP Flutter toolkit to enable AI ass
 
 ## Overview
 
-MCP Flutter provides a bridge between AI assistants and Flutter applications through the Model Context Protocol (MCP). The system uses **Flutter's native service extension mechanism** to enable real-time communication.
+MCP Flutter provides a bridge between AI assistants and Flutter applications through the Model Context Protocol (MCP). The system uses **Flutter's native service extension mechanism** to enable real-time communication and **dynamic tools registration** for registering client side (Flutter App) tools and resources.
 
-**Architecture**: `AI Assistant ↔ MCP Server ↔ Dart VM ↔ Flutter Service Extensions`
+**Architecture**: `AI Assistant ↔ MCP Server (Dart) ↔ Dart VM ↔ Flutter Service Extensions`
 
 ## 📦 Prerequisites
 
-- Node.js (v14 or later)
 - Flutter SDK (3.0.0 or later)
+- Dart SDK (included with Flutter)
 - A Flutter app running in debug mode
 - One of: Cursor, Claude, Cline AI, Windsurf, RooCode, or any other AI assistant that supports MCP server
 
@@ -34,10 +34,10 @@ For developers who want to contribute to the project or run the latest version d
 2. **Install and build dependencies:**
 
    ```bash
-   make install
+   make install-dart
    ```
 
-   This command installs all necessary dependencies listed in `package.json` and then builds the MCP server.
+   This command installs all necessary dependencies listed in `pubspec.yaml` and then builds the MCP server.
 
 3. **Add `mcp_toolkit` Package to Your Flutter App:**
 
@@ -56,7 +56,7 @@ For developers who want to contribute to the project or run the latest version d
      flutter:
        sdk: flutter
      # ... other dependencies
-     mcp_toolkit: ^0.1.2
+     mcp_toolkit: ^0.2.0
    ```
 
    Then run `flutter pub get` in your Flutter app's directory.
@@ -100,7 +100,7 @@ For developers who want to contribute to the project or run the latest version d
 
    **Note for Local Development (GitHub Install):**
 
-   If you installed the Flutter Inspector from GitHub and built it locally, you need to adjust the paths in the AI tool configurations to point to your local `build/index.js` file. Refer to the "Installation from GitHub" section for instructions on cloning and building the project.
+   If you installed the Flutter Inspector from GitHub and built it locally, you need to adjust the paths in the AI tool configurations to point to your local `build/flutter_inspector_mcp` file. Refer to the "Installation from GitHub" section for instructions on cloning and building the project.
 
    #### Cline Setup
 
@@ -109,16 +109,14 @@ For developers who want to contribute to the project or run the latest version d
       {
         "mcpServers": {
           "flutter-inspector": {
-            "command": "node",
+            "command": "/path/to/your/cloned/mcp_flutter/mcp_server_dart/build/flutter_inspector_mcp",
             "args": [
-              "/path/to/your/cloned/mcp_flutter/mcp_server/build/index.js"
+              "--dart-vm-host=localhost",
+              "--dart-vm-port=8181",
+              "--resources",
+              "--images"
             ],
-            "env": {
-              "PORT": "3334",
-              "LOG_LEVEL": "critical",
-              "RESOURCES_SUPPORTED": "true",
-              "IMAGES_SUPPORTED": "true"
-            },
+            "env": {},
             "disabled": false,
             "autoApprove": []
           }
@@ -127,12 +125,13 @@ For developers who want to contribute to the project or run the latest version d
       ```
    2. Restart Cline
    3. The Flutter inspector will be automatically available in your conversations
+   4. You're ready! Try commands like "Please get screenshot of my app" or "List all available tools from my Flutter app"
 
    #### Cursor Setup
 
    # ⚠️ Resources Limitations ⚠️
 
-   - Since Cursor doesn't support resources, make sure you passed `RESOURCES_SUPPORTED=false` as environment variable. It will make some resources to be displayed as tools.
+   - Since Cursor doesn't support resources, you need to pass `--no-resources` as an argument. It will make all resources to be displayed as tools instead.
 
    1. Open Cursor's settings
    2. Go to the Features tab
@@ -141,15 +140,14 @@ For developers who want to contribute to the project or run the latest version d
       {
         "mcpServers": {
           "flutter-inspector": {
-            "command": "node",
+            "command": "/path/to/your/cloned/mcp_flutter/mcp_server_dart/build/flutter_inspector_mcp",
             "args": [
-              "/path/to/your/cloned/mcp_flutter/mcp_server/build/index.js"
+              "--dart-vm-host=localhost",
+              "--dart-vm-port=8181",
+              "--no-resources",
+              "--images"
             ],
-            "env": {
-              "RESOURCES_SUPPORTED": "false",
-              "IMAGES_SUPPORTED": "true",
-              "LOG_LEVEL": "critical"
-            },
+            "env": {},
             "disabled": false
           }
         }
@@ -157,7 +155,7 @@ For developers who want to contribute to the project or run the latest version d
       ```
    4. Restart Cursor
    5. Open Agent Panel (cmd + L on macOS)
-   6. You're ready! Try commands like "analyze my Flutter app's widget tree"
+   6. You're ready! Try commands like "List all available tools from my Flutter app" or "Take a screenshot of my app"
 
    #### Claude Setup
 
@@ -166,14 +164,14 @@ For developers who want to contribute to the project or run the latest version d
       {
         "mcpServers": {
           "flutter-inspector": {
-            "command": "node",
+            "command": "/path/to/your/cloned/mcp_flutter/mcp_server_dart/build/flutter_inspector_mcp",
             "args": [
-              "/path/to/your/cloned/mcp_flutter/mcp_server/build/index.js"
+              "--dart-vm-host=localhost",
+              "--dart-vm-port=8181",
+              "--resources",
+              "--images"
             ],
-            "env": {
-              "PORT": "3334",
-              "LOG_LEVEL": "critical"
-            },
+            "env": {},
             "disabled": false
           }
         }
@@ -181,6 +179,56 @@ For developers who want to contribute to the project or run the latest version d
       ```
    2. Restart Claude
    3. The Flutter inspector tools will be automatically available
+   4. You're ready! Try commands like "Show me all tools available in my Flutter app"
+
+## 🆕 Dynamic Tools Registration
+
+One of the key features of v2.2.0 is the ability to register custom tools and resources from your Flutter app at runtime:
+
+### Basic Example
+
+```dart
+import 'package:mcp_toolkit/mcp_toolkit.dart';
+
+// Register a custom tool in your Flutter App (!).
+final customTool = MCPCallEntry.tool(
+  handler: (request) {
+    final name = request['name'] ?? 'World';
+    return MCPCallResult(
+      message: 'Hello, $name!',
+      parameters: {'greeting': 'Hello, $name!'},
+    );
+  },
+  definition: MCPToolDefinition(
+    name: 'say_hello',
+    description: 'Say hello to someone',
+    inputSchema: {
+      'type': 'object',
+      'properties': {
+        'name': {
+          'type': 'string',
+          'description': 'Name to greet',
+        },
+      },
+    },
+  ),
+);
+
+// Register the tool
+await MCPToolkitBinding.instance.addEntries(entries: {customTool});
+```
+
+### Using Dynamic Tools
+
+1. **Discover Tools**: Use `listClientToolsAndResources` to see all available tools
+2. **Execute Tools**: Use `runClientTool` with the tool name and parameters
+3. **Hot Reload**: Tools update automatically when you hot reload your Flutter app
+
+### Advanced Features
+
+- **Real-time Registration**: Tools are discovered automatically via DTD events
+- **Type Safety**: Full MCP protocol compliance with proper input schemas
+- **Resource Support**: Register both tools and resources
 
 ## 📦 Installation via Smithery (🚧 WIP 🚧)
 

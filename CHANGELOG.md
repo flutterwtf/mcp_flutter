@@ -1,8 +1,92 @@
 ## 2.2.0
 
-This release adds ability to register new tools and resources on server from client side.
+### 🎉 Major Release: Dart Server + Dynamic Tools Registration
 
-todo: describe release and how to use it
+### 🔄 Breaking Changes
+
+- **Server Migration**: The main server is now **`mcp_server_dart`** (Dart-based), replacing the previous TypeScript server (`mcp_server`)
+- **Configuration Changes**: Updated command-line arguments and removed environment variables
+- **Package Version**: Updated `mcp_toolkit` to `^0.2.0`
+
+### ✨ New Features
+
+1. 🆕 Dynamic Tools Registration
+   Flutter apps can now register custom tools and resources at runtime without server restart
+
+2. 🆕 MCP Tools for Dynamic Registry
+
+- `listClientToolsAndResources` - Discover all dynamically registered tools and resources if they are not listed in the AI Assistant (Cursor, Cline, Copilot, Roo Code etc..)
+- `runClientTool` - Execute custom tools registered by Flutter applications
+- `runClientResource` - Read custom resources registered by Flutter applications
+- `getRegistryStats` - Get statistics about the dynamic registry (debug mode only)
+
+### 🔧 Technical Changes
+
+1. Command Line Interface
+
+- Instead of environment variables, now you can use command-line flags: `--resources`, `--no-resources`, `--images`, `--dumps`, `--dynamics`
+- Improved logging with `--log-level` option
+
+2. MCPToolkit API Updates
+
+- Enhanced `MCPToolkitBinding` with `addEntries()` method
+- New `MCPCallEntry.tool()` and `MCPCallEntry.resource()` constructors
+- Improved error handling with `MCPCallResult`
+
+### 📦 Migration Guide
+
+1. **Use New Build Command**:
+
+   ```bash
+   # Old
+   make install
+
+   # New
+   make install-dart
+   ```
+
+2. **Update AI Assistant Configuration**:
+
+   ```json
+   {
+     "mcpServers": {
+       "flutter-inspector": {
+         "command": "/path/to/mcp_flutter/mcp_server_dart/build/flutter_inspector_mcp",
+         "args": [
+           "--dart-vm-host=localhost",
+           "--dart-vm-port=8181",
+           "--resources",
+           "--images",
+           "--dynamics"
+         ],
+         "env": {}
+       }
+     }
+   }
+   ```
+
+3. **Update Flutter App Dependencies**:
+   ```yaml
+   dependencies:
+     mcp_toolkit: ^0.2.0
+   ```
+
+#### For New Users
+
+Follow the updated [Quick Start Guide](QUICK_START.md) for complete setup instructions.
+
+### 🐛 Bug Fixes
+
+- Fixed connection stability issues
+- Improved error handling for VM service disconnections
+- Enhanced port scanning reliability
+- Better resource cleanup on app restart
+
+### 🙏 Acknowledgments
+
+Special thanks to the community for feedback and testing, and to the Flutter team for the new Dart MCP Server which made Dart MCP Server possible.
+
+---
 
 ## Code Rabbit Poem :)
 
@@ -11,7 +95,7 @@ todo: describe release and how to use it
 > Registries and managers with event-driven flair,
 > Flutter and MCP, a seamless new pair.
 > With docs and examples, the future looks bright—
-> This bunny approves: the registry’s just right!
+> This bunny approves: the registry's just right!
 > 🐇✨
 
 ## 2.1.0
