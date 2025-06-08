@@ -204,6 +204,7 @@ final class DynamicRegistry {
         logger: 'DynamicRegistry',
       );
       _clearCurrentRegistrations();
+      _appId = appId;
     }
   }
 
