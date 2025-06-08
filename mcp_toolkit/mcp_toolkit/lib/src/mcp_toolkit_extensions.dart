@@ -122,7 +122,7 @@ mixin MCPToolkitExtensions on MCPToolkitBindingBase {
     for (final toolName in toolNames) {
       developer.postEvent('MCPToolkit.ServiceExtensionStateChanged', {
         'kind': 'ServiceExtensionStateChanged',
-        'extension': 'ext.mcp.toolkit.$toolName',
+        'extension': '$mcpServiceExtensionName.$toolName',
         'value': 'registered',
         'timestamp': DateTime.now().toIso8601String(),
       });
@@ -150,21 +150,7 @@ mixin MCPToolkitExtensions on MCPToolkitBindingBase {
       // Add tool definitions
       if (entry.hasTool) {
         tools.add(Map<String, dynamic>.from(entry.value.toolDefinition!));
-      } else {
-        // Create a default tool definition for entries without one
-        tools.add({
-          'name': entry.key,
-          'description': 'Flutter app tool: ${entry.key}',
-          'inputSchema': {
-            'type': 'object',
-            'properties': {
-              'parameters': {
-                'type': 'object',
-                'description': 'Parameters for the tool call',
-              },
-            },
-          },
-        });
+        continue;
       }
 
       // Add resource definitions
@@ -173,13 +159,29 @@ mixin MCPToolkitExtensions on MCPToolkitBindingBase {
           ...entry.value.resourceDefinition!,
           'uri': entry.resourceUri,
         });
+        continue;
       }
+
+      // Create a default tool definition for entries without one
+      tools.add({
+        'name': entry.key,
+        'description': 'Flutter app tool: ${entry.key}',
+        'inputSchema': {
+          'type': 'object',
+          'properties': {
+            'parameters': {
+              'type': 'object',
+              'description': 'Parameters for the tool call',
+            },
+          },
+        },
+      });
     }
 
     return {
       'tools': tools,
       'resources': resources,
-      'appId': 'flutter_app_${DateTime.now().millisecondsSinceEpoch}',
+      'appId': _getAppId(),
       'registeredAt': DateTime.now().toIso8601String(),
       'totalEntries': _allEntries.length,
     };

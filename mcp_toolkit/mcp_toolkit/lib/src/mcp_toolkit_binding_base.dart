@@ -22,6 +22,9 @@ abstract class MCPToolkitBindingBase {
   /// The name of the MCP service extension.
   String _mcpServiceExtensionName = kMCPServiceExtensionName;
 
+  /// The name of the MCP service extension.
+  String get mcpServiceExtensionName => _mcpServiceExtensionName;
+
   /// Initializes the MCP Toolkit binding.
   @mustCallSuper
   void initialize({

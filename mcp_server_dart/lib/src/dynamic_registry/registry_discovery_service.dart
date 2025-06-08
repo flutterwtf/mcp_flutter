@@ -7,7 +7,10 @@ import 'package:dart_mcp/server.dart';
 import 'package:dtd/dtd.dart';
 import 'package:flutter_inspector_mcp_server/flutter_inspector_mcp_server.dart';
 import 'package:flutter_inspector_mcp_server/src/dynamic_registry/dynamic_registry.dart';
+import 'package:flutter_inspector_mcp_server/src/mixins/flutter_inspector.dart';
 import 'package:from_json_to_json/from_json_to_json.dart';
+import 'package:rx/constructors.dart';
+import 'package:rx/converters.dart';
 import 'package:vm_service/vm_service.dart';
 
 /// Registry discovery service that leverages DTD events and
@@ -51,7 +54,7 @@ final class RegistryDiscoveryService {
     );
 
     // Immediate registration when connected
-    await _registerToolsAndResources();
+    await registerToolsAndResources();
 
     // Listen for DTD events for re-registration
     _discoverySubscription = _listenForToolChanges();
@@ -75,32 +78,36 @@ final class RegistryDiscoveryService {
       logger: _loggerName,
     );
 
-    dtd.onEvent(EventStreams.kService).listen((final e) {
-      // final method = e.data['method'];
-      if (e.kind == EventKind.kServiceRegistered) {
-        logger.log(
-          LoggingLevel.info,
-          'Service registered: $e',
-          logger: _loggerName,
-        );
-        unawaited(_registerToolsAndResources());
-      }
-    });
+    final mergedStream = merge<DTDEvent>([
+      dtd.onEvent(EventStreams.kExtension).toObservable(),
+      dtd.onEvent(EventStreams.kService).toObservable(),
+    ]);
+
+    final listener = mergedStream.toStream().listen(
+      (final e) {
+        // final method = e.data['method'];
+        if (e.kind == EventKind.kServiceRegistered) {
+          logger.log(
+            LoggingLevel.info,
+            'Service registered: $e',
+            logger: _loggerName,
+          );
+          unawaited(registerToolsAndResources());
+        }
+        unawaited(_handleMCPToolkitEvent(e));
+      },
+      onError:
+          (final error, final stackTrace) => logger.log(
+            LoggingLevel.warning,
+            'Error in DTD event listener: $error'
+            'stackTrace: $stackTrace',
+            logger: _loggerName,
+          ),
+    );
 
     try {
       // Listen to the MCPToolkit stream for tool registration events
-      return dtd
-          .onEvent(EventStreams.kExtension)
-          .listen(
-            _handleMCPToolkitEvent,
-            onError:
-                (final error, final stackTrace) => logger.log(
-                  LoggingLevel.warning,
-                  'Error in DTD event listener: $error'
-                  'stackTrace: $stackTrace',
-                  logger: _loggerName,
-                ),
-          );
+      return listener;
     } on Exception catch (e, stackTrace) {
       logger.log(
         LoggingLevel.warning,
@@ -127,12 +134,12 @@ final class RegistryDiscoveryService {
       switch (eventKind) {
         case 'ToolRegistration':
           // Flutter app has registered new tools - re-register everything
-          await _registerToolsAndResources();
+          await registerToolsAndResources();
         case 'ServiceExtensionStateChanged':
           // Tool state changed - might need re-registration
           final extensionName = jsonDecodeString(eventData['extension']);
           if (extensionName.contains('registerDynamics')) {
-            await _registerToolsAndResources();
+            await registerToolsAndResources();
           }
         default:
           logger.log(
@@ -152,7 +159,7 @@ final class RegistryDiscoveryService {
   }
 
   /// Register tools from the Flutter isolate
-  Future<void> _registerToolsAndResources() async {
+  Future<void> registerToolsAndResources() async {
     try {
       logger.log(
         LoggingLevel.info,
@@ -161,7 +168,7 @@ final class RegistryDiscoveryService {
       );
 
       final response = await server.callFlutterExtension(
-        'ext.mcp.toolkit.registerDynamics',
+        '$mcpToolkitExt.registerDynamics',
       );
 
       final data = jsonDecodeMap(response.json);
@@ -201,6 +208,9 @@ final class RegistryDiscoveryService {
       for (final toolData in tools) {
         try {
           final tool = Tool.fromMap(toolData);
+          if (allMcpToolkitExtNames.contains(tool.name)) {
+            continue;
+          }
           server.registerDynamicTool(tool, appId);
         } on Exception catch (e) {
           logger.log(
@@ -215,6 +225,9 @@ final class RegistryDiscoveryService {
       for (final resourceData in resources) {
         try {
           final resource = Resource.fromMap(resourceData);
+          if (allMcpToolkitExtNames.contains(resource.uri)) {
+            continue;
+          }
           server.registerDynamicResource(resource, appId);
         } on Exception catch (e) {
           logger.log(

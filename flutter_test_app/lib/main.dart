@@ -213,17 +213,17 @@ class _MyHomePageState extends State<MyHomePage> {
 
     addMcpTool(
       MCPCallEntry.tool(
-        definition: MCPToolDefinition(
-          name: 'stare',
-          description: 'Get the current my_home_state from the Flutter app',
-          inputSchema: const {'type': 'object', 'properties': {}},
-        ),
         handler: (request) {
           return MCPCallResult(
             message: 'Current counter value from Flutter app',
             parameters: {'counter': _counter},
           );
         },
+        definition: MCPToolDefinition(
+          name: 'get_counter',
+          description: 'Get the current counter from the Flutter app',
+          inputSchema: const {'type': 'object', 'properties': {}},
+        ),
       ),
     );
   }

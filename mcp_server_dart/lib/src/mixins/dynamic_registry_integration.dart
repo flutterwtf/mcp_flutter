@@ -33,7 +33,10 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
     required final MCPToolkitServer mcpToolkitServer,
   }) {
     _dynamicRegistry = DynamicRegistry(server: mcpToolkitServer);
-    _dynamicRegistryTools = DynamicRegistryTools(registry: _dynamicRegistry);
+    _dynamicRegistryTools = DynamicRegistryTools(
+      registry: _dynamicRegistry,
+      server: mcpToolkitServer,
+    );
 
     log(
       LoggingLevel.info,
@@ -45,19 +48,19 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
     _dynamicRegistry.events.listen(_logRegistryEvent);
   }
 
-  late RegistryDiscoveryService _discoveryService;
+  late RegistryDiscoveryService discoveryService;
 
   /// Start registry discovery that immediately registers and listens for changes
   Future<void> startRegistryDiscovery({
     required final MCPToolkitServer mcpToolkitServer,
   }) async {
-    _discoveryService = RegistryDiscoveryService(
+    discoveryService = RegistryDiscoveryService(
       dynamicRegistry: _dynamicRegistry,
       server: mcpToolkitServer,
     );
 
     try {
-      await _discoveryService.startDiscovery();
+      await discoveryService.startDiscovery();
 
       log(
         LoggingLevel.info,
@@ -98,7 +101,7 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
       'Dynamic registry disposed',
       logger: 'DynamicRegistryIntegration',
     );
-    await _discoveryService.dispose();
+    await discoveryService.dispose();
   }
 
   /// Register the dynamic registry management tools

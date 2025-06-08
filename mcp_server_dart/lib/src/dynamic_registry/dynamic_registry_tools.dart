@@ -16,9 +16,10 @@ import 'package:meta/meta.dart';
 /// These tools allow clients to interact with dynamically registered tools and resources
 @immutable
 final class DynamicRegistryTools {
-  const DynamicRegistryTools({required this.registry});
+  const DynamicRegistryTools({required this.registry, required this.server});
 
   final DynamicRegistry registry;
+  final MCPToolkitServer server;
 
   // Reusable text constants for setup instructions
   static const _setupWorkflowText =
@@ -121,7 +122,9 @@ final class DynamicRegistryTools {
 
   FutureOr<CallToolResult> _handleListClientToolsAndResources(
     final CallToolRequest request,
-  ) {
+  ) async {
+    await server.discoveryService.registerToolsAndResources();
+
     final toolEntries = registry.getToolEntries();
     final resourceEntries = registry.getResourceEntries();
 

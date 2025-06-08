@@ -3,7 +3,10 @@ setup:
 compile: 
 	dart compile exe bin/main.dart -o build/flutter_inspector_mcp
 inspect:
-	npx @modelcontextprotocol/inspector build/flutter_inspector_mcp
+	npx @modelcontextprotocol/inspector build/flutter_inspector_mcp --log-level=debug
+
+inspect-verbose:
+	npx @modelcontextprotocol/inspector build/flutter_inspector_mcp --log-level=debug --verbose
 
 # Flutter Inspector MCP Server - Dart Implementation
 

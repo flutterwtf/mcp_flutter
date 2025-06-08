@@ -7,6 +7,7 @@ import 'dart:convert';
 import 'package:dart_mcp/server.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_inspector_mcp_server/flutter_inspector_mcp_server.dart';
+import 'package:flutter_inspector_mcp_server/src/mixins/flutter_inspector.dart';
 import 'package:from_json_to_json/from_json_to_json.dart';
 import 'package:is_dart_empty_or_not/is_dart_empty_or_not.dart';
 import 'package:meta/meta.dart';
@@ -289,14 +290,6 @@ final class DynamicRegistry {
     _lastActivity = null;
   }
 
-  /// Get all dynamically registered tools for MCP ListToolsResult
-  List<Tool> getDynamicTools() =>
-      _tools.values.map((final entry) => entry.tool).toList();
-
-  /// Get all dynamically registered resources for MCP ListResourcesResult
-  List<Resource> getDynamicResources() =>
-      _resources.values.map((final entry) => entry.resource).toList();
-
   /// Get all tool entries with metadata
   List<DynamicToolEntry> getToolEntries() => _tools.values.toList();
 
@@ -346,7 +339,7 @@ final class DynamicRegistry {
 
       // Call the tool's specific service extension
       final response = await server.callFlutterExtension(
-        'ext.mcp.toolkit.${entry.tool.name}',
+        '$mcpToolkitExt.${entry.tool.name}',
         args: arguments ?? {},
       );
 
@@ -420,7 +413,7 @@ final class DynamicRegistry {
 
       // Call the resource's specific service extension
       final response = await server.callFlutterExtension(
-        'ext.mcp.toolkit.$resourceName',
+        '$mcpToolkitExt.$resourceName',
         args: {'uri': resourceUri},
       );
 

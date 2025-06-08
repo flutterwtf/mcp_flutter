@@ -15,6 +15,28 @@ import 'package:is_dart_empty_or_not/is_dart_empty_or_not.dart';
 import 'package:meta/meta.dart';
 import 'package:vm_service/vm_service.dart';
 
+const mcpToolkitExt = 'ext.mcp.toolkit';
+final mcpToolkitExtKeys = (
+  appErrors: '$mcpToolkitExt.${mcpToolkitExtNames.appErrors}',
+  viewDetails: '$mcpToolkitExt.${mcpToolkitExtNames.viewDetails}',
+  viewScreenshots: '$mcpToolkitExt.${mcpToolkitExtNames.viewScreenshots}',
+  registerDynamics: '$mcpToolkitExt.${mcpToolkitExtNames.registerDynamics}',
+);
+
+final allMcpToolkitExtNames = {
+  mcpToolkitExtNames.appErrors,
+  mcpToolkitExtNames.viewDetails,
+  mcpToolkitExtNames.viewScreenshots,
+  mcpToolkitExtNames.registerDynamics,
+};
+
+const mcpToolkitExtNames = (
+  appErrors: 'app_errors',
+  viewDetails: 'view_details',
+  viewScreenshots: 'view_screenshots',
+  registerDynamics: 'registerDynamics',
+);
+
 /// Mix this in to any MCPServer to add Flutter Inspector functionality.
 base mixin FlutterInspector
     on BaseMCPToolkitServer, ToolsSupport, ResourcesSupport, VMServiceSupport {
@@ -362,7 +384,7 @@ base mixin FlutterInspector
       );
 
       final result = await callFlutterExtension(
-        'ext.mcp.toolkit.app_errors',
+        mcpToolkitExtKeys.appErrors,
         args: {'count': requestedCount},
       );
       final json = result.json;
@@ -436,7 +458,7 @@ base mixin FlutterInspector
 
     try {
       final result = await callFlutterExtension(
-        'ext.mcp.toolkit.view_screenshots',
+        mcpToolkitExtKeys.viewScreenshots,
         args: {'compress': true},
       );
 
@@ -488,7 +510,7 @@ base mixin FlutterInspector
 
     try {
       final result = await callFlutterExtension(
-        'ext.mcp.toolkit.view_details',
+        mcpToolkitExtKeys.viewDetails,
         args: {},
       );
 
@@ -993,7 +1015,7 @@ base mixin FlutterInspector
       );
 
       final result = await callFlutterExtension(
-        'ext.mcp.toolkit.app_errors',
+        mcpToolkitExtKeys.appErrors,
         args: {'count': count},
       );
 
@@ -1060,7 +1082,7 @@ base mixin FlutterInspector
       );
 
       final result = await callFlutterExtension(
-        'ext.mcp.toolkit.view_screenshots',
+        mcpToolkitExtKeys.viewScreenshots,
         args: {'compress': compress},
       );
 
@@ -1113,7 +1135,7 @@ base mixin FlutterInspector
     }
 
     try {
-      final result = await callFlutterExtension('ext.mcp.toolkit.view_details');
+      final result = await callFlutterExtension(mcpToolkitExtKeys.viewDetails);
       final details = jsonDecodeListAs<Map<String, dynamic>>(
         result.json?['details'],
       );

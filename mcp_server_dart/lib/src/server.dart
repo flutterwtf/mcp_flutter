@@ -1,6 +1,8 @@
 // Copyright (c) 2025, Flutter Inspector MCP Server authors.
 // Licensed under the MIT License.
 
+// ignore_for_file: avoid_catches_without_on_clauses
+
 import 'dart:async';
 
 import 'package:dart_mcp/server.dart';
@@ -302,25 +304,24 @@ Connect to a running Flutter app on debug mode to use these features.
 
     // Try to initialize VM service connection (non-blocking)
     // This allows tools to be available even if no Flutter app is running
-    unawaited(
-      _initializeVMServiceAsync()
-          .then((_) {
-            log(
-              LoggingLevel.info,
-              'VM service connected successfully',
-              logger: 'VMService',
-            );
-          })
-          .catchError((final e, final s) {
-            // Log but don't fail - tools should still be available
-            log(
-              LoggingLevel.warning,
-              'VM service initialization failed (this is normal if no '
-              'Flutter app is running): $e',
-              logger: 'VMService',
-            );
-          }),
-    );
+    try {
+      await _initializeVMServiceAsync();
+
+      log(
+        LoggingLevel.info,
+        'VM service connected successfully',
+        logger: 'VMService',
+      );
+    } catch (e, s) {
+      // Log but don't fail - tools should still be available
+      log(
+        LoggingLevel.warning,
+        'VM service initialization failed (this is normal if no '
+        'Flutter app is running): $e ',
+        logger: 'VMService',
+      );
+      log(LoggingLevel.debug, () => 'Stack trace: $s', logger: 'VMService');
+    }
 
     log(
       LoggingLevel.info,

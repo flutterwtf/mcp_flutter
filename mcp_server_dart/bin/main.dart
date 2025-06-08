@@ -31,7 +31,7 @@ Future<void> main(final List<String> args) async {
         environment: parsedArgs.option(environment) ?? defaultEnvironment,
         dynamicRegistrySupported: parsedArgs.flag(dynamicRegistrySupported),
       );
-      final server = MCPToolkitServer.connect(
+      final server = MCPToolkitServer.fromStreamChannel(
         StreamChannel.withCloseGuarantee(io.stdin, io.stdout)
             .transform(StreamChannelTransformer.fromCodec(utf8))
             .transformStream(const LineSplitter())
@@ -117,7 +117,7 @@ final argParser =
 
 const defaultHost = 'localhost';
 const defaultPort = 8181;
-const defaultLogLevel = 'critical';
+const defaultLogLevel = 'info';
 const defaultEnvironment = 'production';
 const dartVMHost = 'dart-vm-host';
 const dartVMPort = 'dart-vm-port';

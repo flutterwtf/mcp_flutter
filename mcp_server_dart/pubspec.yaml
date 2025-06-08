@@ -27,6 +27,7 @@ dependencies:
   meta: ^1.16.0
   path: ^1.9.1
   process: ^5.0.3
+  rx: ^0.4.0
   stream_channel: ^2.1.4
   vm_service: ^15.0.0
   web_socket_channel: ^3.0.1
