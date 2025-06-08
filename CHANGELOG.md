@@ -23,17 +23,7 @@
 
 ### 📦 Migration Guide
 
-1. **Use New Build Command**:
-
-   ```bash
-   # Old
-   make install
-
-   # New
-   make install-dart
-   ```
-
-2. **Update AI Assistant Configuration**:
+1. **Update AI Assistant Configuration**:
 
    ```json
    {
@@ -53,7 +43,7 @@
    }
    ```
 
-3. **Update Flutter App Dependencies**:
+2. **Update Flutter App Dependencies**:
    ```yaml
    dependencies:
      mcp_toolkit: ^0.2.0

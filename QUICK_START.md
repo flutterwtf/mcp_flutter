@@ -34,7 +34,7 @@ For developers who want to contribute to the project or run the latest version d
 2. **Install and build dependencies:**
 
    ```bash
-   make install-dart
+   make install
    ```
 
    This command installs all necessary dependencies listed in `pubspec.yaml` and then builds the MCP server.

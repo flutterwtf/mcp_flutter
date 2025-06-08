@@ -51,7 +51,7 @@ Let `[CLONED_MCP_FLUTTER_PATH]` be `[MCP_SERVER_BASE_PATH]/mcp_flutter`.
 AI Agent: Execute this within `[CLONED_MCP_FLUTTER_PATH]`.
 
 ```bash
-make install-dart
+make install
 ```
 
 This command will:
@@ -295,7 +295,7 @@ AI Agent: To verify with the USER that the installation is successful:
   - Check AI tool's MCP server configuration for correct command and arguments.
 - **MCP Server Not Found**:
   - Double-check that `[CLONED_MCP_FLUTTER_PATH]/mcp_server_dart/build/flutter_inspector_mcp` is the correct and absolute path to the built server executable.
-  - Ensure `make install-dart` in Step 3 completed successfully and created the `build` directory.
+  - Ensure `make install` in Step 3 completed successfully and created the `build` directory.
 - **Permission Errors**:
   - Check file permissions for `[CLONED_MCP_FLUTTER_PATH]` and its subdirectories.
   - Ensure the `flutter_inspector_mcp` executable has execute permissions.
