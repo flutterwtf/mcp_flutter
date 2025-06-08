@@ -10,31 +10,25 @@
 
 This project enables AI-powered development tools to interact with Flutter applications through a **Dart-based MCP server** with **dynamic tools registration** capabilities:
 
-### 1. Direct VM Service Communication
+### Architecture Flow
 
 ```
-┌─────────────────┐         ┌──────────────────┐         ┌─────────────────┐
-│                 │         │                  │         │                 │
-│  Flutter App    │<------->│    Dart VM       │<------->│ MCP Server Dart │
-│  (Debug Mode)   │         │    Service       │         │                 │
-│                 │         │    (Port 8181)   │         │                 │
-└─────────────────┘         └──────────────────┘         └─────────────────┘
+┌─────────────────────────────┐     ┌──────────────────┐     ┌─────────────────────────────┐
+│                             │     │                  │     │                             │
+│  Flutter App                │<--->│    Dart VM       │<--->│ MCP Server Dart            │
+│  + mcp_toolkit              │     │    Service       │     │ + Dynamic Registry         │
+│  + Dynamic Tool Registration│     │    (Port 8181)   │     │                             │
+│                             │     │                  │     │                             │
+└─────────────────────────────┘     └──────────────────┘     └─────────────────────────────┘
 ```
 
-Used for: Basic VM operations, general Dart runtime inspection
+![Flutter Inspector Architecture](./docs/architecture.png)
 
-### 2. Flutter-Specific Communication with Dynamic Registration
+This unified architecture supports:
 
-```
-┌─────────────────┐     ┌───────────────────────┐     ┌─────────────────┐
-│                 │     │  Flutter App with     │     │                 │
-│  Flutter App    │<--->│  mcp_toolkit (VM Svc.  │<--->│ MCP Server Dart │
-│  (Debug Mode)   │     │  Extensions + Dynamic │     │  + Dynamic      │
-│                 │     │  Tool Registration)   │     │  Registry       │
-└─────────────────┘     └───────────────────────┘     └─────────────────┘
-```
-
-Used for: Flutter-specific operations (widget inspection, layout analysis, error reporting, screenshots, etc.) via direct MCP Server to VM Service extension calls, plus **runtime tool registration**.
+- **Basic VM operations**: Memory inspection, debugging, isolate management
+- **Flutter-specific operations**: Widget inspection, layout analysis, error reporting, screenshots
+- **Dynamic tool registration**: Runtime tool discovery and custom functionality
 
 ### When to Use This
 
