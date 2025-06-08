@@ -181,7 +181,7 @@ For developers who want to contribute to the project or run the latest version d
    3. The Flutter inspector tools will be automatically available
    4. You're ready! Try commands like "Show me all tools available in my Flutter app"
 
-## 🆕 Dynamic Tools Registration
+## Dynamic Tools Registration
 
 One of the key features of v2.2.0 is the ability to register custom tools and resources from your Flutter app at runtime:
 
@@ -189,6 +189,7 @@ One of the key features of v2.2.0 is the ability to register custom tools and re
 
 ```dart
 import 'package:mcp_toolkit/mcp_toolkit.dart';
+import 'package:dart_mcp/client.dart';
 
 // Register a custom tool in your Flutter App (!).
 final customTool = MCPCallEntry.tool(
@@ -202,15 +203,14 @@ final customTool = MCPCallEntry.tool(
   definition: MCPToolDefinition(
     name: 'say_hello',
     description: 'Say hello to someone',
-    inputSchema: {
-      'type': 'object',
-      'properties': {
-        'name': {
-          'type': 'string',
-          'description': 'Name to greet',
-        },
+    inputSchema: ObjectSchema(
+      required: ['name'],
+      properties: {
+        'name': StringSchema(
+          description: 'Name to greet',
+        ),
       },
-    },
+    ),
   ),
 );
 
@@ -220,15 +220,10 @@ await MCPToolkitBinding.instance.addEntries(entries: {customTool});
 
 ### Using Dynamic Tools
 
-1. **Discover Tools**: Use `listClientToolsAndResources` to see all available tools
-2. **Execute Tools**: Use `runClientTool` with the tool name and parameters
-3. **Hot Reload**: Tools update automatically when you hot reload your Flutter app
+The tools should be registered automatically in MCP server. However, since most clients doesn't support tools/change feature, you have two options:
 
-### Advanced Features
-
-- **Real-time Registration**: Tools are discovered automatically via DTD events
-- **Type Safety**: Full MCP protocol compliance with proper input schemas
-- **Resource Support**: Register both tools and resources
+1. Reload MCP server (from interface).
+2. Use `listClientToolsAndResources` to see all available tools and resources and then call `runClientTool` or `runClientResource` to execute them.
 
 ## 📦 Installation via Smithery (🚧 WIP 🚧)
 
