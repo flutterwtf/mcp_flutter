@@ -34,6 +34,36 @@ MCPToolkitBinding.instance
 
 ## Features
 
+- Auto register tools and resources in MCP server:
+
+```dart
+addMcpTool(
+  MCPCallEntry.tool(
+    definition: MCPToolDefinition(
+      name: 'calculate_fibonacci',
+      description: 'Calculate the nth Fibonacci number and return the sequence',
+      inputSchema: ObjectSchema(
+        required: ['n'],
+        properties: {
+          'n': IntegerSchema(
+            description: 'The position in the Fibonacci sequence (0-100)',
+            minimum: 0,
+            maximum: 100,
+          ),
+        },
+      ),
+    ),
+    handler: (final request) {
+      final n = int.tryParse(request['n'] ?? '0') ?? 0;
+      return MCPCallResult(
+        message: 'Fibonacci number at position $n is ${fibonacci(n)}',
+        parameters: {'result': fibonacci(n)},
+      );
+    },
+  ),
+);
+```
+
 - **VM Service Extensions**: Registers a set of custom VM service extensions (e.g., `ext.mcp.toolkit.app_errors`, `ext.mcp.toolkit.view_screenshots`, `ext.mcp.toolkit.view_details`).
 - **Error Reporting**: Captures and makes available runtime errors from the Flutter application.
 - **Screenshot Capability**: Allows external tools to request screenshots of the application's views.

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dart_mcp/client.dart';
 import 'package:from_json_to_json/from_json_to_json.dart';
 import 'package:is_dart_empty_or_not/is_dart_empty_or_not.dart';
 
@@ -68,18 +69,15 @@ extension type OnAppErrorsEntry._(MCPCallEntry entry) implements MCPCallEntry {
             'Get application errors and diagnostics information. '
             'Returns recent errors with file paths and line numbers '
             'for debugging.',
-        inputSchema: {
-          'type': 'object',
-          'properties': {
-            'count': {
-              'type': 'integer',
-              'description': 'Number of recent errors to retrieve',
-              'default': 10,
-              'minimum': 1,
-              'maximum': 100,
-            },
+        inputSchema: ObjectSchema(
+          properties: {
+            'count': IntegerSchema(
+              description: 'Number of recent errors to retrieve',
+              minimum: 1,
+              maximum: 10,
+            ),
           },
-        },
+        ),
       ),
     );
     return OnAppErrorsEntry._(entry);
@@ -112,16 +110,13 @@ extension type OnViewScreenshotsEntry._(MCPCallEntry entry)
         description:
             'Take screenshots of all Flutter views/screens. '
             'Useful for visual debugging and UI analysis.',
-        inputSchema: {
-          'type': 'object',
-          'properties': {
-            'compress': {
-              'type': 'boolean',
-              'description': 'Whether to compress the screenshots',
-              'default': false,
-            },
+        inputSchema: ObjectSchema(
+          properties: {
+            'compress': BooleanSchema(
+              description: 'Whether to compress the screenshots',
+            ),
           },
-        },
+        ),
       ),
     );
     return OnViewScreenshotsEntry._(entry);
@@ -149,7 +144,7 @@ extension type const OnViewDetailsEntry._(MCPCallEntry entry)
         description:
             'Get detailed information about Flutter views and widgets. '
             'Returns structural information about the current UI state.',
-        inputSchema: {'type': 'object', 'properties': {}},
+        inputSchema: ObjectSchema(properties: {}),
       ),
     );
     return OnViewDetailsEntry._(entry);

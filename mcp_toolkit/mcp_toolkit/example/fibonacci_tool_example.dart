@@ -1,3 +1,4 @@
+import 'package:dart_mcp/client.dart';
 import 'package:flutter/material.dart';
 import 'package:mcp_toolkit/mcp_toolkit.dart';
 
@@ -23,18 +24,16 @@ Future<void> _registerFibonacciTool() async {
     definition: MCPToolDefinition(
       name: 'calculate_fibonacci',
       description: 'Calculate the nth Fibonacci number and return the sequence',
-      inputSchema: {
-        'type': 'object',
-        'properties': {
-          'n': {
-            'type': 'integer',
-            'description': 'The position in the Fibonacci sequence (0-100)',
-            'minimum': 0,
-            'maximum': 100,
-          },
+      inputSchema: ObjectSchema(
+        properties: {
+          'n': IntegerSchema(
+            description: 'The position in the Fibonacci sequence (0-100)',
+            minimum: 0,
+            maximum: 100,
+          ),
         },
-        'required': ['n'],
-      },
+        required: ['n'],
+      ),
     ),
     handler: (final request) {
       final n = int.tryParse(request['n'] ?? '0') ?? 0;

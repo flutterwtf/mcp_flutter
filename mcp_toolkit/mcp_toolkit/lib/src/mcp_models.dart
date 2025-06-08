@@ -2,6 +2,7 @@
 
 import 'dart:async';
 
+import 'package:dart_mcp/client.dart';
 import 'package:flutter/foundation.dart';
 
 /// An interface for all results returned by MCP Toolkit.
@@ -91,16 +92,14 @@ extension type const MCPDefinition._(Map<String, dynamic> _value)
 ///       toolDefinition: MCPToolDefinition(
 ///         name: 'app_errors',
 ///         description: 'Get application errors and diagnostics',
-///         inputSchema: {
-///           'type': 'object',
-///           'properties': {
-///             'count': {
-///               'type': 'integer',
-///               'description': 'Number of errors to retrieve',
-///               'default': 10,
+///         inputSchema: ObjectSchema(
+///           properties: {
+///             'count': IntegerSchema(
+///               description: 'Number of errors to retrieve',
+///               default: 10,
 ///             },
 ///           },
-///         },
+///         ),
 ///       ),
 ///     );
 ///     return OnAppErrorsEntry._(entry);
@@ -120,7 +119,7 @@ extension type const MCPToolDefinition._(MCPDefinition _definition)
   factory MCPToolDefinition({
     required final String name,
     required final String description,
-    final Map<String, dynamic> inputSchema = const {},
+    required final ObjectSchema inputSchema,
   }) => MCPToolDefinition._(
     MCPDefinition(
       name: name,
