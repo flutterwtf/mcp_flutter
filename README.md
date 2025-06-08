@@ -30,26 +30,32 @@ _For AI-Powered Development_
 - [Configuration](CONFIGURATION.md)
 
 > [!NOTE]
-> There is a new [experimental package in development from Flutter team](https://github.com/dart-lang/ai/tree/main/pkgs/dart_tooling_mcp_server) which exposes Dart tooling development.
+> There is official [MCP Server for Flutter from Flutter team](https://github.com/dart-lang/ai/tree/main/pkgs/dart_mcp_server) which exposes Dart tooling.
 >
-> Therefore my current focus is
+> The **main goal of this project** is to bring power of MCP server tools by creating them in Flutter app, using **dynamic MCP registration** . See how it works in [short YouTube video](https://www.youtube.com/watch?v=Qog3x2VcO98). See [Dynamic Tools Registration Docs](#dynamic-tools-registration-🆕) for more details.
 >
-> 1. to stabilize and polish tools which are useful in development (so it would be more plug & play, for example: it will return not only the errors, but prompt for AI how to work with that error) [see more in MCP_RPC_DESCRIPTION.md](MCP_RPC_DESCRIPTION.md)
-> 2. fine-tune process of MCP server tools creation by making it customizable.
+> Also, to stabilize and polish tools which are useful in development (so it would be specifically targeted for AI Assistants, for example: it will return not only the errors, but prompt for AI how to work with that error) [see more in MCP_RPC_DESCRIPTION.md](MCP_RPC_DESCRIPTION.md)
+>
+> Please share your feedback, ideas and suggestions in issues!
 >
 > Hope it will be useful for you,
 >
 > Have a nice day!
 
-## 🎉 v2.1.0 released! 🎉
+## 🎉 v2.2.0 released! 🎉
 
-Added Dart MCP Server to replace in future Typescript one. Already working, will migrate to it in the future. See more about it in [CHANGELOG.md](CHANGELOG.md).
+**Major Changes:**
+
+- **New Dart-based MCP Server**: Replaced TypeScript server with `mcp_server_dart` for better Flutter integration
+- **Dynamic Tools Registration**: Flutter apps can now register custom tools and resources at runtime. See how it works in [short YouTube video](https://www.youtube.com/watch?v=Qog3x2VcO98). See [Dynamic Tools Registration Docs](#dynamic-tools-registration-🆕) for more details.
+
+See more details in [CHANGELOG.md](CHANGELOG.md).
 
 ## ⚠️ WARNING
 
-Dump RPC methods (like `dump_render_tree`), may cause huge amount of tokens usage or overload context. Therefore now they are disabled by default, but can be enabled via environment variable `DUMPS_SUPPORTED=true`.
+Dump RPC methods (like `dump_render_tree`), may cause huge amount of tokens usage or overload context. Therefore now they are disabled by default, but can be enabled via `--dumps` flag.
 
-See more details about environment variables in [.env.example](mcp_server/.env.example).
+See more details about command line options in [mcp_server_dart README](mcp_server_dart/README.md).
 
 ## 🚀 Getting Started
 
@@ -63,7 +69,7 @@ See more details about environment variables in [.env.example](mcp_server/.env.e
 
 ## 🎯 AI Agent Tools
 
-### Error Analysis
+### Core Flutter Tools
 
 - `get_app_errors` [Resource|Tool] - Retrieves precise and condensed error information from your Flutter app
   **Usage**:
@@ -77,28 +83,19 @@ See more details about environment variables in [.env.example](mcp_server/.env.e
   🚧 Android, 🤔 Windows, 🤔 Linux, ❌ Web
   [See issue](https://github.com/Arenukvern/mcp_flutter/issues/23)
 
-### Development Tools
-
-- `view_screenshot` [Resource|Tool] - Captures a screenshots of the running application.
+- `view_screenshot` [Resource|Tool] - Captures screenshots of the running application.
   **Configuration**:
 
-  - Enable with `--images` flag or `IMAGES_SUPPORTED=true` environment variable
+  - Enable with `--images` flag
   - Will use PNG compression to optimize image size.
 
-<!-- - `hot_reload` [Tool] - Performs hot reload of the Flutter application
-  **Tested on**:
-  ✅ macOS, ✅ iOS, ✅ Android
-  **Not tested on**:
-  🤔 Windows, 🤔 Linux, ❌ Web
-  [See issue](https://github.com/Arenukvern/mcp_flutter/issues/23)
+- `get_view_details` [Resource|Tool] - size of screen, pixel ratio. May unlock ability for an Agent to use widget selection. Will return details about each view in the app.
 
-  **Tested on**:
-  ✅ macOS, ✅ iOS
-  **Not tested on**:
-  🚧 Android, 🤔 Windows, 🤔 Linux, ❌ Web
-  [See issue](https://github.com/Arenukvern/mcp_flutter/issues/23) -->
+### Dynamic Tools Registration 🆕
 
-- `get_view_details` [Resource|Tool] - size of screen, pixel ratio. May unlock ability for an Agent to use widget selection.
+**Dynamic Registration Features:**
+
+Flutter apps can now register custom tools and resources at runtime. See how it works in [short YouTube video](https://www.youtube.com/watch?v=Qog3x2VcO98). See [Dynamic Tools Registration Docs](#dynamic-tools-registration-🆕) for more details.
 
 All tools default to using port 8181 if no port is specified. You can override this by providing a specific port number.
 
@@ -121,9 +118,16 @@ This MCP server is verified by [MseeP.ai](https://mseep.ai).
    - Check if the port is not being used by another process
 
 2. **AI Tool Not Detecting Inspector**
+
    - Restart the AI tool after configuration changes
    - Verify the configuration JSON syntax
    - Check the tool's logs for connection errors
+
+3. **Dynamic Tools Not Appearing**
+   - Ensure `mcp_toolkit` package is properly initialized in your Flutter app
+   - Check that tools are registered using `MCPToolkitBinding.instance.addEntries()`
+   - Use `listClientToolsAndResources` to verify registration
+   - Hot reload your Flutter app after adding new tools
 
 The Flutter MCP Server is registered with Smithery's registry, making it discoverable and usable by other AI tools through a standardized interface.
 
@@ -132,9 +136,9 @@ The Flutter MCP Server is registered with Smithery's registry, making it discove
 ```
 ┌─────────────────┐     ┌───────────────────────┐     ┌─────────────────┐
 │                 │     │  Flutter App with     │     │                 │
-│  Flutter App    │<--->│  mcp_toolkit (VM Svc.  │<--->│   MCP Server   │
-│  (Debug Mode)   │     │  Extensions)          │     │                 │
-│                 │     │                       │     │                 │
+│  Flutter App    │<--->│  mcp_toolkit (VM Svc.  │<--->│ MCP Server Dart │
+│  (Debug Mode)   │     │  Extensions + Dynamic │     │                 │
+│                 │     │  Tool Registration)   │     │                 │
 └─────────────────┘     └───────────────────────┘     └─────────────────┘
 ```
 

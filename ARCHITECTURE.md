@@ -8,14 +8,14 @@
 
 ## System Overview
 
-This project enables AI-powered development tools to interact with Flutter applications through two distinct communication paths:
+This project enables AI-powered development tools to interact with Flutter applications through a **Dart-based MCP server** with **dynamic tools registration** capabilities:
 
 ### 1. Direct VM Service Communication
 
 ```
 ┌─────────────────┐         ┌──────────────────┐         ┌─────────────────┐
 │                 │         │                  │         │                 │
-│  Flutter App    │<------->│    Dart VM       │<------->│   MCP Server   │
+│  Flutter App    │<------->│    Dart VM       │<------->│ MCP Server Dart │
 │  (Debug Mode)   │         │    Service       │         │                 │
 │                 │         │    (Port 8181)   │         │                 │
 └─────────────────┘         └──────────────────┘         └─────────────────┘
@@ -23,18 +23,18 @@ This project enables AI-powered development tools to interact with Flutter appli
 
 Used for: Basic VM operations, general Dart runtime inspection
 
-### 2. Flutter-Specific Communication
+### 2. Flutter-Specific Communication with Dynamic Registration
 
 ```
 ┌─────────────────┐     ┌───────────────────────┐     ┌─────────────────┐
 │                 │     │  Flutter App with     │     │                 │
-│  Flutter App    │<--->│  mcp_toolkit (VM Svc.  │<--->│   MCP Server   │
-│  (Debug Mode)   │     │  Extensions)          │     │                 │
-│                 │     │                       │     │                 │
+│  Flutter App    │<--->│  mcp_toolkit (VM Svc.  │<--->│ MCP Server Dart │
+│  (Debug Mode)   │     │  Extensions + Dynamic │     │  + Dynamic      │
+│                 │     │  Tool Registration)   │     │  Registry       │
 └─────────────────┘     └───────────────────────┘     └─────────────────┘
 ```
 
-Used for: Flutter-specific operations (widget inspection, layout analysis, error reporting, screenshots, etc.) via direct MCP Server to VM Service extension calls.
+Used for: Flutter-specific operations (widget inspection, layout analysis, error reporting, screenshots, etc.) via direct MCP Server to VM Service extension calls, plus **runtime tool registration**.
 
 ### When to Use This
 
@@ -46,11 +46,18 @@ Used for: Flutter-specific operations (widget inspection, layout analysis, error
    - General VM state queries
 
 2. **Flutter-Specific Operations**:
+
    - Widget tree inspection
    - Layout debugging
    - State management analysis
    - Performance profiling
    - UI element interaction
+
+3. **Dynamic Tools Registration** 🆕:
+   - Custom debugging tools
+   - App-specific functionality
+   - Runtime tool discovery
+   - Event-driven tool updates
 
 ## Architecture Components
 
@@ -75,17 +82,20 @@ Used for: Flutter-specific operations (widget inspection, layout analysis, error
 - Provides screenshot capabilities of the application's UI.
 - Enables retrieval of application view details.
 - Facilitates interaction with the Flutter application at a higher level than raw VM service calls.
+- **🆕 Dynamic Tool Registration**: Allows runtime registration of custom tools and resources.
 
-### 3. MCP Server Layer
+### 3. MCP Server Layer (Dart-based)
 
-**Location**: `mcp_server/`
-**Purpose**: Protocol translation and request handling
+**Location**: `mcp_server_dart/`
+**Purpose**: Protocol translation, request handling, and dynamic registry management
 **Key Features**:
 
 - JSON-RPC to VM Service Protocol translation
 - Request routing and validation
 - Error handling and logging
 - Connection management
+- Dynamic Registry: Manages runtime-registered tools and resources
+- Event-Driven Discovery: Real-time tool detection via DTD events
 
 ### 4. AI Assistant Integration Layer
 
@@ -97,24 +107,46 @@ Used for: Flutter-specific operations (widget inspection, layout analysis, error
 - Widget tree visualization
 - Debug information display
 - Performance recommendations
+- Dynamic Tool Discovery: Access to runtime-registered tools
 
 ## Communication Flow
+
+### Standard Flow
 
 1. **Request Initiation**:
 
    ```
-   AI Assistant -> MCP JSON-RPC Request -> MCP Server
+   AI Assistant -> MCP JSON-RPC Request -> MCP Server Dart
    ```
 
 2. **Protocol Translation & Interaction**:
 
    ```
-   MCP Server -> Dart VM Service (invoking mcp_toolkit extensions on Flutter App)
+   MCP Server Dart -> Dart VM Service (invoking mcp_toolkit extensions on Flutter App)
    ```
 
 3. **Response Flow**:
    ```
-   mcp_toolkit in Flutter App -> Dart VM Service -> MCP Server -> AI Assistant
+   mcp_toolkit in Flutter App -> Dart VM Service -> MCP Server Dart -> AI Assistant
+   ```
+
+### Dynamic Registration Flow 🆕
+
+1. **Tool Registration**:
+
+   ```
+   Flutter App -> MCPToolkitBinding.addEntries() -> DTD Event -> MCP Server Dart
+   ```
+
+2. **Discovery**:
+
+   ```
+   AI Assistant -> listClientToolsAndResources -> MCP Server Dart -> Dynamic Registry
+   ```
+
+3. **Execution**:
+   ```
+   AI Assistant -> runClientTool -> MCP Server Dart -> Dynamic Registry -> Flutter App
    ```
 
 ## Protocol Details
@@ -125,6 +157,7 @@ Used for: Flutter-specific operations (widget inspection, layout analysis, error
 - Standardized message format
 - Type-safe interactions
 - Extensible command system
+- Dynamic tool support
 
 ### 2. VM Service Protocol
 
@@ -132,6 +165,13 @@ Used for: Flutter-specific operations (widget inspection, layout analysis, error
 - Real-time state access
 - Widget tree manipulation
 - Performance metrics collection
+
+### 3. Dynamic Registry Protocol 🆕
+
+- Event-driven tool discovery
+- Runtime registration/unregistration
+- Type-safe tool definitions
+- Hot reload support
 
 ## Security Considerations
 
@@ -153,6 +193,11 @@ Used for: Flutter-specific operations (widget inspection, layout analysis, error
    - Sanitized error messages
    - Controlled access scope
 
+4. **Dynamic Registration Security** 🆕:
+   - Debug mode enforcement
+   - Local-only tool registration
+   - Sandboxed execution environment
+
 ## Performance Optimization
 
 1. **Connection Management**:
@@ -168,54 +213,101 @@ Used for: Flutter-specific operations (widget inspection, layout analysis, error
    - Optimized protocol translation
 
 3. **Error Handling**:
+
    - Graceful degradation
    - Detailed error reporting
    - Recovery mechanisms
+
+4. **Dynamic Registry Performance**:
+   - Event-driven updates (no polling)
+   - Efficient tool lookup
+   - Minimal overhead registration
 
 ## Extension Points
 
 ### 1. Custom Commands
 
-```typescript
-// Add new commands in server_tools_handler.yaml
-handlers:
-  - name: custom_command
-    description: Your custom functionality
-    rpcMethod: "ext.flutter.custom"
-```
-
-### 2. Protocol Extensions
-
 ```dart
-// Implement custom protocol handlers
-class CustomProtocolHandler {
-  Future<Response> handleCustomMethod(Request request) {
+// Add new commands via dynamic registration
+final customTool = MCPCallEntry.tool(
+  handler: (request) {
     // Your custom logic
-  }
-}
+    return MCPCallResult(message: 'Success');
+  },
+  definition: MCPToolDefinition(
+    name: 'custom_command',
+    description: 'Your custom functionality',
+    inputSchema: {...},
+  ),
+);
+
+await MCPToolkitBinding.instance.addEntries(entries: {customTool});
 ```
 
 ## Common Use Cases
 
 1. **Widget Analysis**:
 
-   ```typescript
+   ```dart
    // Example: Get widget tree
-   const widgetTree = await inspector.getRootWidget();
+   final widgetTree = await inspector.getRootWidget();
    ```
 
 2. **Layout Debugging**:
 
-   ```typescript
+   ```dart
    // Example: Analyze layout issues
-   const layoutInfo = await inspector.debugDumpRenderTree();
+   final layoutInfo = await inspector.debugDumpRenderTree();
    ```
 
 3. **Performance Profiling**:
-   ```typescript
+
+   ```dart
    // Example: Profile widget builds
    await inspector.profileWidgetBuilds({ enabled: true });
    ```
+
+4. **Dynamic Tool Registration**:
+
+   ```dart
+   // Example: Register custom debugging tool
+   final debugTool = MCPCallEntry.tool(
+     handler: (request) => MCPCallResult(
+       message: 'Debug info',
+       parameters: {'state': getCurrentState()},
+     ),
+     definition: MCPToolDefinition(
+       name: 'get_debug_state',
+       description: 'Get current debug state',
+       inputSchema: {'type': 'object', 'properties': {}},
+     ),
+   );
+
+   await MCPToolkitBinding.instance.addEntries(entries: {debugTool});
+   ```
+
+## Dynamic Registry Architecture:
+
+### Components
+
+1. **DynamicRegistry**: Core registry managing tool/resource lifecycle
+2. **RegistryDiscoveryService**: DTD event-driven discovery service
+3. **DynamicRegistryTools**: MCP tools for registry interaction
+4. **MCPToolkitBinding**: Client-side registration interface
+
+### Event Flow
+
+```
+Flutter App Tool Registration -> DTD Event -> Discovery Service -> Registry Update -> MCP Tool Availability
+```
+
+### Tool Lifecycle
+
+1. **Registration**: Flutter app calls `addEntries()`
+2. **Discovery**: DTD event triggers server-side discovery
+3. **Availability**: Tool becomes available via MCP protocol
+4. **Execution**: AI assistant can call tool via `runClientTool`
+5. **Cleanup**: Hot reload or app restart clears registry
 
 ## Troubleshooting
 
@@ -232,12 +324,20 @@ class CustomProtocolHandler {
    - Verify parameter types
 
 3. **Performance Problems**:
+
    - Monitor message volume
    - Check response times
    - Analyze resource usage
+
+4. **Dynamic Registration Issues**:
+   - Ensure `mcp_toolkit` is properly initialized
+   - Check DTD event streaming
+   - Verify tool schema compliance
+   - Use `listClientToolsAndResources` for debugging
 
 ## Further Reading
 
 - [Flutter DevTools Documentation](https://docs.flutter.dev/development/tools/devtools/overview)
 - [VM Service Protocol](https://github.com/dart-lang/sdk/blob/main/runtime/vm/service/service.md)
 - [MCP Protocol Specification](https://modelcontextprotocol.io/introduction)
+- [Dart Toolkit Developer (DTD) Documentation](https://github.com/dart-lang/sdk/tree/main/pkg/dtd)
