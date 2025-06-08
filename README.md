@@ -32,9 +32,9 @@ _For AI-Powered Development_
 > [!NOTE]
 > There is official [MCP Server for Flutter from Flutter team](https://github.com/dart-lang/ai/tree/main/pkgs/dart_mcp_server) which exposes Dart tooling.
 >
-> The **main goal of this project** is to bring power of MCP server tools by creating them in Flutter app, using **dynamic MCP registration** . See how it works in [short YouTube video](https://www.youtube.com/watch?v=Qog3x2VcO98). See [Dynamic Tools Registration Docs](#dynamic-tools-registration-🆕) for more details.
+> The **main goal of this project** is to bring power of MCP server tools by creating them in Flutter app, using **dynamic MCP tools registration** . See how it works in [short YouTube video](https://www.youtube.com/watch?v=Qog3x2VcO98). See [Quick Start](QUICK_START.md) for more details. See [original motivation](https://github.com/Arenukvern/mcp_flutter/blob/main/CHANGELOG.md#210) behind the idea.
 >
-> Also, to stabilize and polish tools which are useful in development (so it would be specifically targeted for AI Assistants, for example: it will return not only the errors, but prompt for AI how to work with that error) [see more in MCP_RPC_DESCRIPTION.md](MCP_RPC_DESCRIPTION.md)
+> Also, secondary goal is to stabilize and polish tools which are useful in development (so it would be specifically targeted for AI Assistants, for example: it will return not only the errors, but prompt for AI how to work with that error) [see more in MCP_RPC_DESCRIPTION.md](MCP_RPC_DESCRIPTION.md)
 >
 > Please share your feedback, ideas and suggestions in issues!
 >
@@ -46,8 +46,8 @@ _For AI-Powered Development_
 
 **Major Changes:**
 
-- **New Dart-based MCP Server**: Replaced TypeScript server with `mcp_server_dart` for better Flutter integration
-- **Dynamic Tools Registration**: Flutter apps can now register custom tools and resources at runtime. See how it works in [short YouTube video](https://www.youtube.com/watch?v=Qog3x2VcO98). See [Dynamic Tools Registration Docs](#dynamic-tools-registration-🆕) for more details.
+- **Dart-based MCP Server now is the main server**: Typescript server removed, and `mcp_server_dart` is the main server.
+- **Dynamic Tools Registration**: Flutter apps can now register custom tools at the MCP server. See how it works in [short YouTube video](https://www.youtube.com/watch?v=Qog3x2VcO98). See [Dynamic Tools Registration Docs](#dynamic-tools-registration-🆕) for more details.
 
 See more details in [CHANGELOG.md](CHANGELOG.md).
 
