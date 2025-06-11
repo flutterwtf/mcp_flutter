@@ -1,3 +1,8 @@
+## 2.2.1
+
+- Added badge to install Flutter Inspector to Cursor in README.md
+- Restored License file
+
 ## 2.2.0
 
 ### 🎉 Dart Server + Dynamic Tools Registration

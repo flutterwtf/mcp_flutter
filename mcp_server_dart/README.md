@@ -117,9 +117,21 @@ For developers who want to contribute to the project or run the latest version d
 
    #### Cursor Setup
 
+   ##### Badge
+
+   You can use this badge to add Flutter Inspector to Cursor:
+
+   [![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/install-mcp?name=flutter-inspector&config=eyJjb21tYW5kIjoiL3BhdGgvdG8veW91ci9jbG9uZWQvbWNwX2ZsdXR0ZXIvbWNwX3NlcnZlcl9kYXJ0L2J1aWxkL2ZsdXR0ZXJfaW5zcGVjdG9yX21jcCAtLWRhcnQtdm0taG9zdD1sb2NhbGhvc3QgLS1kYXJ0LXZtLXBvcnQ9ODE4MSAtLW5vLXJlc291cmNlcyAtLWltYWdlcyIsImVudiI6e30sImRpc2FibGVkIjpmYWxzZX0%3D)
+   <!-- to update use: https://docs.cursor.com/deeplinks#markdown -->
+
+   Note: fix path after installation.
+
+   ##### Manual Setup
+
    1. Open Cursor's settings
    2. Go to the Features tab
    3. Under "Model Context Protocol", add the server:
+
       ```json
       {
         "mcpServers": {
@@ -138,6 +150,7 @@ For developers who want to contribute to the project or run the latest version d
         }
       }
       ```
+
    4. Restart Cursor
    5. Open Agent Panel (cmd + L on macOS)
    6. You're ready! Try commands like "Please get screenshot of my app"
