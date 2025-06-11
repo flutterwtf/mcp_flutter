@@ -42,9 +42,17 @@ _For AI-Powered Development_
 >
 > Have a nice day!
 
-## 🎉 v2.2.0 released! 🎉
+## 🎉 v2.2.2 released! 🎉
 
-**Major Changes:**
+**New Features:**
+
+- Added `--await-dnd` flag to wait until DND connection is established. By default `--no-await-dnd` will be applied.
+  There will be 5 seconds timeout for DND connection and then server will start without DND connection.
+
+  This is workaround for MCP Clients which don't support tools updates.
+  Important: some clients doesn't support it. Use with caution. (disable for Windsurf, works with Cursor)
+
+**Major Changes in v2.2.0:**
 
 - **Dart-based MCP Server now is the main server**: Typescript server removed, and `mcp_server_dart` is the main server.
 - **Dynamic Tools Registration**: Flutter apps can now register custom tools at the MCP server. See how it works in [short YouTube video](https://www.youtube.com/watch?v=Qog3x2VcO98). See [Dynamic Tools Registration Docs](#dynamic-tools-registration-🆕) for more details.
