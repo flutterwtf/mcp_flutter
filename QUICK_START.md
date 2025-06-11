@@ -139,7 +139,8 @@ For developers who want to contribute to the project or run the latest version d
 
    You can use this badge to add Flutter Inspector to Cursor:
 
-   [![Add to Cursor](https://img.shields.io/badge/Add%20to-Cursor-blue?style=for-the-badge&logo=cursor)](cursor://anysphere.cursor-deeplink/mcp/install?name=flutter-inspector&config=eyJmbHV0dGVyLWluc3BlY3RvciI6eyJjb21tYW5kIjoiL3BhdGgvdG8veW91ci9jbG9uZWQvbWNwX2ZsdXR0ZXIvbWNwX3NlcnZlcl9kYXJ0L2J1aWxkL2ZsdXR0ZXJfaW5zcGVjdG9yX21jcCIsImFyZ3MiOlsiLS1kYXJ0LXZtLWhvc3Q9bG9jYWxob3N0IiwiLS1kYXJ0LXZtLXBvcnQ9ODE4MSIsIi0tbm8tcmVzb3VyY2VzIiwiLS1pbWFnZXMiXSwiZW52Ijp7fSwiZGlzYWJsZWQiOmZhbHNlfX0=)
+   [![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/install-mcp?name=flutter-inspector&config=eyJjb21tYW5kIjoiL3BhdGgvdG8veW91ci9jbG9uZWQvbWNwX2ZsdXR0ZXIvbWNwX3NlcnZlcl9kYXJ0L2J1aWxkL2ZsdXR0ZXJfaW5zcGVjdG9yX21jcCAtLWRhcnQtdm0taG9zdD1sb2NhbGhvc3QgLS1kYXJ0LXZtLXBvcnQ9ODE4MSAtLW5vLXJlc291cmNlcyAtLWltYWdlcyIsImVudiI6e30sImRpc2FibGVkIjpmYWxzZX0%3D)
+   <!-- to update use: https://docs.cursor.com/deeplinks#markdown -->
 
    Note: fix path after installation.
 
