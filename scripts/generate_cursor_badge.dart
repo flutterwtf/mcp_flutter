@@ -1,11 +1,23 @@
 import 'dart:convert';
-import 'package:args/args.dart';
 import 'dart:io';
 
+import 'package:args/args.dart';
+
 void main(List<String> arguments) {
-  final parser = ArgParser()
-    ..addOption('name', abbr: 'n', help: 'The server name for the Cursor deeplink', mandatory: true)
-    ..addOption('config', abbr: 'c', help: 'The JSON configuration string for the MCP server', mandatory: true);
+  final parser =
+      ArgParser()
+        ..addOption(
+          'name',
+          abbr: 'n',
+          help: 'The server name for the Cursor deeplink',
+          mandatory: false,
+        )
+        ..addOption(
+          'config',
+          abbr: 'c',
+          help: 'The JSON configuration string for the MCP server',
+          mandatory: false,
+        );
 
   ArgResults argResults;
   try {
@@ -16,27 +28,32 @@ void main(List<String> arguments) {
     exit(64); // Command line usage error
   }
 
-  final serverName = argResults['name'] as String?;
-  final configStr = argResults['config'] as String?;
-
-  // The 'mandatory' flag in ArgParser should handle this, but an explicit check is good for clarity.
-  if (serverName == null || serverName.isEmpty) {
-    print('Error: --name argument is required.');
-    print(parser.usage);
-    exit(64);
+  final serverName = argResults['name'] as String? ?? 'flutter-inspector';
+  final configStr =
+      argResults['config'] as String? ??
+      '''
+{
+  "${serverName}": {
+    "command": "/path/to/your/cloned/mcp_flutter/mcp_server_dart/build/flutter_inspector_mcp",
+    "args": [
+      "--dart-vm-host=localhost",
+      "--dart-vm-port=8181",
+      "--no-resources",
+      "--images"
+    ],
+    "env": {},
+    "disabled": false
   }
-
-  if (configStr == null || configStr.isEmpty) {
-    print('Error: --config argument is required.');
-    print(parser.usage);
-    exit(64);
-  }
+}
+''';
 
   dynamic parsedJson;
   try {
     parsedJson = jsonDecode(configStr);
   } on FormatException catch (e) {
-    print('Error: Invalid JSON configuration string provided for --config: ${e.message}');
+    print(
+      'Error: Invalid JSON configuration string provided for --config: ${e.message}',
+    );
     exit(1);
   }
 

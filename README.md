@@ -9,7 +9,6 @@ _For AI-Powered Development_
 [![smithery badge](https://smithery.ai/badge/@Arenukvern/mcp_flutter)](https://smithery.ai/server/@Arenukvern/mcp_flutter)
 [![Verified on MseeP](https://mseep.ai/badge.svg)](https://mseep.ai/app/03aa0f2d-4ef7-40ae-93de-c7b87e0ac32d)
 [![All Contributors](https://img.shields.io/github/all-contributors/Arenukvern/mcp_flutter?color=ee8449&style=flat-square)](https://github.com/Arenukvern/mcp_flutter#contributors-)
-[![Add to Cursor](https://img.shields.io/badge/Add%20to-Cursor-blue?style=for-the-badge&logo=cursor)](cursor://anysphere.cursor-deeplink/mcp/install?name=flutter-inspector&config=eyJjb21tYW5kIjoibWNwX2ZsdXR0ZXIvbWNwX3NlcnZlcl9kYXJ0L2J1aWxkL2ZsdXR0ZXJfaW5zcGVjdG9yX21jcCIsImFyZ3MiOlsiLS1kYXJ0LXZtLWhvc3Q9bG9jYWxob3N0IiwiLS1kYXJ0LXZtLXBvcnQ9ODE4MSIsIi0tbm8tcmVzb3VyY2VzIiwiLS1pbWFnZXMiXSwiZW52Ijp7fSwiZGlzYWJsZWQiOmZhbHNlLCJhdXRvQXBwcm92ZSI6W119)
 
 </div>
 

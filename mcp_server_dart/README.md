@@ -117,9 +117,20 @@ For developers who want to contribute to the project or run the latest version d
 
    #### Cursor Setup
 
+   ##### Badge
+
+   You can use this badge to add Flutter Inspector to Cursor:
+
+   [![Add to Cursor](https://img.shields.io/badge/Add%20to-Cursor-blue?style=for-the-badge&logo=cursor)](cursor://anysphere.cursor-deeplink/mcp/install?name=flutter-inspector&config=eyJmbHV0dGVyLWluc3BlY3RvciI6eyJjb21tYW5kIjoiL3BhdGgvdG8veW91ci9jbG9uZWQvbWNwX2ZsdXR0ZXIvbWNwX3NlcnZlcl9kYXJ0L2J1aWxkL2ZsdXR0ZXJfaW5zcGVjdG9yX21jcCIsImFyZ3MiOlsiLS1kYXJ0LXZtLWhvc3Q9bG9jYWxob3N0IiwiLS1kYXJ0LXZtLXBvcnQ9ODE4MSIsIi0tbm8tcmVzb3VyY2VzIiwiLS1pbWFnZXMiXSwiZW52Ijp7fSwiZGlzYWJsZWQiOmZhbHNlfX0=)
+
+   Note: fix path after installation.
+
+   ##### Manual Setup
+
    1. Open Cursor's settings
    2. Go to the Features tab
    3. Under "Model Context Protocol", add the server:
+
       ```json
       {
         "mcpServers": {
@@ -138,7 +149,7 @@ For developers who want to contribute to the project or run the latest version d
         }
       }
       ```
-   [![Add to Cursor](https://img.shields.io/badge/Add%20to-Cursor-blue?style=for-the-badge&logo=cursor)](cursor://anysphere.cursor-deeplink/mcp/install?name=flutter-inspector&config=eyJjb21tYW5kIjoibWNwX2ZsdXR0ZXIvbWNwX3NlcnZlcl9kYXJ0L2J1aWxkL2ZsdXR0ZXJfaW5zcGVjdG9yX21jcCIsImFyZ3MiOlsiLS1kYXJ0LXZtLWhvc3Q9bG9jYWxob3N0IiwiLS1kYXJ0LXZtLXBvcnQ9ODE4MSIsIi0tbm8tcmVzb3VyY2VzIiwiLS1pbWFnZXMiXSwiZW52Ijp7fSwiZGlzYWJsZWQiOmZhbHNlLCJhdXRvQXBwcm92ZSI6W119)
+
    4. Restart Cursor
    5. Open Agent Panel (cmd + L on macOS)
    6. You're ready! Try commands like "Please get screenshot of my app"

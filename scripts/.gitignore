@@ -8,7 +8,7 @@ yarn-error.log*
 /build/
 dist/
 *.tsbuildinfo
-
+.dart_tool/
 # IDE
 .idea/
 *.swp

@@ -135,6 +135,16 @@ For developers who want to contribute to the project or run the latest version d
 
    - Since Cursor doesn't support resources, you need to pass `--no-resources` as an argument. It will make all resources to be displayed as tools instead.
 
+   ##### Badge
+
+   You can use this badge to add Flutter Inspector to Cursor:
+
+   [![Add to Cursor](https://img.shields.io/badge/Add%20to-Cursor-blue?style=for-the-badge&logo=cursor)](cursor://anysphere.cursor-deeplink/mcp/install?name=flutter-inspector&config=eyJmbHV0dGVyLWluc3BlY3RvciI6eyJjb21tYW5kIjoiL3BhdGgvdG8veW91ci9jbG9uZWQvbWNwX2ZsdXR0ZXIvbWNwX3NlcnZlcl9kYXJ0L2J1aWxkL2ZsdXR0ZXJfaW5zcGVjdG9yX21jcCIsImFyZ3MiOlsiLS1kYXJ0LXZtLWhvc3Q9bG9jYWxob3N0IiwiLS1kYXJ0LXZtLXBvcnQ9ODE4MSIsIi0tbm8tcmVzb3VyY2VzIiwiLS1pbWFnZXMiXSwiZW52Ijp7fSwiZGlzYWJsZWQiOmZhbHNlfX0=)
+
+   Note: fix path after installation.
+
+   ##### Manual Setup
+
    1. Open Cursor's settings
    2. Go to the Features tab
    3. Under "Model Context Protocol", add the server:
