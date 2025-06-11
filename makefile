@@ -1,10 +1,10 @@
 .PHONY: install
 install: 
-	cd $(CURDIR)/mcp_server_dart && dart pub get && make build
+	cd $(CURDIR)/mcp_server_dart && dart pub get && make setup
 
 .PHONY: build
 build:
-	cd $(CURDIR)/mcp_server_dart && make build
+	cd $(CURDIR)/mcp_server_dart && make compile
 
 .PHONY: inspect
 inspect:
