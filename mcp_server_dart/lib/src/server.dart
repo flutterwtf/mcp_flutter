@@ -335,7 +335,11 @@ Connect to a running Flutter app on debug mode to use these features.
     // This made is to fight current limitations of MCP Clients
     // which doesn't support tools updates.
     if (configuration.dynamicRegistrySupported) {
-      await startRegistryDiscovery(mcpToolkitServer: this);
+      if (configuration.awaitDndConnection) {
+        await startRegistryDiscovery(mcpToolkitServer: this);
+      } else {
+        unawaited(startRegistryDiscovery(mcpToolkitServer: this));
+      }
     }
 
     log(

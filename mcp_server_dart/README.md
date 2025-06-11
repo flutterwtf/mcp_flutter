@@ -193,7 +193,7 @@ Options:
   --resources                   Enable resources support (default: true)
   --images                      Enable images support (default: true)
   --dumps                       Enable dumps support (default: false)
-  --await-dnd                    Wait until DND connection is established (default: false). Do not use with Windsurf.
+  --await-dnd                    Wait until DND connection is established (default: false). Do not use with Windsurf. Workaround for MCP Clients which don't support tools updates. Important: some clients doesn't support it. Use with caution. (disable for Windsurf, works with Cursor)
   --log-level                   Logging level (default: critical)
   --environment                 Environment (default: production)
   -h, --help                    Show usage text

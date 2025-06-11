@@ -3,6 +3,9 @@
 - Added `--await-dnd` flag to wait until DND connection is established. By default `--no-await-dnd` will be applied.
   There will be 5 seconds timeout for DND connection and then server will start without DND connection.
 
+  This is workaround for MCP Clients which don't support tools updates.
+  Important: some clients doesn't support it. Use with caution. (disable for Windsurf, works with Cursor)
+
 ## 2.2.1
 
 - Added badge to install Flutter Inspector to Cursor in README.md
