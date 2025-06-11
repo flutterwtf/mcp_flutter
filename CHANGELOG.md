@@ -1,3 +1,8 @@
+## 2.2.2
+
+- Added `--await-dnd` flag to wait until DND connection is established. By default `--no-await-dnd` will be applied.
+  There will be 5 seconds timeout for DND connection and then server will start without DND connection.
+
 ## 2.2.1
 
 - Added badge to install Flutter Inspector to Cursor in README.md

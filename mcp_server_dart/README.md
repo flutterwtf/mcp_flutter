@@ -193,6 +193,7 @@ Options:
   --resources                   Enable resources support (default: true)
   --images                      Enable images support (default: true)
   --dumps                       Enable dumps support (default: false)
+  --await-dnd                    Wait until DND connection is established (default: false). Do not use with Windsurf.
   --log-level                   Logging level (default: critical)
   --environment                 Environment (default: production)
   -h, --help                    Show usage text

@@ -63,11 +63,7 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
       await discoveryService.startDiscovery();
 
       // Immediate registration when connected
-      if (mcpToolkitServer.configuration.awaitDynamicRegistryOnStartup) {
-        await discoveryService.registerToolsAndResources();
-      } else {
-        unawaited(discoveryService.registerToolsAndResources());
-      }
+      await discoveryService.registerToolsAndResources();
 
       log(
         LoggingLevel.info,

@@ -30,9 +30,7 @@ Future<void> main(final List<String> args) async {
         logLevel: parsedArgs.option(logLevel) ?? defaultLogLevel,
         environment: parsedArgs.option(environment) ?? defaultEnvironment,
         dynamicRegistrySupported: parsedArgs.flag(dynamicRegistrySupported),
-        awaitDynamicRegistryOnStartup: parsedArgs.flag(
-          awaitDynamicRegistryOnStartup,
-        ),
+        awaitDndConnection: parsedArgs.flag(awaitDndConnection),
       );
       final server = MCPToolkitServer.fromStreamChannel(
         StreamChannel.withCloseGuarantee(io.stdin, io.stdout)
@@ -104,9 +102,14 @@ final argParser =
         defaultsTo: true,
       )
       ..addFlag(
-        awaitDynamicRegistryOnStartup,
-        help: 'Await dynamic registry on startup',
-        defaultsTo: true,
+        awaitDndConnection,
+        help:
+            'Await until DND connection is established. '
+            'Will block server startup until DND is connected. '
+            "This is workaround for MCP Clients which don't "
+            'support tools updates. '
+            "Important: some clients doesn't support it. "
+            'Use with caution. (disable for Windsurf, works with Cursor)',
       )
       ..addFlag(dumpsSupported, help: 'Enable debug dump operations')
       ..addOption(
@@ -136,4 +139,4 @@ const logLevel = 'log-level';
 const environment = 'environment';
 const help = 'help';
 const dynamicRegistrySupported = 'dynamics';
-const awaitDynamicRegistryOnStartup = 'await-dynamics';
+const awaitDndConnection = 'await-dnd';

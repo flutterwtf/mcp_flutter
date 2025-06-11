@@ -305,7 +305,11 @@ Connect to a running Flutter app on debug mode to use these features.
     // Try to initialize VM service connection (non-blocking)
     // This allows tools to be available even if no Flutter app is running
     try {
-      await _initializeVMServiceAsync();
+      if (configuration.awaitDndConnection) {
+        await _initializeVMServiceAsync();
+      } else {
+        await _initializeVMServiceAsync().timeout(const Duration(seconds: 10));
+      }
 
       log(
         LoggingLevel.info,

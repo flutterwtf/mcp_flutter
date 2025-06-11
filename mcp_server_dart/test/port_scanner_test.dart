@@ -22,7 +22,7 @@ base class TestPortScannerServer extends BaseMCPToolkitServer {
         configuration: (
           vmHost: 'localhost',
           vmPort: 8181,
-          awaitDynamicRegistryOnStartup: false,
+          awaitDndConnection: false,
           resourcesSupported: false,
           imagesSupported: false,
           dumpsSupported: false,
