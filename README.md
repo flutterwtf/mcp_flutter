@@ -173,24 +173,6 @@ Huge thanks to all contributors for making this project better!
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
-## Developer Utilities
-
-### Generating 'Add to Cursor' Badge Markdown
-
-This script generates the Markdown for an 'Add to Cursor' button deeplink.
-
-**Usage:**
-
-```bash
-dart run scripts/generate_cursor_badge.dart --name "your-server-name" --config '{"command":"your-command","args":["arg1","arg2"]}'
-```
-
-**Example Output:**
-
-```markdown
-[![Add to Cursor](https://img.shields.io/badge/Add%20to-Cursor-blue?style=for-the-badge&logo=cursor)](cursor://anysphere.cursor-deeplink/mcp/install?name=your-server-name&config=...)
-```
-
 ## 📖 Learn More
 
 - [Flutter DevTools Documentation](https://docs.flutter.dev/development/tools/devtools/overview)
