@@ -6,7 +6,7 @@
   This is workaround for MCP Clients which don't support tools updates.
   Important: some clients doesn't support it. Use with caution. (disable for Windsurf, works with Cursor)
 
-Thank you [@ednikisfun](https://github.com/rednikisfun) for [raising issue for Windsurf](https://github.com/Arenukvern/mcp_flutter/issues/51).
+Thank you [@rednikisfun](https://github.com/rednikisfun) for [raising issue for Windsurf](https://github.com/Arenukvern/mcp_flutter/issues/51).
 
 ## 2.2.1
 
