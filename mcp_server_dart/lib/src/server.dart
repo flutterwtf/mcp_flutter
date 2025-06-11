@@ -323,6 +323,17 @@ Connect to a running Flutter app on debug mode to use these features.
       log(LoggingLevel.debug, () => 'Stack trace: $s', logger: 'VMService');
     }
 
+    // Start dynamic registry discovery if supported
+    //
+    // Warning! This may block the server from starting up
+    // if --await-dynamics is set.
+    //
+    // This made is to fight current limitations of MCP Clients
+    // which doesn't support tools updates.
+    if (configuration.dynamicRegistrySupported) {
+      await startRegistryDiscovery(mcpToolkitServer: this);
+    }
+
     log(
       LoggingLevel.info,
       'Flutter Inspector MCP Server initialized successfully',
@@ -341,7 +352,7 @@ Connect to a running Flutter app on debug mode to use these features.
 
     try {
       await initializeVMService();
-      await startRegistryDiscovery(mcpToolkitServer: this);
+
       log(
         LoggingLevel.info,
         'VM service initialization completed',

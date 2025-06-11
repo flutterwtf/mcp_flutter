@@ -14,6 +14,7 @@ typedef VMServiceConfigurationRecord =
       bool dynamicRegistrySupported,
       String logLevel,
       String environment,
+      bool awaitDynamicRegistryOnStartup,
     });
 
 abstract base class BaseMCPToolkitServer extends MCPServer

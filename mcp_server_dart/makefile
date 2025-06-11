@@ -3,7 +3,8 @@ setup:
 	flutter pub get && make compile
 
 .PHONY: compile
-compile: 
+compile:
+	@ mkdir -p build && \
 	dart compile exe bin/main.dart -o build/flutter_inspector_mcp
 
 .PHONY: inspect

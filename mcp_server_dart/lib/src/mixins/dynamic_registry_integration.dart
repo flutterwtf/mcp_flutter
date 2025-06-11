@@ -62,6 +62,13 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
     try {
       await discoveryService.startDiscovery();
 
+      // Immediate registration when connected
+      if (mcpToolkitServer.configuration.awaitDynamicRegistryOnStartup) {
+        await discoveryService.registerToolsAndResources();
+      } else {
+        unawaited(discoveryService.registerToolsAndResources());
+      }
+
       log(
         LoggingLevel.info,
         'Simplified Flutter app discovery started successfully',

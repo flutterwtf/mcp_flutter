@@ -53,9 +53,6 @@ final class RegistryDiscoveryService {
       logger: _loggerName,
     );
 
-    // Immediate registration when connected
-    await registerToolsAndResources();
-
     // Listen for DTD events for re-registration
     _discoverySubscription = _listenForToolChanges();
   }

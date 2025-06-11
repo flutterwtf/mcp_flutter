@@ -30,6 +30,9 @@ Future<void> main(final List<String> args) async {
         logLevel: parsedArgs.option(logLevel) ?? defaultLogLevel,
         environment: parsedArgs.option(environment) ?? defaultEnvironment,
         dynamicRegistrySupported: parsedArgs.flag(dynamicRegistrySupported),
+        awaitDynamicRegistryOnStartup: parsedArgs.flag(
+          awaitDynamicRegistryOnStartup,
+        ),
       );
       final server = MCPToolkitServer.fromStreamChannel(
         StreamChannel.withCloseGuarantee(io.stdin, io.stdout)
@@ -100,6 +103,11 @@ final argParser =
         help: 'Enable dynamic registry support',
         defaultsTo: true,
       )
+      ..addFlag(
+        awaitDynamicRegistryOnStartup,
+        help: 'Await dynamic registry on startup',
+        defaultsTo: true,
+      )
       ..addFlag(dumpsSupported, help: 'Enable debug dump operations')
       ..addOption(
         logLevel,
@@ -128,3 +136,4 @@ const logLevel = 'log-level';
 const environment = 'environment';
 const help = 'help';
 const dynamicRegistrySupported = 'dynamics';
+const awaitDynamicRegistryOnStartup = 'await-dynamics';
