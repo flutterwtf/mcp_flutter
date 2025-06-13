@@ -87,3 +87,65 @@ tools:
           type: number
           description: "Optional: Custom port number if not using default Flutter debug port 8181"
       required: ["hint", "text"]
+  - name: tap_by_semantic_label
+    description: "Taps a widget containing the specified semantic label in the Flutter app."
+    inputSchema:
+      type: object
+      properties:
+        label:
+          type: string
+          description: "The semantic label to search for in the widget tree"
+        port:
+          type: number
+          description: "Optional: Custom port number if not using default Flutter debug port 8181"
+      required: ["label"]
+  - name: tap_by_coordinate
+    description: "Taps a widget at the specified coordinates in the Flutter app."
+    inputSchema:
+      type: object
+      properties:
+        x:
+          type: number
+          description: "The x coordinate to tap"
+        y:
+          type: number
+          description: "The y coordinate to tap"
+        port:
+          type: number
+          description: "Optional: Custom port number if not using default Flutter debug port 8181"
+      required: ["x", "y"]
+  - name: view_widget_tree
+    description: "Get the complete widget tree structure of the Flutter app with detailed information about each widget including properties, bounds, and hierarchy."
+    inputSchema:
+      type: object
+      properties:
+        port:
+          type: number
+          description: "Optional: Custom port number if not using default Flutter debug port 8181"
+      required: []
+  - name: scroll_by_offset
+    description: "Scrolls a scrollable widget by the specified offset. Can filter by key, semantic label, or text content."
+    inputSchema:
+      type: object
+      properties:
+        dx:
+          type: number
+          description: "The horizontal offset to scroll by"
+          default: 0
+        dy:
+          type: number
+          description: "The vertical offset to scroll by"
+          default: 0
+        key:
+          type: string
+          description: "Optional: Filter by widget key"
+        semanticLabel:
+          type: string
+          description: "Optional: Filter by semantic label"
+        text:
+          type: string
+          description: "Optional: Filter by text content within the scrollable widget"
+        port:
+          type: number
+          description: "Optional: Custom port number if not using default Flutter debug port 8181"
+      required: []

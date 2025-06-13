@@ -103,6 +103,55 @@ export function createCustomRpcHandlerMap(
       };
     },
 
+    tap_by_semantic_label: async (request: CallToolRequest) => {
+      const port = handlePortParam(request);
+      const label = request.params.arguments?.label || "Increment";
+
+      const result = await rpcUtils.callFlutterExtension("ext.mcp.call", {
+        dartVmPort: port,
+        params: {
+          method: "tap_by_semantic_label",
+          arguments: {
+            label: label,
+          },
+        },
+      });
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `The click was performed by SemanticLabel('${label}').\n\nResult:\n${JSON.stringify(result, null, 2)}`,
+          },
+        ],
+      };
+    },
+
+    tap_by_coordinate: async (request: CallToolRequest) => {
+      const port = handlePortParam(request);
+      const x = request.params.arguments?.x || 0;
+      const y = request.params.arguments?.y || 0;
+
+      const result = await rpcUtils.callFlutterExtension("ext.mcp.call", {
+        dartVmPort: port,
+        params: {
+          method: "tap_by_coordinate",
+          arguments: {
+            x: x,
+            y: y,
+          },
+        },
+      });
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `The click was performed at coordinate (${x}, ${y}).\n\nResult:\n${JSON.stringify(result, null, 2)}`,
+          },
+        ],
+      };
+    },
 
     get_vm: async (request: CallToolRequest) => {
       const port = handlePortParam(request);
@@ -213,6 +262,62 @@ export function createCustomRpcHandlerMap(
           {
             type: "text",
             text: JSON.stringify([...new Set(allExtensions)], null, 2),
+          },
+        ],
+      };
+    },
+
+    view_widget_tree: async (request: CallToolRequest) => {
+      const port = handlePortParam(request);
+
+      const result = await rpcUtils.callFlutterExtension("ext.mcp.call", {
+        dartVmPort: port,
+        params: {
+          method: "view_widget_tree",
+          arguments: {},
+        },
+      });
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Widget tree structure retrieved successfully.\n\nResult:\n${JSON.stringify(result, null, 2)}`,
+          },
+        ],
+      };
+    },
+
+    scroll_by_offset: async (request: CallToolRequest) => {
+      const port = handlePortParam(request);
+      const dx = request.params.arguments?.dx || 0;
+      const dy = request.params.arguments?.dy || 0;
+      const key = request.params.arguments?.key;
+      const semanticLabel = request.params.arguments?.semanticLabel;
+      const text = request.params.arguments?.text;
+
+      const scrollArgs: any = {
+        dx: dx,
+        dy: dy,
+      };
+      
+      if (key) scrollArgs.key = key;
+      if (semanticLabel) scrollArgs.semanticLabel = semanticLabel;
+      if (text) scrollArgs.text = text;
+
+      const result = await rpcUtils.callFlutterExtension("ext.mcp.call", {
+        dartVmPort: port,
+        params: {
+          method: "scroll_by_offset",
+          arguments: scrollArgs,
+        },
+      });
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Scrolled by offset dx=${dx}, dy=${dy}.\n\nResult:\n${JSON.stringify(result, null, 2)}`,
           },
         ],
       };

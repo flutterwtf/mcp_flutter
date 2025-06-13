@@ -481,3 +481,43 @@ handlers:
     parameters:
       hint: "arg.hint"
       text: "arg.text"
+
+  - name: tap_by_semantic_label
+    description: Taps a widget containing the specified semantic label.
+    rpcMethod: "ext.mcp.toolkit.tap_by_semantic_label"
+    needsDartServiceExtensionProxy: true
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters:
+      label: "arg.label"
+
+  - name: tap_by_coordinate
+    description: Taps a widget at the specified coordinates.
+    rpcMethod: "ext.mcp.toolkit.tap_by_coordinate"
+    needsDartServiceExtensionProxy: true
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters:
+      x: "arg.x"
+      y: "arg.y"
+
+  - name: view_widget_tree
+    description: Gets the complete widget tree structure with detailed information about each widget.
+    rpcMethod: "ext.mcp.toolkit.view_widget_tree"
+    needsDartServiceExtensionProxy: true
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters: {}
+
+  - name: scroll_by_offset
+    description: Scrolls a scrollable widget by the specified offset with optional filtering.
+    rpcMethod: "ext.mcp.toolkit.scroll_by_offset"
+    needsDartServiceExtensionProxy: true
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters:
+      dx: "arg.dx"
+      dy: "arg.dy"
+      key: "arg.key"
+      semanticLabel: "arg.semanticLabel"
+      text: "arg.text"

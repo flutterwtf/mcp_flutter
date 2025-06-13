@@ -334,6 +334,26 @@ export const rpcToolConfigs = {
     rpcMethod: 'ext.mcp.toolkit.enter_text_by_hint',
     needsDebugVerification: true,
     needsDartProxy: false
+  },
+  tap_by_semantic_label: {
+    rpcMethod: 'ext.mcp.toolkit.tap_by_semantic_label',
+    needsDebugVerification: true,
+    needsDartProxy: true
+  },
+  tap_by_coordinate: {
+    rpcMethod: 'ext.mcp.toolkit.tap_by_coordinate',
+    needsDebugVerification: true,
+    needsDartProxy: true
+  },
+  view_widget_tree: {
+    rpcMethod: 'ext.mcp.toolkit.view_widget_tree',
+    needsDebugVerification: true,
+    needsDartProxy: true
+  },
+  scroll_by_offset: {
+    rpcMethod: 'ext.mcp.toolkit.scroll_by_offset',
+    needsDebugVerification: true,
+    needsDartProxy: true
   }
 } as const;
 
