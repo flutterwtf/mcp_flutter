@@ -55,7 +55,7 @@ _For AI-Powered Development_
 **Major Changes in v2.2.0:**
 
 - **Dart-based MCP Server now is the main server**: Typescript server removed, and `mcp_server_dart` is the main server.
-- **Dynamic Tools Registration**: Flutter apps can now register custom tools at the MCP server. See how it works in [short YouTube video](https://www.youtube.com/watch?v=Qog3x2VcO98). See [Dynamic Tools Registration Docs](#dynamic-tools-registration-🆕) for more details.
+- **Dynamic Tools Registration**: Flutter apps can now register custom tools at the MCP server. See how it works in [short YouTube video](https://www.youtube.com/watch?v=Qog3x2VcO98). See [Dynamic Tools Registration Docs](https://github.com/Arenukvern/mcp_flutter/blob/main/QUICK_START.md#dynamic-tools-registration) for more details.
 
 See more details in [CHANGELOG.md](CHANGELOG.md).
 
