@@ -354,6 +354,16 @@ export const rpcToolConfigs = {
     rpcMethod: 'ext.mcp.toolkit.scroll_by_offset',
     needsDebugVerification: true,
     needsDartProxy: true
+  },
+  get_navigation_stack: {
+    rpcMethod: 'ext.mcp.toolkit.get_navigation_stack',
+    needsDebugVerification: true,
+    needsDartProxy: true
+  },
+  get_navigation_tree: {
+    rpcMethod: 'ext.mcp.toolkit.get_navigation_tree',
+    needsDebugVerification: true,
+    needsDartProxy: true
   }
 } as const;
 

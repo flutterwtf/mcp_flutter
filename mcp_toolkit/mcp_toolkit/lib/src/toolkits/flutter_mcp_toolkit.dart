@@ -1,8 +1,9 @@
-// ignore_for_file: unnecessary_null_comparison
+// ignore_for_file: unnecessary_null_comparison, unnecessary_async, avoid_dynamic_calls, no_dynamic_invocations
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:from_json_to_json/from_json_to_json.dart';
+import 'package:go_router/go_router.dart';
 import 'package:is_dart_empty_or_not/is_dart_empty_or_not.dart';
 
 import '../mcp_models.dart';
@@ -10,6 +11,7 @@ import '../mcp_toolkit_binding.dart';
 import '../services/application_info.dart';
 import '../services/error_monitor.dart';
 import '../services/screenshot_service.dart';
+import '../widgets/text_painter_widget.dart';
 
 /// Returns a set of MCPCallEntry objects for the Flutter MCP Toolkit.
 ///
@@ -19,17 +21,19 @@ import '../services/screenshot_service.dart';
 /// [binding] is the MCP toolkit binding instance.
 Set<MCPCallEntry> getFlutterMcpToolkitEntries({
   required final MCPToolkitBinding binding,
-}) => {
-  OnAppErrorsEntry(errorMonitor: binding),
-  OnViewScreenshotsEntry(),
-  OnViewDetailsEntry(),
-  TapByTextEntry(),
-  EnterTextByHintEntry(),
-  TapBySemanticLabelEntry(),
-  TapByCoordinateEntry(),
-  OnViewWidgetTreeEntry(),
-  ScrollByOffsetEntry(),
-};
+}) =>
+    {
+      OnAppErrorsEntry(errorMonitor: binding),
+      OnViewScreenshotsEntry(),
+      OnViewDetailsEntry(),
+      TapByTextEntry(),
+      EnterTextByHintEntry(),
+      TapBySemanticLabelEntry(),
+      TapByCoordinateEntry(),
+      OnViewWidgetTreeEntry(),
+      ScrollByOffsetEntry(),
+      OnGetNavigationTreeEntry(),
+    };
 
 /// Extension on [MCPToolkitBinding] to initialize the Flutter MCP Toolkit.
 extension MCPToolkitBindingExtension on MCPToolkitBinding {
@@ -44,9 +48,7 @@ extension MCPToolkitBindingExtension on MCPToolkitBinding {
 extension type OnAppErrorsEntry._(MCPCallEntry entry) implements MCPCallEntry {
   /// {@macro on_app_errors_entry}
   factory OnAppErrorsEntry({required final ErrorMonitor errorMonitor}) {
-    final entry = MCPCallEntry(const MCPMethodName('app_errors'), (
-      final parameters,
-    ) {
+    final entry = MCPCallEntry(const MCPMethodName('app_errors'), (final parameters,) {
       final count = jsonDecodeInt(parameters['count'] ?? '').whenZeroUse(10);
       final reversedErrors = errorMonitor.errors.take(count).toList();
       final errors = reversedErrors.map((final e) => e.toJson()).toList();
@@ -78,19 +80,17 @@ extension type OnAppErrorsEntry._(MCPCallEntry entry) implements MCPCallEntry {
 /// MCPCallEntry for handling view screenshots.
 /// {@endtemplate}
 extension type OnViewScreenshotsEntry._(MCPCallEntry entry)
-    implements MCPCallEntry {
+implements MCPCallEntry {
   /// {@macro on_view_screenshots_entry}
   factory OnViewScreenshotsEntry() {
-    final entry = MCPCallEntry(const MCPMethodName('view_screenshots'), (
-      final parameters,
-    ) async {
+    final entry = MCPCallEntry(const MCPMethodName('view_screenshots'), (final parameters,) async {
       final compress = jsonDecodeBool(parameters['compress']);
       final images = await ScreenshotService.takeScreenshots(
         compress: compress,
       );
       return MCPCallResult(
         message:
-            'Screenshots taken for each view. '
+        'Screenshots taken for each view. '
             'If you find visual errors, you can try to request errors '
             'to get more information with stack trace',
         parameters: {'images': images},
@@ -104,12 +104,10 @@ extension type OnViewScreenshotsEntry._(MCPCallEntry entry)
 /// MCPCallEntry for handling view details.
 /// {@endtemplate}
 extension type const OnViewDetailsEntry._(MCPCallEntry entry)
-    implements MCPCallEntry {
+implements MCPCallEntry {
   /// {@macro on_view_details_entry}
   factory OnViewDetailsEntry() {
-    final entry = MCPCallEntry(const MCPMethodName('view_details'), (
-      final parameters,
-    ) {
+    final entry = MCPCallEntry(const MCPMethodName('view_details'), (final parameters,) {
       final details = ApplicationInfo.getViewsInformation();
       final json = details.map((final e) => e.toJson()).toList();
       return MCPCallResult(
@@ -127,9 +125,7 @@ extension type const OnViewDetailsEntry._(MCPCallEntry entry)
 extension type TapByTextEntry._(MCPCallEntry entry) implements MCPCallEntry {
   /// {@macro tap_by_text_entry}
   factory TapByTextEntry() {
-    final entry = MCPCallEntry(const MCPMethodName('tap_by_text'), (
-      final parameters,
-    ) {
+    final entry = MCPCallEntry(const MCPMethodName('tap_by_text'), (final parameters,) {
       final searchText = parameters['text'];
       var found = false;
 
@@ -137,63 +133,104 @@ extension type TapByTextEntry._(MCPCallEntry entry) implements MCPCallEntry {
         if (found) return;
 
         final widget = element.widget;
-        if (widget is Text && widget.data == searchText) {
-          final context = element;
 
-          final elevatedButton =
-              context.findAncestorWidgetOfExactType<ElevatedButton>();
-          if (elevatedButton?.onPressed != null) {
-            elevatedButton!.onPressed!();
-            found = true;
-            return;
-          }
+        bool matchesText() {
+          if (widget is Text && widget.data == searchText) return true;
+          if (widget is RichText && widget.text.toPlainText() == searchText) return true;
+          if (widget is TextPainterWidget && widget.text == searchText) return true;
+          return false;
+        }
 
-          final textButton =
-              context.findAncestorWidgetOfExactType<TextButton>();
-          if (textButton?.onPressed != null) {
-            textButton!.onPressed!();
-            found = true;
-            return;
-          }
+        void simulateGesture(final Element target) {
+          final renderObject = target.renderObject;
+          if (renderObject is! RenderBox) return;
 
-          final gestureDetector =
-              context.findAncestorWidgetOfExactType<GestureDetector>();
-          if (gestureDetector?.onTap != null) {
-            gestureDetector!.onTap!();
+          final position = renderObject.localToGlobal(renderObject.size.center(Offset.zero));
+          bool handled = false;
+
+          target.visitAncestorElements((final ancestor) {
+            final w = ancestor.widget;
+
+            // GestureDetector
+            if (w is GestureDetector) {
+              final downDetails = TapDownDetails(globalPosition: position);
+              final upDetails = TapUpDetails(globalPosition: position, kind: PointerDeviceKind.touch);
+
+              w.onTapDown?.call(downDetails);
+              w.onTapUp?.call(upDetails);
+              w.onTap?.call();
+              if (w.onTap == null && w.onTapDown == null && w.onTapUp == null) {
+                w.onTapCancel?.call();
+              }
+
+              handled = true;
+              return false;
+            }
+
+            bool tryCall(final VoidCallback? callback) {
+              if (callback != null) {
+                callback();
+                return true;
+              }
+              return false;
+            }
+
+            // Button-like widgets
+            if (w is TextButton ||
+                w is ElevatedButton ||
+                w is OutlinedButton ||
+                w is IconButton ||
+                w is FloatingActionButton) {
+              handled = tryCall((w as dynamic).onPressed);
+              if (handled) return false;
+            }
+
+            // Ink variants
+            if (w is InkWell || w is InkResponse) {
+              handled = tryCall((w as dynamic).onTap);
+              if (handled) return false;
+            }
+
+            return true;
+          });
+
+          if (handled) {
             found = true;
-            return;
           }
         }
+
+        if (matchesText()) {
+          simulateGesture(element);
+        }
+
         element.visitChildren(visitor);
       }
 
-      // Start the search from the root
-      final context = WidgetsBinding.instance.rootElement;
-      if (context != null) {
-        context.visitChildren(visitor);
+      final root = WidgetsBinding.instance.rootElement;
+      if (root != null) {
+        root.visitChildren(visitor);
       }
 
-      final message =
-          found
-              ? 'Successfully tapped widget with text: $searchText'
-              : 'Could not find tappable widget with text: $searchText';
+      final message = found
+          ? 'Successfully tapped widget with text: $searchText'
+          : 'Could not find tappable widget with text: $searchText';
 
       return MCPCallResult(message: message, parameters: {'success': found});
     });
+
     return TapByTextEntry._(entry);
   }
 }
+
 
 /// {@template enter_text_by_hint_entry}
 /// MCPCallEntry for entering text into text fields by their hint text.
 /// {@endtemplate}
 extension type EnterTextByHintEntry._(MCPCallEntry entry)
-    implements MCPCallEntry {
+implements MCPCallEntry {
   /// {@macro enter_text_by_hint_entry}
   factory EnterTextByHintEntry() {
-    final entry = MCPCallEntry(const MCPMethodName('enter_text_by_hint'), (
-      final parameters,
-    ) {
+    final entry = MCPCallEntry(const MCPMethodName('enter_text_by_hint'), (final parameters,) {
       final hintText = parameters['hint'] ?? '';
       final textToEnter = parameters['text'] ?? '';
       var found = false;
@@ -233,9 +270,9 @@ extension type EnterTextByHintEntry._(MCPCallEntry entry)
       }
 
       final message =
-          found
-              ? 'Successfully entered text into field with hint: $hintText'
-              : 'Could not find text field with hint: $hintText';
+      found
+          ? 'Successfully entered text into field with hint: $hintText'
+          : 'Could not find text field with hint: $hintText';
 
       return MCPCallResult(message: message, parameters: {'success': found});
     });
@@ -247,12 +284,10 @@ extension type EnterTextByHintEntry._(MCPCallEntry entry)
 /// MCPCallEntry for tapping widgets by their semantic label.
 /// {@endtemplate}
 extension type TapBySemanticLabelEntry._(MCPCallEntry entry)
-    implements MCPCallEntry {
+implements MCPCallEntry {
   /// {@macro tap_by_semantic_label_entry}
   factory TapBySemanticLabelEntry() {
-    final entry = MCPCallEntry(const MCPMethodName('tap_by_semantic_label'), (
-      final parameters,
-    ) {
+    final entry = MCPCallEntry(const MCPMethodName('tap_by_semantic_label'), (final parameters,) {
       final searchLabel = (parameters['label'] ?? '').toLowerCase();
       var found = false;
 
@@ -261,59 +296,79 @@ extension type TapBySemanticLabelEntry._(MCPCallEntry entry)
 
         final widget = element.widget;
 
-        // Check for explicit Semantics widgets
-        if (widget is Semantics &&
-            widget.properties.label?.toLowerCase() == searchLabel) {
-          final context = element;
-
-          final elevatedButton =
-              context.findAncestorWidgetOfExactType<ElevatedButton>();
-          if (elevatedButton?.onPressed != null) {
-            elevatedButton!.onPressed!();
-            found = true;
-            return;
+        bool matchesLabel() {
+          if (widget is Semantics && widget.properties.label?.toLowerCase() == searchLabel) return true;
+          if (widget is FloatingActionButton) {
+            final renderObject = element.renderObject;
+            if (renderObject is RenderObject) {
+              final semantics = renderObject.debugSemantics;
+              return semantics?.label.toLowerCase() == searchLabel ||
+                  (searchLabel == 'increment' && widget.tooltip == null);
+            }
           }
+          return false;
+        }
 
-          final textButton =
-              context.findAncestorWidgetOfExactType<TextButton>();
-          if (textButton?.onPressed != null) {
-            textButton!.onPressed!();
-            found = true;
-            return;
-          }
+        void simulateGesture(final Element target) {
+          final renderObject = target.renderObject;
+          if (renderObject is! RenderBox) return;
 
-          final floatingActionButton =
-              context.findAncestorWidgetOfExactType<FloatingActionButton>();
-          if (floatingActionButton?.onPressed != null) {
-            floatingActionButton!.onPressed!();
-            found = true;
-            return;
-          }
+          final position = renderObject.localToGlobal(renderObject.size.center(Offset.zero));
+          bool handled = false;
 
-          final gestureDetector =
-              context.findAncestorWidgetOfExactType<GestureDetector>();
-          if (gestureDetector?.onTap != null) {
-            gestureDetector!.onTap!();
+          target.visitAncestorElements((final ancestor) {
+            final w = ancestor.widget;
+
+            // GestureDetector
+            if (w is GestureDetector) {
+              final downDetails = TapDownDetails(globalPosition: position);
+              final upDetails = TapUpDetails(globalPosition: position, kind: PointerDeviceKind.touch);
+
+              w.onTapDown?.call(downDetails);
+              w.onTapUp?.call(upDetails);
+              w.onTap?.call();
+              if (w.onTap == null && w.onTapDown == null && w.onTapUp == null) {
+                w.onTapCancel?.call();
+              }
+
+              handled = true;
+              return false;
+            }
+
+            bool tryCall(final VoidCallback? callback) {
+              if (callback != null) {
+                callback();
+                return true;
+              }
+              return false;
+            }
+
+            // Button-like widgets
+            if (w is TextButton ||
+                w is ElevatedButton ||
+                w is OutlinedButton ||
+                w is IconButton ||
+                w is FloatingActionButton) {
+              handled = tryCall((w as dynamic).onPressed);
+              if (handled) return false;
+            }
+
+            // Ink variants
+            if (w is InkWell || w is InkResponse) {
+              handled = tryCall((w as dynamic).onTap);
+              if (handled) return false;
+            }
+
+            return true;
+          });
+
+          if (handled) {
             found = true;
-            return;
           }
         }
 
-        // Check for FloatingActionButton with implicit semantics
-        if (widget is FloatingActionButton) {
-          // FloatingActionButton typically has "Increment" as default semantic label
-          final renderObject = element.renderObject;
-          if (renderObject is RenderObject) {
-            final semantics = renderObject.debugSemantics;
-            if (semantics?.label.toLowerCase() == searchLabel ||
-                (searchLabel == 'increment' && widget.tooltip == null)) {
-              if (widget.onPressed != null) {
-                widget.onPressed!();
-                found = true;
-                return;
-              }
-            }
-          }
+        if (matchesLabel()) {
+          simulateGesture(element);
         }
 
         element.visitChildren(visitor);
@@ -325,9 +380,9 @@ extension type TapBySemanticLabelEntry._(MCPCallEntry entry)
       }
 
       final message =
-          found
-              ? 'Successfully tapped widget with semanticLabel: $searchLabel'
-              : 'Could not find tappable widget with semanticLabel: $searchLabel';
+      found
+          ? 'Successfully tapped widget with semanticLabel: $searchLabel'
+          : 'Could not find tappable widget with semanticLabel: $searchLabel';
 
       return MCPCallResult(message: message, parameters: {'success': found});
     });
@@ -339,12 +394,10 @@ extension type TapBySemanticLabelEntry._(MCPCallEntry entry)
 /// MCPCallEntry for tapping widgets by their coordinates.
 /// {@endtemplate}
 extension type TapByCoordinateEntry._(MCPCallEntry entry)
-    implements MCPCallEntry {
+implements MCPCallEntry {
   /// {@macro tap_by_coordinate_entry}
   factory TapByCoordinateEntry() {
-    final entry = MCPCallEntry(const MCPMethodName('tap_by_coordinate'), (
-      final parameters,
-    ) async {
+    final entry = MCPCallEntry(const MCPMethodName('tap_by_coordinate'), (final parameters,) async {
       final dx = double.tryParse(parameters['x']?.toString() ?? '');
       final dy = double.tryParse(parameters['y']?.toString() ?? '');
 
@@ -356,100 +409,129 @@ extension type TapByCoordinateEntry._(MCPCallEntry entry)
       }
 
       final position = Offset(dx, dy);
-      bool tapped = false;
-
-      final rootContext = WidgetsBinding.instance.rootElement;
+      var found = false;
 
       void visitor(final Element element) {
-        if (tapped) return;
+        if (found) return;
 
-        final widget = element.widget;
         final renderObject = element.renderObject;
 
-        if (renderObject != null && renderObject.attached) {
+        bool matchesPosition() {
+          if (renderObject == null || !renderObject.attached) return false;
           try {
             final bounds = renderObject.paintBounds;
             final transform = renderObject.getTransformTo(null);
             final globalBounds = MatrixUtils.transformRect(transform, bounds);
+            return globalBounds.contains(position);
+          } catch (_) {
+            return false;
+          }
+        }
 
-            // Enlarge the area for easy clicking
-            final expandedBounds = globalBounds.inflate(10);
+        void simulateGesture(final Element target) {
+          final renderObject = target.renderObject;
+          if (renderObject is! RenderBox) return;
 
-            if (expandedBounds.contains(position)) {
-              // Checking onTap/onPressed support
-              final onTap = () {
-                if (widget is GestureDetector && widget.onTap != null) {
-                  widget.onTap!();
-                  return true;
-                }
-                if (widget is InkWell && widget.onTap != null) {
-                  widget.onTap!();
-                  return true;
-                }
-                if (widget is ElevatedButton && widget.onPressed != null) {
-                  widget.onPressed!();
-                  return true;
-                }
-                if (widget is TextButton && widget.onPressed != null) {
-                  widget.onPressed!();
-                  return true;
-                }
-                if (widget is IconButton && widget.onPressed != null) {
-                  widget.onPressed!();
-                  return true;
-                }
-                return false;
-              }();
+          bool handled = false;
 
-              if (onTap) {
-                tapped = true;
-                return;
+          target.visitAncestorElements((final ancestor) {
+            final w = ancestor.widget;
+
+            // GestureDetector
+            if (w is GestureDetector) {
+              final downDetails = TapDownDetails(globalPosition: position);
+              final upDetails = TapUpDetails(globalPosition: position, kind: PointerDeviceKind.touch);
+
+              w.onTapDown?.call(downDetails);
+              w.onTapUp?.call(upDetails);
+              w.onTap?.call();
+              if (w.onTap == null && w.onTapDown == null && w.onTapUp == null) {
+                w.onTapCancel?.call();
               }
+
+              handled = true;
+              return false;
             }
-          } catch (_) {}
+
+            bool tryCall(final VoidCallback? callback) {
+              if (callback != null) {
+                callback();
+                return true;
+              }
+              return false;
+            }
+
+            // Button-like widgets
+            if (w is TextButton ||
+                w is ElevatedButton ||
+                w is OutlinedButton ||
+                w is IconButton ||
+                w is FloatingActionButton) {
+              handled = tryCall((w as dynamic).onPressed);
+              if (handled) return false;
+            }
+
+            // Ink variants
+            if (w is InkWell || w is InkResponse) {
+              handled = tryCall((w as dynamic).onTap);
+              if (handled) return false;
+            }
+
+            return true;
+          });
+
+          if (handled) {
+            found = true;
+            return;
+          }
+
+          // If none of the standard tap handlers worked, simulate raw pointer event
+          if (!found) {
+            try {
+              final gestureBinding = GestureBinding.instance;
+              final now = DateTime.now();
+              final timestamp = Duration(microseconds: now.microsecondsSinceEpoch);
+
+              final down = PointerDownEvent(
+                position: position,
+                timeStamp: timestamp,
+                pointer: 1,
+              );
+
+              final up = PointerUpEvent(
+                position: position,
+                timeStamp: timestamp + const Duration(milliseconds: 50),
+                pointer: 1,
+              );
+
+              gestureBinding.handlePointerEvent(down);
+              Future.delayed(const Duration(milliseconds: 10), () {
+                gestureBinding.handlePointerEvent(up);
+              });
+
+              found = true;
+            } catch (_) {}
+          }
+        }
+
+        if (matchesPosition()) {
+          simulateGesture(element);
         }
 
         element.visitChildren(visitor);
       }
 
+      final rootContext = WidgetsBinding.instance.rootElement;
       if (rootContext != null) {
         rootContext.visitChildren(visitor);
       }
 
-      // If none of the onTap/onPressed triggered, we simulate a touch
-      if (!tapped) {
-        try {
-          final gestureBinding = GestureBinding.instance;
-          final now = DateTime.now();
-          final timestamp = Duration(microseconds: now.microsecondsSinceEpoch);
-
-          final down = PointerDownEvent(
-            position: position,
-            timeStamp: timestamp,
-            pointer: 1,
-          );
-
-          final up = PointerUpEvent(
-            position: position,
-            timeStamp: timestamp + const Duration(milliseconds: 50),
-            pointer: 1,
-          );
-
-          gestureBinding.handlePointerEvent(down);
-          await Future.delayed(const Duration(milliseconds: 10));
-          gestureBinding.handlePointerEvent(up);
-          await Future.delayed(const Duration(milliseconds: 100));
-
-          tapped = true;
-        } catch (_) {}
-      }
-
       return MCPCallResult(
         message:
-            tapped
-                ? 'Tapped widget at coordinate: ($dx, $dy)'
-                : 'No tappable widget found at: ($dx, $dy)',
-        parameters: {'success': tapped},
+        found
+            ? 'Tapped widget at coordinate: ($dx, $dy)'
+            : 'No tappable widget found at: ($dx, $dy)',
+        parameters: {'success': found},
       );
     });
 
@@ -461,12 +543,11 @@ extension type TapByCoordinateEntry._(MCPCallEntry entry)
 /// MCPCallEntry for viewing the widget tree.
 /// {@endtemplate}
 extension type const OnViewWidgetTreeEntry._(MCPCallEntry entry)
-    implements MCPCallEntry {
+implements MCPCallEntry {
   /// {@macro on_view_widget_tree_entry}
   factory OnViewWidgetTreeEntry() {
-    final entry = MCPCallEntry(const MCPMethodName('view_widget_tree'), (
-      final parameters,
-    ) {
+    final entry = MCPCallEntry(const MCPMethodName('view_widget_tree'), (final parameters,) {
+      final includeRenderParams = jsonDecodeBool(parameters['includeRenderParams']);
       final root = WidgetsBinding.instance.rootElement;
       if (root == null) {
         return MCPCallResult(
@@ -544,7 +625,7 @@ extension type const OnViewWidgetTreeEntry._(MCPCallEntry entry)
           data['error'] = 'Failed to extract properties.';
         }
 
-        if (renderObject != null && renderObject.attached) {
+        if (includeRenderParams && renderObject != null && renderObject.attached) {
           try {
             final bounds = renderObject.paintBounds;
             final transform = renderObject.getTransformTo(null);
@@ -583,286 +664,516 @@ extension type const OnViewWidgetTreeEntry._(MCPCallEntry entry)
 }
 
 /// {@template scroll_by_offset_entry}
-/// MCPCallEntry for scrolling a scrollable widget by an offset.
+/// Improved MCPCallEntry for scrolling a scrollable widget by an offset.
 /// {@endtemplate}
 extension type ScrollByOffsetEntry._(MCPCallEntry entry)
-    implements MCPCallEntry {
+implements MCPCallEntry {
   /// {@macro scroll_by_offset_entry}
   factory ScrollByOffsetEntry() {
-    final entry = MCPCallEntry(const MCPMethodName('scroll_by_offset'), (
-      final parameters,
-    ) async {
-      final dx = double.tryParse(parameters['dx']?.toString() ?? '') ?? 0.0;
-      final dy = double.tryParse(parameters['dy']?.toString() ?? '') ?? 0.0;
-      final keyFilter = parameters['key']?.toString();
-      final semanticLabelFilter = parameters['semanticLabel']?.toString();
-      final textFilter = parameters['text']?.toString();
+    final entry = MCPCallEntry(
+      const MCPMethodName('scroll_by_offset'),
+          (final parameters,) async {
+        final dx = double.tryParse(parameters['dx'] ?? '') ?? 0.0;
+        final dy = double.tryParse(parameters['dy'] ?? '') ?? 0.0;
 
-      bool hasMatchingDescendant(
-        final Element element,
-        final String textToFind,
-      ) {
-        bool found = false;
+        final keyFilter = parameters['key']?.toString();
+        final semanticLabel = parameters['semanticLabel']?.toString();
+        final textFilter = parameters['text']?.toString();
 
-        void searchForText(final Element e) {
-          if (found) return;
+        var scrolled = false;
+        final debug = <String>[];
 
-          final widget = e.widget;
-          if (widget is Text && widget.data?.contains(textToFind) == true) {
-            found = true;
-            return;
+        bool matches(final Element e) {
+          final w = e.widget;
+
+          if (keyFilter != null &&
+              w.key is ValueKey &&
+              (w.key! as ValueKey).value != keyFilter) {
+            return false;
           }
 
-          e.visitChildren(searchForText);
-        }
+          if (semanticLabel != null &&
+              w is Semantics &&
+              w.properties.label != semanticLabel) {
+            return false;
+          }
 
-        searchForText(element);
-        return found;
-      }
-
-      bool matchesFilters(final Element element) {
-        final widget = element.widget;
-
-        // If no filters are specified, match all scrollable widgets
-        if (keyFilter == null &&
-            semanticLabelFilter == null &&
-            textFilter == null) {
+          if (textFilter != null) {
+            var found = false;
+            void search(final Element el) {
+              if (found) return;
+              if (el.widget is Text &&
+                  (el.widget as Text)
+                      .data
+                      ?.contains(textFilter) == true) {
+                found = true;
+              }
+              el.visitChildren(search);
+            }
+            search(e);
+            if (!found) return false;
+          }
           return true;
         }
 
-        // Filter by key
-        if (keyFilter != null && widget.key is ValueKey) {
-          if ((widget.key! as ValueKey).value != keyFilter) return false;
-        }
+        ScrollableState? findScrollableState(final Element e) {
+          ScrollableState? result;
 
-        // Filter by semantic label
-        if (semanticLabelFilter != null &&
-            widget is Semantics &&
-            widget.properties.label != semanticLabelFilter) {
-          return false;
-        }
-
-        // Filter by text - check if this scrollable widget contains the text
-        if (textFilter != null) {
-          if (!hasMatchingDescendant(element, textFilter)) {
-            return false;
+          if (e is StatefulElement && e.widget is Scrollable) {
+            final st = e.state;
+            if (st is ScrollableState) return st;
           }
+
+          e.visitAncestorElements((final anc) {
+            if (anc is StatefulElement && anc.widget is Scrollable) {
+              final st = anc.state;
+              if (st is ScrollableState) {
+                result = st;
+                return false;
+              }
+            }
+            return true;
+          });
+          return result;
         }
 
-        return true;
-      }
+        Future<bool> scroll(final Element e, final double dx, final double dy) async {
+          final scrollState = findScrollableState(e);
+          if (scrollState == null) return false;
 
-      bool scrolled = false;
-      final rootContext = WidgetsBinding.instance.rootElement;
-      final List<String> debugInfo = [];
+          final position = scrollState.position;
+          final controller = scrollState.widget.controller;
+          final axis = position.axis;
 
-      Future<void> visitor(final Element element) async {
-        if (scrolled) return;
+          final delta = axis == Axis.vertical ? dy : dx;
+          final target = (position.pixels + delta)
+              .clamp(position.minScrollExtent, position.maxScrollExtent);
 
-        final widget = element.widget;
-
-        // Check if this element is a scrollable widget
-        final bool isScrollable =
-            widget is SingleChildScrollView ||
-            widget is ListView ||
-            widget is GridView ||
-            widget is CustomScrollView ||
-            widget is Scrollbar;
-
-        if (isScrollable) {
-          debugInfo.add('Found scrollable widget: ${widget.runtimeType}');
-
-          if (matchesFilters(element)) {
-            debugInfo.add('Widget matches filters');
-
-            // Found a matching scrollable widget, try to scroll it
-            ScrollController? controller;
-
-            // Get the appropriate controller based on widget type
-            if (widget is SingleChildScrollView) {
-              controller = widget.controller;
-              debugInfo.add(
-                'SingleChildScrollView - controller: ${controller != null ? "present" : "null"}',
-              );
-            } else if (widget is ListView) {
-              controller = widget.controller;
-              debugInfo.add(
-                'ListView - controller: ${controller != null ? "present" : "null"}',
-              );
-            } else if (widget is GridView) {
-              controller = widget.controller;
-              debugInfo.add(
-                'GridView - controller: ${controller != null ? "present" : "null"}',
-              );
-            } else if (widget is CustomScrollView) {
-              controller = widget.controller;
-              debugInfo.add(
-                'CustomScrollView - controller: ${controller != null ? "present" : "null"}',
-              );
-            } else if (widget is Scrollbar) {
-              controller = widget.controller;
-              debugInfo.add(
-                'Scrollbar - controller: ${controller != null ? "present" : "null"}',
-              );
-            }
-
-            // If no explicit controller, try to get the primary scroll controller
-            if (controller == null) {
+          Future<bool> byController() async {
+            if (controller == null || !controller.hasClients) return false;
+            try {
+              controller.jumpTo(target);
+              return true;
+            } catch (_) {
               try {
-                controller = PrimaryScrollController.of(element);
-                debugInfo.add('Using PrimaryScrollController');
-              } catch (e) {
-                debugInfo.add('PrimaryScrollController failed: $e');
+                await controller.animateTo(
+                  target,
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOut,
+                );
+                return true;
+              } catch (_) {
+                return false;
               }
             }
-
-            if (controller != null) {
-              debugInfo.add('Controller hasClients: ${controller.hasClients}');
-
-              if (controller.hasClients) {
-                try {
-                  final currentOffset = controller.offset;
-                  debugInfo.add('Current offset: $currentOffset');
-
-                  // Determine which direction to scroll based on widget type and parameters
-                  double newOffset = currentOffset;
-
-                  if (widget is SingleChildScrollView) {
-                    debugInfo.add('ScrollDirection: ${widget.scrollDirection}');
-                    if (widget.scrollDirection == Axis.horizontal && dx != 0) {
-                      newOffset = currentOffset + dx;
-                      debugInfo.add('Scrolling horizontally to: $newOffset');
-                    } else if (widget.scrollDirection == Axis.vertical &&
-                        dy != 0) {
-                      newOffset = currentOffset + dy;
-                      debugInfo.add('Scrolling vertically to: $newOffset');
-                    } else if (dy != 0) {
-                      // Default to vertical if no specific direction and dy is provided
-                      newOffset = currentOffset + dy;
-                      debugInfo.add('Default vertical scroll to: $newOffset');
-                    }
-                  } else {
-                    // For ListView, GridView, etc., default to vertical scrolling
-                    if (dy != 0) {
-                      newOffset = currentOffset + dy;
-                      debugInfo.add('List/Grid vertical scroll to: $newOffset');
-                    } else if (dx != 0) {
-                      newOffset = currentOffset + dx;
-                      debugInfo.add(
-                        'List/Grid horizontal scroll to: $newOffset',
-                      );
-                    }
-                  }
-
-                  // Ensure we don't scroll beyond bounds
-                  final maxScrollExtent = controller.position.maxScrollExtent;
-                  final minScrollExtent = controller.position.minScrollExtent;
-                  debugInfo.add(
-                    'Scroll bounds: min=$minScrollExtent, max=$maxScrollExtent',
-                  );
-                  newOffset = newOffset.clamp(minScrollExtent, maxScrollExtent);
-                  debugInfo.add('Clamped offset: $newOffset');
-
-                  if (newOffset != currentOffset) {
-                    debugInfo.add(
-                      'Attempting to scroll from $currentOffset to $newOffset',
-                    );
-
-                    // Try jumpTo first as it's more reliable
-                    try {
-                      controller.jumpTo(newOffset);
-                      scrolled = true;
-                      debugInfo.add(
-                        'Successfully jumped to new offset: $newOffset',
-                      );
-                      return;
-                    } catch (jumpError) {
-                      debugInfo.add('JumpTo failed: $jumpError');
-
-                      // Fallback to animateTo
-                      try {
-                        debugInfo.add('Trying animateTo as fallback');
-                        await controller.animateTo(
-                          newOffset,
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeOut,
-                        );
-                        scrolled = true;
-                        debugInfo.add(
-                          'Successfully animated to new offset: $newOffset',
-                        );
-                        return;
-                      } catch (animateError) {
-                        debugInfo.add('AnimateTo also failed: $animateError');
-                      }
-                    }
-                  } else {
-                    debugInfo.add(
-                      'New offset same as current, no scroll needed',
-                    );
-                  }
-                } catch (e) {
-                  debugInfo.add('Animation failed: $e');
-                  // If animation fails, try jumpTo
-                  try {
-                    final currentOffset = controller.offset;
-                    double newOffset = currentOffset;
-
-                    if (widget is SingleChildScrollView) {
-                      if (widget.scrollDirection == Axis.horizontal &&
-                          dx != 0) {
-                        newOffset = currentOffset + dx;
-                      } else if (dy != 0) {
-                        newOffset = currentOffset + dy;
-                      }
-                    } else {
-                      newOffset = currentOffset + (dy != 0 ? dy : dx);
-                    }
-
-                    final maxScrollExtent = controller.position.maxScrollExtent;
-                    final minScrollExtent = controller.position.minScrollExtent;
-                    newOffset = newOffset.clamp(
-                      minScrollExtent,
-                      maxScrollExtent,
-                    );
-
-                    if (newOffset != currentOffset) {
-                      controller.jumpTo(newOffset);
-                      scrolled = true;
-                      debugInfo.add('Successfully jumped to new offset');
-                      return;
-                    }
-                  } catch (e2) {
-                    debugInfo.add('JumpTo also failed: $e2');
-                  }
-                }
-              }
-            }
-          } else {
-            debugInfo.add('Widget does not match filters');
           }
+
+          Future<bool> byPosition() async {
+            try {
+              await position.animateTo(
+                target,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOut,
+              );
+              return true;
+            } catch (_) {
+              return false;
+            }
+          }
+
+          Future<bool> byEnsureVisible() async {
+            try {
+              await Scrollable.ensureVisible(
+                e,
+                alignment: 0,
+                duration: const Duration(milliseconds: 300),
+              );
+              return true;
+            } catch (_) {
+              return false;
+            }
+          }
+
+          Future<bool> byGesture() async {
+            try {
+              final g = GestureBinding.instance;
+              const start = Offset.zero;
+              final end = axis == Axis.vertical
+                  ? start.translate(0, delta)
+                  : start.translate(delta, 0);
+              final ts = Duration(
+                  microseconds: DateTime
+                      .now()
+                      .microsecondsSinceEpoch);
+
+              g..handlePointerEvent(
+                PointerDownEvent(timeStamp: ts, pointer: 1),
+              )..handlePointerEvent(
+                PointerMoveEvent(
+                  position: end,
+                  timeStamp: ts + const Duration(milliseconds: 16),
+                  pointer: 1,
+                ),
+              )..handlePointerEvent(
+                PointerUpEvent(
+                  position: end,
+                  timeStamp: ts + const Duration(milliseconds: 32),
+                  pointer: 1,
+                ),
+              );
+              return true;
+            } catch (_) {
+              return false;
+            }
+          }
+
+          return await byController() ||
+              await byPosition() ||
+              await byEnsureVisible() ||
+              await byGesture();
         }
 
-        // Continue searching in children
-        element.visitChildren(visitor);
-      }
+        Future<void> walk(final Element root) async {
+          Future<void> dfs(final Element e) async {
+            if (scrolled) return;
 
-      if (rootContext != null) {
-        await visitor(rootContext);
-      }
+            if (matches(e) && await scroll(e, dx, dy)) {
+              scrolled = true;
+              return;
+            }
 
-      final debugMessage =
-          debugInfo.isNotEmpty ? '\nDebug info:\n${debugInfo.join('\n')}' : '';
+            final waits = <Future<void>>[];
+            e.visitChildren((final child) {
+              waits.add(dfs(child));
+            });
+            await Future.wait(waits);
+          }
 
-      return MCPCallResult(
-        message:
-            scrolled
-                ? 'Successfully scrolled scrollable widget by offset dx=$dx, dy=$dy.$debugMessage'
-                : 'No matching scrollable widget found or could not scroll. Make sure the widget has a ScrollController and scrollable content.$debugMessage',
-        parameters: {'success': scrolled, 'debug': debugInfo},
-      );
-    });
+          await dfs(root);
+        }
+
+        final root = WidgetsBinding.instance.rootElement;
+        if (root != null) await walk(root);
+
+        return MCPCallResult(
+          message: scrolled
+              ? 'Scrolled by dx=$dx, dy=$dy'
+              : 'No suitable Scrollable found',
+          parameters: {'success': scrolled, 'debug': debug},
+        );
+      },
+    );
 
     return ScrollByOffsetEntry._(entry);
   }
+}
+
+/// {@template get_navigation_stack_entry}
+/// MCPCallEntry for getting the current navigation stack (supports Navigator 2.0 and basic 1.0).
+/// {@endtemplate}
+extension type const OnGetNavigationStackEntry._(MCPCallEntry entry)
+    implements MCPCallEntry {
+  /// {@macro get_navigation_stack_entry}
+  factory OnGetNavigationStackEntry() {
+    final entry = MCPCallEntry(const MCPMethodName('get_navigation_stack'),
+        (final parameters,) {
+      final root = WidgetsBinding.instance.rootElement;
+      if (root == null) {
+        return MCPCallResult(
+          message: 'No root element found.',
+          parameters: {'stack': []},
+        );
+      }
+
+      final List<Map<String, dynamic>> stackEntries = [];
+
+      void findNavigatorElements(final Element element) {
+        if (element is StatefulElement && element.state is NavigatorState) {
+          final NavigatorState navState = element.state as NavigatorState;
+          final Navigator navigatorWidget = navState.widget;
+
+          try {
+            final pages = navigatorWidget.pages;
+            if (pages.isNotEmpty) {
+              for (final page in pages) {
+                stackEntries.add({
+                  'type': 'Page',
+                  'name': page.name ?? page.runtimeType.toString(),
+                  'runtimeType': page.runtimeType.toString(),
+                  'key': page.key.toString(),
+                });
+              }
+            } else {
+              // Navigator 1.0 fallback
+              if (navigatorWidget.initialRoute != null) {
+                stackEntries.add({
+                  'type': 'InitialRoute',
+                  'name': navigatorWidget.initialRoute,
+                });
+              } else {
+                stackEntries.add({
+                  'type': 'Unknown',
+                  'message':
+                      'Could not extract stack from NavigatorState (Navigator 1.0)',
+                });
+              }
+            }
+          } catch (_) {
+            stackEntries.add({
+              'type': 'Error',
+              'message': 'Error while accessing navigator.pages or initialRoute',
+            });
+          }
+        }
+
+        element.visitChildren(findNavigatorElements);
+      }
+
+      root.visitChildren(findNavigatorElements);
+
+      return MCPCallResult(
+        message: 'Collected navigation stack.',
+        parameters: {'stack': stackEntries},
+      );
+    });
+
+    return OnGetNavigationStackEntry._(entry);
+  }
+}
+
+/// {@template on_get_navigation_tree_entry}
+/// MCPCallEntry for viewing the navigation tree (GoRouter, AutoRoute, or fallback).
+/// {@endtemplate}
+extension type const OnGetNavigationTreeEntry._(MCPCallEntry entry)
+    implements MCPCallEntry {
+  /// {@macro on_get_navigation_tree_entry}
+  factory OnGetNavigationTreeEntry() {
+    final entry = MCPCallEntry(const MCPMethodName('get_navigation_tree'),
+        (final parameters,) {
+      final root = WidgetsBinding.instance.rootElement;
+      final routerContext = root != null ? findRouterContext(root) : null;
+
+      if (routerContext == null) {
+        return MCPCallResult(
+          message: 'No Router widget found in the widget tree.',
+          parameters: {'tree': []},
+        );
+      }
+
+      // Get RouterDelegate directly from RouterState
+      final delegate = (routerContext.widget as Router).routerDelegate;
+
+      if (delegate == null) {
+        return MCPCallResult(
+          message: 'RouterDelegate not found.',
+          parameters: {'tree': []},
+        );
+      }
+
+      // --- GoRouter ---
+      if (delegate is GoRouterDelegate) {
+        try {
+          final goRouter = delegate.state.topRoute;
+          final tree = _serializeGoRouter(goRouter?.routes ?? []);
+          return MCPCallResult(
+            message: 'GoRouter navigation tree.',
+            parameters: {'tree': tree},
+          );
+        } catch (e) {
+          return MCPCallResult(
+            message: 'Failed to serialize GoRouter: $e',
+            parameters: {'tree': []},
+          );
+        }
+      }
+
+      // --- AutoRoute ---
+      if (delegate.runtimeType.toString().contains('AutoRouterDelegate')) {
+        try {
+          final autoRouter = _findAutoRouter(routerContext);
+          final tree = _serializeAutoRouter(autoRouter);
+          return MCPCallResult(
+            message: 'AutoRoute navigation tree.',
+            parameters: {'tree': tree},
+          );
+        } catch (e) {
+          return MCPCallResult(
+            message: 'Failed to serialize AutoRoute: $e',
+            parameters: {'tree': []},
+          );
+        }
+      }
+
+      // --- Navigator fallback ---
+      try {
+        final navStack = <Map<String, dynamic>>[];
+        void findNavigatorElements(final Element element) {
+          if (element is StatefulElement && element.state is NavigatorState) {
+            final NavigatorState navState = element.state as NavigatorState;
+            final Navigator navigatorWidget = navState.widget;
+            try {
+              final pages = navigatorWidget.pages;
+              if (pages.isNotEmpty) {
+                for (final page in pages) {
+                  navStack.add({
+                    'type': 'Page',
+                    'name': page.name ?? page.runtimeType.toString(),
+                    'runtimeType': page.runtimeType.toString(),
+                    'key': page.key.toString(),
+                  });
+                }
+              } else if (navigatorWidget.initialRoute != null) {
+                navStack.add({
+                  'type': 'InitialRoute',
+                  'name': navigatorWidget.initialRoute,
+                });
+              }
+            } catch (_) {}
+          }
+          element.visitChildren(findNavigatorElements);
+        }
+
+        (routerContext as Element).visitChildren(findNavigatorElements);
+        return MCPCallResult(
+          message: 'Navigator navigation stack.',
+          parameters: {'tree': navStack},
+        );
+      } catch (e) {
+        return MCPCallResult(
+          message: 'Unknown navigation type or error: $e',
+          parameters: {'tree': []},
+        );
+      }
+    });
+
+    return OnGetNavigationTreeEntry._(entry);
+  }
+}
+
+
+// ==== GoRouter support ====
+
+List<Map<String, dynamic>> _serializeGoRouter(List<RouteBase> routes, [String parentPath = '']) {
+  final List<Map<String, dynamic>> result = [];
+
+  for (final route in routes) {
+    String? routePath;
+    String? routeName;
+    String? pageBuilder;
+    List<RouteBase>? childrenRoutes;
+
+    if (route is GoRoute) {
+      routePath = route.path;
+      routeName = route.name?.toString();
+      pageBuilder = route.builder?.toString();
+      childrenRoutes = route.routes;
+    } else if (route is ShellRoute) {
+      // ShellRoute has a builder and routes
+      routePath = null; // ShellRoute does not have a path
+      routeName = null;
+      pageBuilder = route.builder?.toString();
+      childrenRoutes = route.routes;
+    } else    // Fallback for other RouteBase types
+    try {
+      childrenRoutes = route.routes;
+    } catch (_) {}
+  
+
+    final path = parentPath + '/' + (routePath ?? '').replaceAll('//', '/');
+    final routeInfo = <String, dynamic>{
+      'type': route.runtimeType.toString(),
+      'path': path,
+      'name': routeName,
+      'page': pageBuilder,
+    };
+    if (childrenRoutes != null && childrenRoutes.isNotEmpty) {
+      routeInfo['children'] = _serializeGoRouter(childrenRoutes, path);
+    }
+    result.add(routeInfo);
+  }
+
+  return result;
+}
+
+// ==== AutoRoute support ====
+
+dynamic _findAutoRouter(BuildContext context) {
+  // fallback using dynamic context
+  return (context as dynamic).router;
+}
+
+List<Map<String, dynamic>> _serializeAutoRouter(dynamic router, [String parentPath = '']) {
+  final List<Map<String, dynamic>> result = [];
+
+  final stack = (router is Map && router['stack'] is List)
+      ? router['stack'] as List
+      : (router != null && router.stack is List ? router.stack as List : <dynamic>[]);
+
+  for (final route in stack) {
+    dynamic routeData;
+    if (route is Map) {
+      routeData = route['data'];
+    } else if (route != null && route.data != null) {
+      // ignore: avoid_dynamic_calls
+      routeData = route.data;
+    }
+    String routeDataName = 'unknown';
+    if (routeData is Map && routeData['name'] != null) {
+      routeDataName = routeData['name'].toString();
+    } else if (routeData != null && routeData.name != null) {
+      // ignore: avoid_dynamic_calls
+      routeDataName = routeData.name.toString();
+    }
+    final path = parentPath + '/' + routeDataName;
+    String? routeName;
+    String? page;
+    if (routeData is Map) {
+      routeName = routeData['name']?.toString();
+      page = routeData['route']?.toString();
+    } else if (routeData != null) {
+      try {
+        // ignore: avoid_dynamic_calls
+        if (routeData.name != null) routeName = routeData.name.toString();
+      } catch (_) {}
+      try {
+        // ignore: avoid_dynamic_calls
+        if (routeData.route != null) page = routeData.route.toString();
+      } catch (_) {}
+    }
+    final routeInfo = <String, dynamic>{
+      'path': path,
+      'name': routeName,
+      'page': page,
+    };
+    // Children
+    List<dynamic>? children;
+    if (route is Map && route.containsKey('children')) {
+      children = route['children'] as List<dynamic>?;
+    } else if (route != null) {
+      try {
+        // ignore: avoid_dynamic_calls
+        if (route.children != null) children = route.children as List<dynamic>?;
+      } catch (_) {}
+    }
+    if (children != null && children.isNotEmpty) {
+      routeInfo['children'] = _serializeAutoRouter(children, path);
+    }
+    result.add(routeInfo);
+  }
+
+  return result;
+}
+
+BuildContext? findRouterContext(Element root) {
+  BuildContext? found;
+  void visitor(Element element) {
+    if (found != null) return;
+    if (element.widget is Router) {
+      found = element;
+      return;
+    }
+    element.visitChildren(visitor);
+  }
+  root.visitChildren(visitor);
+  return found;
 }

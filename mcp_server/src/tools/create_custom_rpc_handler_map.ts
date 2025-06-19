@@ -269,12 +269,15 @@ export function createCustomRpcHandlerMap(
 
     view_widget_tree: async (request: CallToolRequest) => {
       const port = handlePortParam(request);
+      const includeRenderParams = request.params.arguments?.includeRenderParams || false;
 
       const result = await rpcUtils.callFlutterExtension("ext.mcp.call", {
         dartVmPort: port,
         params: {
           method: "view_widget_tree",
-          arguments: {},
+          arguments: {
+            includeRenderParams: includeRenderParams
+          },
         },
       });
 
@@ -318,6 +321,44 @@ export function createCustomRpcHandlerMap(
           {
             type: "text",
             text: `Scrolled by offset dx=${dx}, dy=${dy}.\n\nResult:\n${JSON.stringify(result, null, 2)}`,
+          },
+        ],
+      };
+    },
+
+    get_navigation_stack: async (request: CallToolRequest) => {
+      const port = handlePortParam(request);
+      const result = await rpcUtils.callFlutterExtension("ext.mcp.call", {
+        dartVmPort: port,
+        params: {
+          method: "get_navigation_stack",
+          arguments: {},
+        },
+      });
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Navigation stack retrieved successfully.\n\nResult:\n${JSON.stringify(result, null, 2)}`,
+          },
+        ],
+      };
+    },
+
+    get_navigation_tree: async (request: CallToolRequest) => {
+      const port = handlePortParam(request);
+      const result = await rpcUtils.callFlutterExtension("ext.mcp.call", {
+        dartVmPort: port,
+        params: {
+          method: "get_navigation_tree",
+          arguments: {},
+        },
+      });
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Navigation tree retrieved successfully.\n\nResult:\n${JSON.stringify(result, null, 2)}`,
           },
         ],
       };

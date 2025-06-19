@@ -507,7 +507,8 @@ handlers:
     needsDartServiceExtensionProxy: true
     needsDebugVerification: true
     responseWrapper: true
-    parameters: {}
+    parameters:
+      includeRenderParams: "arg.includeRenderParams"
 
   - name: scroll_by_offset
     description: Scrolls a scrollable widget by the specified offset with optional filtering.
@@ -521,3 +522,19 @@ handlers:
       key: "arg.key"
       semanticLabel: "arg.semanticLabel"
       text: "arg.text"
+
+  - name: get_navigation_stack
+    description: Gets the current navigation stack (Navigator 2.0 and 1.0 supported).
+    rpcMethod: "ext.mcp.toolkit.get_navigation_stack"
+    needsDartServiceExtensionProxy: true
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters: {}
+
+  - name: get_navigation_tree
+    description: Gets the current navigation tree.
+    rpcMethod: "ext.mcp.toolkit.get_navigation_tree"
+    needsDartServiceExtensionProxy: true
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters: {}
