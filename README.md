@@ -89,6 +89,9 @@ See more details about environment variables in [.env.example](mcp_server/.env.e
 - `get_view_details` [Resource|Tool] - size of screen, pixel ratio. May unlock ability for an Agent to use widget selection.
 
 
+- `view_widget_tree` [Tool] - json tree of widgets with small information about them. May unlock ability for an Agent to use widget selection.
+
+
 <!-- - `hot_reload` [Tool] - Performs hot reload of the Flutter application
   **Tested on**:
   ✅ macOS, ✅ iOS, ✅ Android
@@ -121,6 +124,42 @@ See more details about environment variables in [.env.example](mcp_server/.env.e
 
     - Write the AI agent the hint text of TextField and text that you want to write in it and wait.
     - Write input data as well as action instructions to the AI agent, instructing it to call 'view_screenshots' after each action so that it continues to follow the script and determine its next step.
+
+  **Tested on**:
+  ✅ Android
+  **Not tested on**:
+  🤔 iOS, 🤔 macOs 🤔 Windows, 🤔 Linux, ❌ Web
+
+
+- `tap_by_semantic_label` [Tool] - Looks for a Semantics that has label equal to the `text` parameter. Tap on ancestor widget that has tappable methods
+  **Usage**:
+
+  - Write the AI agent the semantic label of widget.
+  - Write action instructions to the AI agent, telling it to call view_screenshots after each action so that it continues to follow the script itself by clicking buttons.
+
+  **Tested on**:
+  ✅ Android
+  **Not tested on**:
+  🤔 iOS, 🤔 macOs 🤔 Windows, 🤔 Linux, ❌ Web
+
+
+- `tap_by_coordinate` [Tool] - Looks for a tappable widget on `dx` and `dy`. Tap on it if it has tappable methods
+  **Usage**:
+
+  - Write the AI agent the coordinates of widget.
+  - Write action instructions to the AI agent, telling it to call view_screenshots after each action so that it continues to follow the script itself by clicking on coordinates.
+
+  **Tested on**:
+  ✅ Android
+  **Not tested on**:
+  🤔 iOS, 🤔 macOs 🤔 Windows, 🤔 Linux, ❌ Web
+
+
+- `scroll_by_offset` [Tool] - Looks for a scrollable widget with scroll controller and child that has key, semantic label or text. Scroll this widget by passed offset
+  **Usage**:
+
+  - Write the AI agent the text, key or semantic label of child widget and offset to scroll.
+  - Write action instructions to the AI agent, telling it to call view_screenshots after each action so that it continues to follow the script itself by scrolling.
 
   **Tested on**:
   ✅ Android
