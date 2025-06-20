@@ -1,5 +1,6 @@
 // ignore_for_file: unnecessary_null_comparison, unnecessary_async, avoid_dynamic_calls, no_dynamic_invocations
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:from_json_to_json/from_json_to_json.dart';
@@ -33,6 +34,9 @@ Set<MCPCallEntry> getFlutterMcpToolkitEntries({
       OnViewWidgetTreeEntry(),
       ScrollByOffsetEntry(),
       OnGetNavigationTreeEntry(),
+      OnGetWidgetPropertiesEntry(),
+      OnGetNavigationStackEntry(),
+      LongPressByTextEntry(),
     };
 
 /// Extension on [MCPToolkitBinding] to initialize the Flutter MCP Toolkit.
@@ -1053,7 +1057,7 @@ extension type const OnGetNavigationTreeEntry._(MCPCallEntry entry)
 
 // ==== GoRouter support ====
 
-List<Map<String, dynamic>> _serializeGoRouter(List<RouteBase> routes, [String parentPath = '']) {
+List<Map<String, dynamic>> _serializeGoRouter(final List<RouteBase> routes, [final String parentPath = '']) {
   final List<Map<String, dynamic>> result = [];
 
   for (final route in routes) {
@@ -1097,12 +1101,12 @@ List<Map<String, dynamic>> _serializeGoRouter(List<RouteBase> routes, [String pa
 
 // ==== AutoRoute support ====
 
-dynamic _findAutoRouter(BuildContext context) {
+dynamic _findAutoRouter(final BuildContext context) {
   // fallback using dynamic context
   return (context as dynamic).router;
 }
 
-List<Map<String, dynamic>> _serializeAutoRouter(dynamic router, [String parentPath = '']) {
+List<Map<String, dynamic>> _serializeAutoRouter(final dynamic router, [final String parentPath = '']) {
   final List<Map<String, dynamic>> result = [];
 
   final stack = (router is Map && router['stack'] is List)
@@ -1164,9 +1168,9 @@ List<Map<String, dynamic>> _serializeAutoRouter(dynamic router, [String parentPa
   return result;
 }
 
-BuildContext? findRouterContext(Element root) {
+BuildContext? findRouterContext(final Element root) {
   BuildContext? found;
-  void visitor(Element element) {
+  void visitor(final Element element) {
     if (found != null) return;
     if (element.widget is Router) {
       found = element;
@@ -1176,4 +1180,251 @@ BuildContext? findRouterContext(Element root) {
   }
   root.visitChildren(visitor);
   return found;
+}
+
+/// {@template on_get_widget_properties_entry}
+/// MCPCallEntry that returns widget properties at a specific element location.
+/// {@endtemplate}
+extension type const OnGetWidgetPropertiesEntry._(MCPCallEntry entry)
+    implements MCPCallEntry {
+  /// {@macro on_get_widget_properties_entry}
+  factory OnGetWidgetPropertiesEntry() {
+    final entry = MCPCallEntry(const MCPMethodName('get_widget_properties'),
+        (final parameters,) {
+      final String? key = parameters['key'];
+      if (key == null) {
+        return MCPCallResult(
+          message: 'Missing required parameter: key',
+          parameters: {},
+        );
+      }
+
+      final root = WidgetsBinding.instance.rootElement;
+      if (root == null) {
+        return MCPCallResult(
+          message: 'No root element found',
+          parameters: {},
+        );
+      }
+
+      Element? found;
+      void finder(final Element element) {
+        if (found != null) return;
+        final widgetKey = element.widget.key;
+        if (widgetKey != null) {
+          if (widgetKey.toString() == key || widgetKey.toString().contains(key)) {
+            found = element;
+            return;
+          }
+          // Handle ValueKey specifically
+          if (widgetKey is ValueKey) {
+            if (widgetKey.value.toString() == key) {
+              found = element;
+              return;
+            }
+          }
+        }
+        element.visitChildren(finder);
+      }
+
+      root.visitChildren(finder);
+
+      if (found == null) {
+        return MCPCallResult(
+          message: 'Widget with key "$key" not found.',
+          parameters: {},
+        );
+      }
+
+      final widget = found!.widget;
+      final renderObject = found is RenderObjectElement ? found!.renderObject : null;
+      final diagnostics = widget.toDiagnosticsNode(style: DiagnosticsTreeStyle.singleLine).toString();
+
+      final properties = <String, dynamic>{
+        'runtimeType': widget.runtimeType.toString(),
+        'key': widget.key.toString(),
+        'diagnostics': diagnostics,
+      };
+
+      if (renderObject is RenderBox) {
+        properties['size'] = {
+          'width': renderObject.size.width,
+          'height': renderObject.size.height,
+        };
+        try {
+          final offset = renderObject.localToGlobal(Offset.zero);
+          properties['offset'] = {'dx': offset.dx, 'dy': offset.dy};
+        } catch (_) {}
+      }
+
+      return MCPCallResult(
+        message: 'Widget properties for key "$key"',
+        parameters: properties,
+      );
+    });
+
+    return OnGetWidgetPropertiesEntry._(entry);
+  }
+}
+
+/// {@template long_press_by_text_entry}
+/// MCPCallEntry for performing a long press on widgets by their text, key, or semanticsLabel.
+/// Supports detailed matching criteria and configurable long press duration.
+/// {@endtemplate}
+extension type LongPressByTextEntry._(MCPCallEntry entry) implements MCPCallEntry {
+  /// {@macro long_press_by_text_entry}
+  factory LongPressByTextEntry() {
+    final entry = MCPCallEntry(const MCPMethodName('long_press'), (final parameters,) async {
+      final query = parameters['query']?.toString();
+      final durationMs = int.tryParse(parameters['duration']?.toString() ?? '') ?? 500; // Default to 500ms for long press
+      var found = false;
+      String matchedCriteria = '';
+      String widgetType = '';
+
+      void visitor(final Element element) {
+        if (found) return;
+
+        final widget = element.widget;
+
+        bool matches() {
+          final String? keyStr = widget.key?.toString();
+          final String? semanticsLabel = _extractSemanticsLabel(widget);
+
+          if (widget is Text && widget.data == query) {
+            matchedCriteria = 'text content';
+            return true;
+          }
+          if (widget is RichText && widget.text.toPlainText() == query) {
+            matchedCriteria = 'rich text content';
+            return true;
+          }
+          if (widget is TextPainterWidget && widget.text == query) {
+            matchedCriteria = 'text painter content';
+            return true;
+          }
+          if (keyStr != null && keyStr.contains(query!)) {
+            matchedCriteria = 'key match';
+            return true;
+          }
+          if (semanticsLabel != null && semanticsLabel.contains(query!)) {
+            matchedCriteria = 'semantics label';
+            return true;
+          }
+          // Additional matching for button tooltip or hint text
+          if (widget is TextField && widget.decoration?.hintText == query) {
+            matchedCriteria = 'text field hint';
+            return true;
+          }
+          if ((widget is ElevatedButton || widget is TextButton || widget is IconButton || widget is FloatingActionButton) && (widget as dynamic).tooltip == query) {
+            matchedCriteria = 'button tooltip';
+            return true;
+          }
+          return false;
+        }
+
+        void simulateLongPress(final Element target) {
+          final renderObject = target.renderObject;
+          if (renderObject is! RenderBox) return;
+
+          final position = renderObject.localToGlobal(renderObject.size.center(Offset.zero));
+          bool handled = false;
+          widgetType = target.widget.runtimeType.toString();
+
+          target.visitAncestorElements((final ancestor) {
+            final w = ancestor.widget;
+
+            if (w is GestureDetector) {
+              final startDetails = LongPressStartDetails(globalPosition: position);
+              final endDetails = LongPressEndDetails(globalPosition: position);
+              w.onLongPressStart?.call(startDetails);
+              w.onLongPress?.call();
+              // Simulate duration
+              Future.delayed(Duration(milliseconds: durationMs), () {
+                w.onLongPressEnd?.call(endDetails);
+              });
+              handled = true;
+              return false;
+            }
+
+            bool tryCall(final VoidCallback? callback) {
+              if (callback != null) {
+                callback();
+                return true;
+              }
+              return false;
+            }
+
+            if (w is InkWell || w is InkResponse) {
+              handled = tryCall((w as dynamic).onLongPress);
+              if (handled) return false;
+            }
+            // Additional widget types
+            if (w is ListTile) {
+              handled = tryCall((w as dynamic).onLongPress);
+              if (handled) return false;
+            }
+
+            return true;
+          });
+
+          if (handled) {
+            found = true;
+          } else {
+            // Fallback to raw pointer events if no specific handler is found
+            try {
+              final gestureBinding = GestureBinding.instance;
+              final now = DateTime.now();
+              final timestamp = Duration(microseconds: now.microsecondsSinceEpoch);
+
+              final down = PointerDownEvent(
+                position: position,
+                timeStamp: timestamp,
+                pointer: 1,
+              );
+
+              final up = PointerUpEvent(
+                position: position,
+                timeStamp: timestamp + Duration(milliseconds: durationMs),
+                pointer: 1,
+              );
+
+              gestureBinding.handlePointerEvent(down);
+              Future.delayed(Duration(milliseconds: durationMs), () {
+                gestureBinding.handlePointerEvent(up);
+              });
+
+              found = true;
+            } catch (_) {}
+          }
+        }
+
+        if (query != null && matches()) {
+          simulateLongPress(element);
+        }
+
+        element.visitChildren(visitor);
+      }
+
+      final root = WidgetsBinding.instance.rootElement;
+      if (root != null) {
+        root.visitChildren(visitor);
+      }
+
+      final message = found
+          ? 'Successfully long-pressed widget with query: $query (Matched by: $matchedCriteria, Type: $widgetType)'
+          : 'Could not find long-pressable widget with query: $query';
+
+      return MCPCallResult(message: message, parameters: {'success': found, 'widgetType': widgetType, 'matchedBy': matchedCriteria});
+    });
+
+    return LongPressByTextEntry._(entry);
+  }
+}
+
+String? _extractSemanticsLabel(final Widget widget) {
+  if (widget is Semantics) return widget.properties.label;
+  if (widget is ExcludeSemantics) return null;
+  if (widget is MergeSemantics) return null;
+  // Add more if needed
+  return null;
 }

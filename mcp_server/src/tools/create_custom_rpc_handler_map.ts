@@ -363,6 +363,69 @@ export function createCustomRpcHandlerMap(
         ],
       };
     },
+
+    get_widget_properties: async (request: CallToolRequest) => {
+      const port = handlePortParam(request);
+      const key = request.params.arguments?.key;
+      if (!key) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Missing required parameter: key`,
+            },
+          ],
+        };
+      }
+      const result = await rpcUtils.callFlutterExtension("ext.mcp.call", {
+        dartVmPort: port,
+        params: {
+          method: "get_widget_properties",
+          arguments: { key },
+        },
+      });
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Widget properties for key '${key}':\n\n${JSON.stringify(result, null, 2)}`,
+          },
+        ],
+      };
+    },
+
+    long_press: async (request: CallToolRequest) => {
+      const port = handlePortParam(request);
+      const query = request.params.arguments?.query;
+      const duration = request.params.arguments?.duration;
+      if (!query) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Missing required parameter: query`,
+            },
+          ],
+        };
+      }
+      const args: any = { query };
+      if (duration) args.duration = duration;
+      const result = await rpcUtils.callFlutterExtension("ext.mcp.call", {
+        dartVmPort: port,
+        params: {
+          method: "long_press",
+          arguments: args,
+        },
+      });
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Long press performed for query '${query}':\n\n${JSON.stringify(result, null, 2)}`,
+          },
+        ],
+      };
+    },
   };
 }
 

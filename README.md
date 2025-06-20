@@ -91,6 +91,8 @@ See more details about environment variables in [.env.example](mcp_server/.env.e
 
 - `view_widget_tree` [Tool] - json tree of widgets with small information about them. May unlock ability for an Agent to use widget selection.
 
+- `get_widget_properties` [Tool] - Returns detailed properties of a widget identified by its key.
+
 
 <!-- - `hot_reload` [Tool] - Performs hot reload of the Flutter application
   **Tested on**:
@@ -155,11 +157,50 @@ See more details about environment variables in [.env.example](mcp_server/.env.e
   🤔 iOS, 🤔 macOs 🤔 Windows, 🤔 Linux, ❌ Web
 
 
-- `scroll_by_offset` [Tool] - Looks for a scrollable widget with scroll controller and child that has key, semantic label or text. Scroll this widget by passed offset
+- `scroll_by_offset` [Tool] - Scrolls a scrollable widget (like ListView, GridView, etc.) by a specified horizontal (`dx`) or vertical (`dy`) offset. You can optionally filter the target scrollable by its key, semantic label, or by searching for a child widget containing specific text.
+  **Usage**:
+  - Provide `dx` and/or `dy` to specify the scroll amount. The scroll will be applied along the widget's scroll direction (vertical or horizontal).
+  - Optionally, provide a `key`, `semanticLabel`, or `text` to target a specific scrollable widget.
+  - If no filter is provided, the first scrollable found will be scrolled.
+  - Useful for programmatically scrolling lists, grids, or other scrollable areas in your app.
+  - After scrolling, you can call `view_screenshots` to verify the new UI state.
+
+  **Tested on**:
+  ✅ Android
+  **Not tested on**:
+  🤔 iOS, 🤔 macOs 🤔 Windows, 🤔 Linux, ❌ Web
+
+- `long_press` [Tool] - Performs a long press on a widget identified by text, key, or semantic label.
+  **Usage**:
+  - Provide the `query` parameter to match the widget (by text, key, semantic label, hint, or tooltip).
+  - Optionally, provide `duration` (in milliseconds) to control the long press duration (default: 500ms).
+  - Useful for testing context menus, drag-and-drop, or any UI that responds to long press gestures.
+  - Returns success status, matched widget type, and matching criteria.
+
+  **Tested on**:
+  ✅ Android
+  **Not tested on**:
+  🤔 iOS, 🤔 macOs 🤔 Windows, 🤔 Linux, ❌ Web
+
+### Navigation Tools
+
+- `get_navigation_tree` [Tool] - Returns a tree structure representing the current navigation hierarchy of your app. Supports GoRouter, AutoRoute, or falls back to Navigator. Useful for understanding the full navigation structure and available routes.
   **Usage**:
 
-  - Write the AI agent the text, key or semantic label of child widget and offset to scroll.
-  - Write action instructions to the AI agent, telling it to call view_screenshots after each action so that it continues to follow the script itself by scrolling.
+  - Call this tool to get a JSON tree of all navigation routes and their relationships.
+  - Helps AI agents reason about possible navigation paths and available screens.
+
+  **Tested on**:
+  ✅ Android
+  **Not tested on**:
+  🤔 iOS, 🤔 macOs 🤔 Windows, 🤔 Linux, ❌ Web
+
+
+- `get_navigation_stack` [Tool] - Returns the current navigation stack, showing the active pages/screens in the app. Supports both Navigator 2.0 and basic Navigator 1.0.
+  **Usage**:
+
+  - Call this tool to get a list of the current stack of pages/screens.
+  - Useful for understanding the current navigation state and back stack.
 
   **Tested on**:
   ✅ Android

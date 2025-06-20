@@ -538,3 +538,22 @@ handlers:
     needsDebugVerification: true
     responseWrapper: true
     parameters: {}
+
+  - name: get_widget_properties
+    description: Returns widget properties for a widget with the specified key.
+    rpcMethod: "ext.mcp.toolkit.get_widget_properties"
+    needsDartServiceExtensionProxy: true
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters:
+      key: "arg.key"
+
+  - name: long_press
+    description: Performs a long press on a widget identified by text, key, or semantic label.
+    rpcMethod: "ext.mcp.toolkit.long_press"
+    needsDartServiceExtensionProxy: true
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters:
+      query: "arg.query"
+      duration: "arg.duration"

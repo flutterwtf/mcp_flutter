@@ -171,3 +171,30 @@ tools:
           type: number
           description: "Optional: Custom port number if not using default Flutter debug port 8181"
       required: []
+  - name: get_widget_properties
+    description: "Returns widget properties for a widget with the specified key."
+    inputSchema:
+      type: object
+      properties:
+        key:
+          type: string
+          description: "The key of the widget to inspect."
+        port:
+          type: number
+          description: "Optional: Custom port number if not using default Flutter debug port 8181"
+      required: ["key"]
+  - name: long_press
+    description: "Performs a long press on a widget identified by text, key, or semantic label."
+    inputSchema:
+      type: object
+      properties:
+        query:
+          type: string
+          description: "The query to identify the widget (text, key, or semantic label)."
+        duration:
+          type: number
+          description: "Optional: Duration of the long press in milliseconds (default: 500)."
+        port:
+          type: number
+          description: "Optional: Custom port number if not using default Flutter debug port 8181"
+      required: ["query"]

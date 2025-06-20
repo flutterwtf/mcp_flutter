@@ -364,6 +364,16 @@ export const rpcToolConfigs = {
     rpcMethod: 'ext.mcp.toolkit.get_navigation_tree',
     needsDebugVerification: true,
     needsDartProxy: true
+  },
+  get_widget_properties: {
+    rpcMethod: 'ext.mcp.toolkit.get_widget_properties',
+    needsDebugVerification: true,
+    needsDartProxy: true
+  },
+  long_press: {
+    rpcMethod: 'ext.mcp.toolkit.long_press',
+    needsDebugVerification: true,
+    needsDartProxy: true
   }
 } as const;
 
