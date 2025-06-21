@@ -1,4 +1,4 @@
-// ignore_for_file: avoid_catches_without_on_clauses
+// ignore_for_file: avoid_catches_without_on_clauses, unused_local_variable
 
 import 'package:devtools_mcp_extension/common_imports.dart';
 import 'package:devtools_mcp_extension/services/error_devtools/error_monitor.dart';
@@ -91,12 +91,12 @@ final class CustomDevtoolsService extends BaseDevtoolsService {
       return RPCResponse.error('VM service not available');
     }
     final objectGroupManager = initObjectGroup(debugName: 'playground');
-    final responsed = await devtoolsService.serviceManager
+    final response = await devtoolsService.serviceManager
         .callServiceExtensionOnMainIsolate(
           'ext.mcp.toolkit.app_errors',
           // args: {'count': 10},
         );
-    print(responsed.json);
+    print(response.json);
     return RPCResponse.successMap({'errors': []});
     // final objectRef = await vmService.getObject(
     //   isolateId,
@@ -209,7 +209,8 @@ final class CustomDevtoolsService extends BaseDevtoolsService {
     //     rethrow;
     //   }
     // } catch (e, stackTrace) {
-    //   return RPCResponse.error('Error getting visual errors: $e', stackTrace);
+    //   return RPCResponse.error('Error getting
+    // visual errors: $e', stackTrace);
     // }
   }
 
@@ -297,7 +298,8 @@ final class CustomDevtoolsService extends BaseDevtoolsService {
   }
 
   // final layoutExplorerNode = await vmService.callServiceExtension(
-  //   'ext.flutter.inspector.${WidgetInspectorServiceExtensions.getLayoutExplorerNode.name}',
+  //   'ext.flutter.inspector.${WidgetInspectorServiceExtensions.
+  // getLayoutExplorerNode.name}',
   //   isolateId: isolateId,
   //   args: {
   //     'objectGroup': group.groupName,
@@ -335,7 +337,8 @@ final class CustomDevtoolsService extends BaseDevtoolsService {
     try {
       // First get the properties for the node
       final propertiesResponse = await vmService.callServiceExtension(
-        'ext.flutter.inspector.${WidgetInspectorServiceExtensions.getProperties.name}',
+        'ext.flutter.inspector.'
+        '${WidgetInspectorServiceExtensions.getProperties.name}',
         isolateId: isolateId,
         args: {'arg': nodeId, 'objectGroup': groupName},
       );
@@ -369,7 +372,8 @@ final class CustomDevtoolsService extends BaseDevtoolsService {
 
       // Get the parent chain for context
       final parentChainResponse = await vmService.callServiceExtension(
-        'ext.flutter.inspector.${WidgetInspectorServiceExtensions.getParentChain.name}',
+        'ext.flutter.inspector.'
+        '${WidgetInspectorServiceExtensions.getParentChain.name}',
         isolateId: isolateId,
         args: {'arg': nodeId, 'objectGroup': groupName},
       );

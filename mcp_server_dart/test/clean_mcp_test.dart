@@ -1,4 +1,5 @@
 #!/usr/bin/env dart
+// ignore_for_file: avoid_print, avoid_catches_without_on_clauses
 
 import 'dart:async';
 import 'dart:convert';
@@ -211,12 +212,13 @@ void main() {
         final requestSink,
         final responseStream,
       ) async {
-        const malformedJson =
-            '{"jsonrpc": "2.0", "id": 5, "method": "test"'; // Missing closing brace
+        // Missing closing brace
+        const malformedJson = '{"jsonrpc": "2.0", "id": 5, "method": "test"';
 
         requestSink.add(malformedJson);
 
-        // Server should either respond with a parse error or ignore malformed JSON
+        // Server should either respond with a parse error or
+        // ignore malformed JSON.
         // We'll wait a short time to see if there's a response
         try {
           final response = await responseStream.first.timeout(
@@ -310,8 +312,12 @@ Future<bool> _runServerTest(
             .map((final line) {
               try {
                 return jsonDecode(line) as Map<String, dynamic>;
-              } catch (e) {
-                throw FormatException('Invalid JSON response: $line');
+              } catch (e, stackTrace) {
+                print('Invalid JSON response: $line');
+                throw FormatException(
+                  'Invalid JSON response: $line',
+                  stackTrace,
+                );
               }
             })
             .asBroadcastStream();
@@ -328,8 +334,9 @@ Future<bool> _runServerTest(
     await testFunction(requestController.sink, responseStream);
 
     return true;
-  } catch (e) {
+  } catch (e, stackTrace) {
     print('Test failed with error: $e');
+    print('Stack trace: $stackTrace');
     return false;
   } finally {
     // Clean up
@@ -338,7 +345,9 @@ Future<bool> _runServerTest(
     if (serverProcess != null) {
       try {
         await serverProcess.exitCode.timeout(const Duration(seconds: 2));
-      } catch (e) {
+      } catch (e, stackTrace) {
+        print('Error killing server: $e');
+        print('Stack trace: $stackTrace');
         serverProcess.kill(ProcessSignal.sigkill);
       }
     }

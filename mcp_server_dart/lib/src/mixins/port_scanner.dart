@@ -33,7 +33,8 @@ class PortScanner {
       } else {
         log(
           LoggingLevel.warning,
-          'Unsupported platform ${Platform.operatingSystem}, using fallback method',
+          'Unsupported platform ${Platform.operatingSystem}, '
+          'using fallback method',
         );
         return await _scanForFlutterPortsFallback();
       }
@@ -182,7 +183,8 @@ class PortScanner {
       if (parts.length < 5) {
         log(
           LoggingLevel.debug,
-          'Skipping malformed netstat line: insufficient parts (${parts.length})',
+          'Skipping malformed netstat line: '
+          'insufficient parts (${parts.length})',
         );
         continue;
       }

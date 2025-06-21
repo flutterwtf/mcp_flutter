@@ -30,7 +30,7 @@ base class TestPortScannerServer extends BaseMCPToolkitServer {
           environment: 'test',
           dynamicRegistrySupported: false,
         ),
-        implementation: ServerImplementation(
+        implementation: Implementation(
           name: 'test-port-scanner',
           version: '1.0.0',
         ),

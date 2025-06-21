@@ -102,6 +102,7 @@ class RpcClientsOrchestrator with ChangeNotifier {
     // Connect to VM service
     await _dartVmDevtoolsService.connectToVmService();
     const forwardingServiceEnabled = false;
+    // ignore: dead_code
     if (forwardingServiceEnabled) await connectToForwardingService();
     await customDevtoolsService.init();
     await errorDevtoolsService.init();
@@ -111,6 +112,7 @@ class RpcClientsOrchestrator with ChangeNotifier {
   Future<void> dispose() async {
     _dartVmDevtoolsService.dispose();
     await errorDevtoolsService.dispose();
+    super.dispose();
   }
 
   /// Connect to the Flutter VM service

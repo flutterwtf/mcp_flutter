@@ -1,4 +1,3 @@
-import 'package:dart_mcp/client.dart';
 import 'package:flutter/material.dart';
 import 'package:mcp_toolkit/mcp_toolkit.dart';
 

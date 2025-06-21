@@ -69,7 +69,8 @@ class ForwardingRpcListener {
             // Print response info without the full data
             print(
               'Screenshot result - error: ${screenshot.error} '
-              'success: ${screenshot.success} data length: ${compressedScreenshot.length}',
+              'success: ${screenshot.success} data length: '
+              '${compressedScreenshot.length}',
             );
           } else {
             print(

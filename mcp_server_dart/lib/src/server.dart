@@ -24,7 +24,7 @@ final class MCPToolkitServer extends BaseMCPToolkitServer
     super.channel, {
     required super.configuration,
   }) : super.fromStreamChannel(
-         implementation: ServerImplementation(
+         implementation: Implementation(
            name: 'flutter-inspector',
            version: '1.0.0',
          ),
