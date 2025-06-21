@@ -46,11 +46,8 @@ _For AI-Powered Development_
 
 **New Features:**
 
-- Added `--await-dnd` flag to wait until DND connection is established. By default `--no-await-dnd` will be applied.
-  There will be 5 seconds timeout for DND connection and then server will start without DND connection.
-
-  This is workaround for MCP Clients which don't support tools updates.
-  Important: some clients doesn't support it. Use with caution. (disable for Windsurf, works with Cursor)
+- perf: v0.2.3 - added more checks for [MCPCallEntry.resourceUri] for MCPToolkit package
+- mcp_server_dart: fixed various issues with dynamic registry, made logs level error by default.
 
 **Major Changes in v2.2.0:**
 
