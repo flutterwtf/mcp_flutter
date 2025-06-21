@@ -18,10 +18,11 @@ import 'package:meta/meta.dart';
 /// Works by wrapping the standard MCP tool/resource registration system
 base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
   @protected
-  late final DynamicRegistry _dynamicRegistry;
+  DynamicRegistry? _dynamicRegistry;
 
   @protected
-  late final DynamicRegistryTools _dynamicRegistryTools;
+  DynamicRegistryTools? _dynamicRegistryTools;
+  RegistryDiscoveryService? discoveryService;
 
   /// Check if dynamic registry is enabled
   @protected
@@ -32,9 +33,10 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
   void initializeDynamicRegistry({
     required final MCPToolkitServer mcpToolkitServer,
   }) {
-    _dynamicRegistry = DynamicRegistry(server: mcpToolkitServer);
+    final registry =
+        _dynamicRegistry = DynamicRegistry(server: mcpToolkitServer);
     _dynamicRegistryTools = DynamicRegistryTools(
-      registry: _dynamicRegistry,
+      registry: registry,
       server: mcpToolkitServer,
     );
 
@@ -45,25 +47,26 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
     );
 
     // Listen to registry events for debugging/monitoring
-    _dynamicRegistry.events.listen(_logRegistryEvent);
+    registry.events.listen(_logRegistryEvent);
   }
-
-  late RegistryDiscoveryService discoveryService;
 
   /// Start registry discovery that immediately registers and listens for changes
   Future<void> startRegistryDiscovery({
     required final MCPToolkitServer mcpToolkitServer,
   }) async {
+    final registry = _dynamicRegistry;
+    if (registry == null) return;
+
     discoveryService = RegistryDiscoveryService(
-      dynamicRegistry: _dynamicRegistry,
+      dynamicRegistry: registry,
       server: mcpToolkitServer,
     );
 
     try {
-      await discoveryService.startDiscovery();
+      await discoveryService?.startDiscovery();
 
       // Immediate registration when connected
-      await discoveryService.registerToolsAndResources();
+      await discoveryService?.registerToolsAndResources();
 
       log(
         LoggingLevel.info,
@@ -98,19 +101,22 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
   /// Dispose dynamic registry resources
   @protected
   Future<void> disposeDynamicRegistry() async {
-    await _dynamicRegistry.dispose();
+    await _dynamicRegistry?.dispose();
     log(
       LoggingLevel.info,
       'Dynamic registry disposed',
       logger: 'DynamicRegistryIntegration',
     );
-    await discoveryService.dispose();
+    await discoveryService?.dispose();
   }
 
   /// Register the dynamic registry management tools
   void _registerDynamicRegistryTools() {
+    final registryTools = _dynamicRegistryTools;
+    if (registryTools == null) return;
+
     for (final MapEntry(key: tool, value: handler)
-        in _dynamicRegistryTools.allTools.entries) {
+        in registryTools.allTools.entries) {
       try {
         // it should register the tool and send a notification when the
         // tool is registered. However most client doesn't support it yet.
@@ -135,6 +141,9 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
     final String sourceApp, {
     final Map<String, dynamic> metadata = const {},
   }) {
+    final registry = _dynamicRegistry;
+    if (registry == null) return;
+
     if (!isDynamicRegistrySupported) {
       log(
         LoggingLevel.warning,
@@ -147,17 +156,14 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
     final appId = DynamicAppId(sourceApp);
 
     // Register in the dynamic registry
-    _dynamicRegistry.registerTool(tool, appId);
+    registry.registerTool(tool, appId);
 
     // Register as a standard MCP tool that forwards to the dynamic registry
     try {
       registerTool(
         tool,
         (final request) async =>
-            await _dynamicRegistry.forwardToolCall(
-              request.name,
-              request.arguments,
-            ) ??
+            await registry.forwardToolCall(request.name, request.arguments) ??
             CallToolResult(
               content: [
                 TextContent(
@@ -190,6 +196,9 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
     final String sourceApp, {
     final Map<String, dynamic> metadata = const {},
   }) {
+    final registry = _dynamicRegistry;
+    if (registry == null) return;
+
     if (!isDynamicRegistrySupported) {
       log(
         LoggingLevel.warning,
@@ -202,12 +211,12 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
     final appId = DynamicAppId(sourceApp);
 
     // Register in the dynamic registry
-    _dynamicRegistry.registerResource(resource, appId);
+    registry.registerResource(resource, appId);
 
     // Register as a standard MCP resource that forwards to the dynamic registry
     try {
       addResource(resource, (final request) async {
-        final content = await _dynamicRegistry.forwardResourceRead(request.uri);
+        final content = await registry.forwardResourceRead(request.uri);
         if (content != null) return content;
 
         return ReadResourceResult(
@@ -239,7 +248,10 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
   void unregisterDynamicApp(final String sourceApp) {
     if (!isDynamicRegistrySupported) return;
 
-    final hadContent = _dynamicRegistry.getAppEntries();
+    final registry = _dynamicRegistry;
+    if (registry == null) return;
+
+    final hadContent = registry.getAppEntries();
 
     // Unregister from MCP framework first
     for (final entry in hadContent.tools) {
@@ -269,14 +281,16 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
     }
 
     // Then unregister from dynamic registry
-    _dynamicRegistry.unregisterApp();
+    registry.unregisterApp();
   }
 
   /// Get dynamic registry statistics
   @protected
   DynamicAppInfo? getDynamicRegistryStats() {
     if (!isDynamicRegistrySupported) return null;
-    return _dynamicRegistry.appInfo;
+    final registry = _dynamicRegistry;
+    if (registry == null) return null;
+    return registry.appInfo;
   }
 
   /// Get the dynamic registry instance (for advanced usage)
