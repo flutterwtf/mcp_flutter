@@ -1,3 +1,8 @@
+## 2.2.3
+
+- perf: v0.2.3 - added more checks for [MCPCallEntry.resourceUri] for MCPToolkit package
+- mcp_server_dart: - fixed various issues with dynamic registry, made logs level error by default.
+
 ## 2.2.2
 
 - Added `--await-dnd` flag to wait until DND connection is established. By default `--no-await-dnd` will be applied.

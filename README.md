@@ -42,7 +42,7 @@ _For AI-Powered Development_
 >
 > Have a nice day!
 
-## 🎉 v2.2.2 released! 🎉
+## 🎉 v2.2.3 released! 🎉
 
 **New Features:**
 

@@ -1,3 +1,7 @@
+## 0.2.3
+
+- perf: added more checks for [MCPCallEntry.resourceUri]
+
 ## 0.2.0
 
 - Added `addMcpTool` function to add a single MCP tool to the MCP toolkit.
