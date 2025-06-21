@@ -4,6 +4,7 @@
     "mcpdevtools",
     "pubspec",
     "tasklist",
+    "toolkits",
     "Upserts",
     "venv"
   ]

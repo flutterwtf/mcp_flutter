@@ -27,6 +27,7 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
   /// Check if dynamic registry is enabled
   @protected
   bool get isDynamicRegistrySupported => configuration.dynamicRegistrySupported;
+  StreamSubscription? _subscription;
 
   /// Initialize the dynamic registry integration
   @protected
@@ -47,7 +48,7 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
     );
 
     // Listen to registry events for debugging/monitoring
-    registry.events.listen(_logRegistryEvent);
+    _subscription = registry.events.listen(_logRegistryEvent);
   }
 
   /// Start registry discovery that immediately registers and listens for changes
@@ -63,9 +64,12 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
     );
 
     try {
+      await mcpToolkitServer.ensureVMServiceConnected();
+
       await discoveryService?.startDiscovery();
 
       // Immediate registration when connected
+      // will fail if VM service is not connected
       await discoveryService?.registerToolsAndResources();
 
       log(
@@ -101,6 +105,7 @@ base mixin DynamicRegistryIntegration on BaseMCPToolkitServer {
   /// Dispose dynamic registry resources
   @protected
   Future<void> disposeDynamicRegistry() async {
+    await _subscription?.cancel();
     await _dynamicRegistry?.dispose();
     log(
       LoggingLevel.info,

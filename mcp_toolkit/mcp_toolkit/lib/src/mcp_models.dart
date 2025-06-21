@@ -97,7 +97,7 @@ extension type const MCPDefinition._(Map<String, dynamic> _value)
 ///             'count': IntegerSchema(
 ///               description: 'Number of errors to retrieve',
 ///               default: 10,
-///             },
+///             ),
 ///           },
 ///         ),
 ///       ),
@@ -224,11 +224,16 @@ extension type const MCPCallEntry._(_MCPCallEntryRecord entry)
   ///
   /// The entry key must match the pattern of lowercase letters, digits, and underscores.
   String get resourceUri {
+    final key = entry.key;
+    if (key.isEmpty) {
+      return 'visual://localhost/unknown';
+    }
+
     final keyPattern = RegExp(r'^[a-z0-9_]+$');
     assert(
-      keyPattern.hasMatch(entry.key),
-      'Resource entry key "${entry.key}" must contain only lowercase letters, digits, and underscores',
+      keyPattern.hasMatch(key),
+      'Resource entry key "$key" must contain only lowercase letters, digits, and underscores',
     );
-    return 'visual://localhost/${entry.key.split('_').join('/')}';
+    return 'visual://localhost/${key.split('_').join('/')}';
   }
 }

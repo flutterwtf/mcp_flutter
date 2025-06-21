@@ -128,7 +128,7 @@ final argParser =
 
 const defaultHost = 'localhost';
 const defaultPort = 8181;
-const defaultLogLevel = 'info';
+const defaultLogLevel = 'error';
 const defaultEnvironment = 'production';
 const dartVMHost = 'dart-vm-host';
 const dartVMPort = 'dart-vm-port';
