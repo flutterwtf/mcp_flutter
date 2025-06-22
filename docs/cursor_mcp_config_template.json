@@ -18,7 +18,7 @@
         "--dart-vm-port=8181",
         "--no-resources",
         "--images",
-        "--save-images-to-files"
+        "--save-images"
       ],
       "env": {},
       "disabled": false

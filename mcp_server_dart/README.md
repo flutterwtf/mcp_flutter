@@ -192,7 +192,7 @@ Options:
   --dart-vm-port                Port for Dart VM connection (default: 8181)
   --resources                   Enable resources support (default: true)
   --images                      Enable images support (default: true)
-  --save-images-to-files        Save captured images as files in temporal folder instead of returning base64 data (default: false)
+  --save-images        Save captured images as files in temporal folder instead of returning base64 data (default: false)
   --dumps                       Enable dumps support (default: false)
   --await-dnd                   Wait until DND connection is established (default: false). Do not use with Windsurf. Workaround for MCP Clients which don't support tools updates. Important: some clients doesn't support it. Use with caution. (disable for Windsurf, works with Cursor)
   --log-level                   Logging level (default: critical)
@@ -202,7 +202,7 @@ Options:
 
 #### Image File Saving Mode
 
-When `--save-images-to-files` is enabled, the server will:
+When `--save-images` is enabled, the server will:
 
 - Save all captured screenshots as PNG files in a `.mcp_screenshots` folder in the current working directory
 - Return file URLs (`file://`) instead of base64 encoded image data

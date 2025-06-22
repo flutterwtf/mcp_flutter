@@ -147,4 +147,4 @@ const environment = 'environment';
 const help = 'help';
 const dynamicRegistrySupported = 'dynamics';
 const awaitDndConnection = 'await-dnd';
-const saveImagesToFiles = 'img-files';
+const saveImagesToFiles = 'save-images';

@@ -1,7 +1,15 @@
 ## 2.2.3
 
-- perf: v0.2.3 - added more checks for [MCPCallEntry.resourceUri] for MCPToolkit package
-- mcp_server_dart: - fixed various issues with dynamic registry, made logs level error by default.
+- perf: added more checks for [MCPCallEntry.resourceUri] for MCPToolkit package (MCPToolkit updated to v0.2.3)
+
+## mcp_server_dart
+
+- feat: Added support for saving captured screenshots as files instead of returning them as base64 data, with automatic cleanup of old screenshots. Use (`--save-images`) flag to enable it.
+
+- fix: Fixed various issues with dynamic registry, made logs level error by default.
+
+- added section for RooCode in QUICK_START.md
+- disabled resources support by default for RooCode and Cline setups (for unknown reason it doesn't work)
 
 ## 2.2.2
 

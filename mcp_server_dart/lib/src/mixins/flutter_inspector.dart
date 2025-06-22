@@ -448,6 +448,38 @@ base mixin FlutterInspector
     }
   }
 
+  /// Common file saving logic for screenshots.
+  /// Returns a record with (fileUrls, error) where error is null on success.
+  Future<({List<String>? fileUrls, Exception? error})> _saveScreenshotsToFiles(
+    final List<String> images,
+  ) async {
+    if (!configuration.saveImagesToFiles) {
+      return (fileUrls: null, error: null);
+    }
+
+    try {
+      // Clean up old screenshots first
+      await _imageFileSaver.cleanupOldScreenshots();
+
+      // Save images to files and return file URLs
+      final fileUrls = await _imageFileSaver.saveImagesToFiles(images);
+      log(
+        LoggingLevel.info,
+        'Screenshots saved to files: ${fileUrls.length} files created',
+        logger: 'FlutterInspector',
+      );
+
+      return (fileUrls: fileUrls, error: null);
+    } on Exception catch (e) {
+      log(
+        LoggingLevel.error,
+        'Failed to save screenshots to files: $e',
+        logger: 'FlutterInspector',
+      );
+      return (fileUrls: null, error: e);
+    }
+  }
+
   /// Handle screenshots resource request.
   Future<ReadResourceResult> _handleScreenshotsResource(
     final ReadResourceRequest request,
@@ -457,6 +489,23 @@ base mixin FlutterInspector
       'Handling screenshots resource request',
       logger: 'FlutterInspector',
     );
+
+    final connected = await ensureVMServiceConnected();
+    if (!connected) {
+      log(
+        LoggingLevel.error,
+        'Screenshots resource failed: VM service not connected',
+        logger: 'FlutterInspector',
+      );
+      return ReadResourceResult(
+        contents: [
+          TextResourceContents(
+            uri: request.uri,
+            text: 'VM service not connected',
+          ),
+        ],
+      );
+    }
 
     try {
       final result = await callFlutterExtension(
@@ -471,41 +520,23 @@ base mixin FlutterInspector
         logger: 'FlutterInspector',
       );
 
-      // Check if file saving mode is enabled
-      if (configuration.saveImagesToFiles) {
-        try {
-          // Clean up old screenshots first
-          await _imageFileSaver.cleanupOldScreenshots();
+      // Use the common file saving helper
+      final saveResult = await _saveScreenshotsToFiles(images);
 
-          // Save images to files and return file URLs
-          final fileUrls = await _imageFileSaver.saveImagesToFiles(images);
-          log(
-            LoggingLevel.info,
-            'Screenshots saved to files: ${fileUrls.length} files created',
-            logger: 'FlutterInspector',
-          );
-
-          return ReadResourceResult(
-            meta: Meta.fromMap({'fileUrls': fileUrls}),
-            contents:
-                fileUrls
-                    .map(
-                      (final fileUrl) => TextResourceContents(
-                        uri: request.uri,
-                        text: 'Analyse with vision image by URL $fileUrl ',
-                        mimeType: 'text/plain',
-                      ),
-                    )
-                    .toList(),
-          );
-        } on Exception catch (e) {
-          log(
-            LoggingLevel.error,
-            'Failed to save screenshots to files: $e',
-            logger: 'FlutterInspector',
-          );
-          // Fall back to returning base64 images
-        }
+      if (saveResult.fileUrls != null) {
+        return ReadResourceResult(
+          meta: Meta.fromMap({'fileUrls': saveResult.fileUrls}),
+          contents:
+              saveResult.fileUrls!
+                  .map(
+                    (final fileUrl) => TextResourceContents(
+                      uri: request.uri,
+                      text: 'Analyse with vision image by URL $fileUrl ',
+                      mimeType: 'text/plain',
+                    ),
+                  )
+                  .toList(),
+        );
       }
 
       // Default behavior: return base64 images
@@ -1137,39 +1168,21 @@ base mixin FlutterInspector
         logger: 'FlutterInspector',
       );
 
-      // Check if file saving mode is enabled
-      if (configuration.saveImagesToFiles) {
-        try {
-          // Clean up old screenshots first
-          await _imageFileSaver.cleanupOldScreenshots();
+      // Use the common file saving helper
+      final saveResult = await _saveScreenshotsToFiles(images);
 
-          // Save images to files and return file URLs
-          final fileUrls = await _imageFileSaver.saveImagesToFiles(images);
-          log(
-            LoggingLevel.info,
-            'Screenshots saved to files: ${fileUrls.length} files created',
-            logger: 'FlutterInspector',
-          );
-
-          return CallToolResult(
-            meta: Meta.fromMap({'fileUrls': fileUrls}),
-            content:
-                fileUrls
-                    .map(
-                      (final fileUrl) => TextContent(
-                        text: 'Analyse with vision image by URL $fileUrl',
-                      ),
-                    )
-                    .toList(),
-          );
-        } on Exception catch (e) {
-          log(
-            LoggingLevel.error,
-            'Failed to save screenshots to files: $e',
-            logger: 'FlutterInspector',
-          );
-          // Fall back to returning base64 images
-        }
+      if (saveResult.fileUrls != null) {
+        return CallToolResult(
+          meta: Meta.fromMap({'fileUrls': saveResult.fileUrls}),
+          content:
+              saveResult.fileUrls!
+                  .map(
+                    (final fileUrl) => TextContent(
+                      text: 'Analyse with vision image by URL $fileUrl',
+                    ),
+                  )
+                  .toList(),
+        );
       }
 
       // Default behavior: return base64 images
