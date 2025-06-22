@@ -31,6 +31,7 @@ Future<void> main(final List<String> args) async {
         environment: parsedArgs.option(environment) ?? defaultEnvironment,
         dynamicRegistrySupported: parsedArgs.flag(dynamicRegistrySupported),
         awaitDndConnection: parsedArgs.flag(awaitDndConnection),
+        saveImagesToFiles: parsedArgs.flag(saveImagesToFiles),
       );
       final server = MCPToolkitServer.fromStreamChannel(
         StreamChannel.withCloseGuarantee(io.stdin, io.stdout)
@@ -112,6 +113,12 @@ final argParser =
             'Use with caution. (disable for Windsurf, works with Cursor)',
       )
       ..addFlag(dumpsSupported, help: 'Enable debug dump operations')
+      ..addFlag(
+        saveImagesToFiles,
+        help:
+            'Save captured images as files in temporal folder instead of'
+            ' returning base64 data',
+      )
       ..addOption(
         logLevel,
         defaultsTo: defaultLogLevel,
@@ -140,3 +147,4 @@ const environment = 'environment';
 const help = 'help';
 const dynamicRegistrySupported = 'dynamics';
 const awaitDndConnection = 'await-dnd';
+const saveImagesToFiles = 'img-files';

@@ -10,6 +10,18 @@
       ],
       "env": {},
       "disabled": false
+    },
+    "flutter-inspector-files": {
+      "command": "/absolute/path/to/flutter_inspector_mcp",
+      "args": [
+        "--dart-vm-host=localhost",
+        "--dart-vm-port=8181",
+        "--no-resources",
+        "--images",
+        "--save-images-to-files"
+      ],
+      "env": {},
+      "disabled": false
     }
   }
 }

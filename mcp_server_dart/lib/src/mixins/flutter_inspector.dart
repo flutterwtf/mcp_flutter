@@ -8,6 +8,7 @@ import 'dart:convert';
 
 import 'package:dart_mcp/server.dart';
 import 'package:flutter_inspector_mcp_server/src/base_server.dart';
+import 'package:flutter_inspector_mcp_server/src/mixins/image_file_saver.dart';
 import 'package:flutter_inspector_mcp_server/src/mixins/port_scanner.dart';
 import 'package:flutter_inspector_mcp_server/src/mixins/vm_service_support.dart';
 import 'package:from_json_to_json/from_json_to_json.dart';
@@ -41,6 +42,7 @@ const mcpToolkitExtNames = (
 base mixin FlutterInspector
     on BaseMCPToolkitServer, ToolsSupport, ResourcesSupport, VMServiceSupport {
   late final _portScanner = PortScanner(server: this);
+  late final _imageFileSaver = ImageFileSaver(server: this);
 
   @override
   FutureOr<InitializeResult> initialize(final InitializeRequest request) {
@@ -469,6 +471,44 @@ base mixin FlutterInspector
         logger: 'FlutterInspector',
       );
 
+      // Check if file saving mode is enabled
+      if (configuration.saveImagesToFiles) {
+        try {
+          // Clean up old screenshots first
+          await _imageFileSaver.cleanupOldScreenshots();
+
+          // Save images to files and return file URLs
+          final fileUrls = await _imageFileSaver.saveImagesToFiles(images);
+          log(
+            LoggingLevel.info,
+            'Screenshots saved to files: ${fileUrls.length} files created',
+            logger: 'FlutterInspector',
+          );
+
+          return ReadResourceResult(
+            meta: Meta.fromMap({'fileUrls': fileUrls}),
+            contents:
+                fileUrls
+                    .map(
+                      (final fileUrl) => TextResourceContents(
+                        uri: request.uri,
+                        text: 'Analyse with vision image by URL $fileUrl ',
+                        mimeType: 'text/plain',
+                      ),
+                    )
+                    .toList(),
+          );
+        } on Exception catch (e) {
+          log(
+            LoggingLevel.error,
+            'Failed to save screenshots to files: $e',
+            logger: 'FlutterInspector',
+          );
+          // Fall back to returning base64 images
+        }
+      }
+
+      // Default behavior: return base64 images
       return ReadResourceResult(
         contents:
             images
@@ -496,6 +536,10 @@ base mixin FlutterInspector
         ],
       );
     }
+  }
+
+  Future<void> dispose() async {
+    await _imageFileSaver.cleanupOldScreenshots();
   }
 
   /// Handle view details resource request.
@@ -1093,6 +1137,42 @@ base mixin FlutterInspector
         logger: 'FlutterInspector',
       );
 
+      // Check if file saving mode is enabled
+      if (configuration.saveImagesToFiles) {
+        try {
+          // Clean up old screenshots first
+          await _imageFileSaver.cleanupOldScreenshots();
+
+          // Save images to files and return file URLs
+          final fileUrls = await _imageFileSaver.saveImagesToFiles(images);
+          log(
+            LoggingLevel.info,
+            'Screenshots saved to files: ${fileUrls.length} files created',
+            logger: 'FlutterInspector',
+          );
+
+          return CallToolResult(
+            meta: Meta.fromMap({'fileUrls': fileUrls}),
+            content:
+                fileUrls
+                    .map(
+                      (final fileUrl) => TextContent(
+                        text: 'Analyse with vision image by URL $fileUrl',
+                      ),
+                    )
+                    .toList(),
+          );
+        } on Exception catch (e) {
+          log(
+            LoggingLevel.error,
+            'Failed to save screenshots to files: $e',
+            logger: 'FlutterInspector',
+          );
+          // Fall back to returning base64 images
+        }
+      }
+
+      // Default behavior: return base64 images
       return CallToolResult(
         content: [
           ...images.map(
