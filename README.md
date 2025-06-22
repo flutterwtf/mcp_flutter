@@ -42,7 +42,7 @@ _For AI-Powered Development_
 >
 > Have a nice day!
 
-## 🎉 v2.2.3 released! 🎉
+## 🎉 v2.3.0 released! 🎉
 
 - feature: Added support for saving captured screenshots as files instead of returning them as base64 data, with automatic cleanup of old screenshots. Use (`--save-images`) flag to enable it.
 

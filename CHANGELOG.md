@@ -1,4 +1,4 @@
-## 2.2.3
+## 2.3.0
 
 - perf: added more checks for [MCPCallEntry.resourceUri] for MCPToolkit package (MCPToolkit updated to v0.2.3)
 
