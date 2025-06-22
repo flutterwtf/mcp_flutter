@@ -51,6 +51,7 @@ _For AI-Powered Development_
 - perf: v0.2.3 - added more checks for [MCPCallEntry.resourceUri] for MCPToolkit package (MCPToolkit updated to v0.2.3)
 - disabled resources support by default for RooCode and Cline setups (for unknown reason it doesn't work)
 - added section for RooCode in QUICK_START.md
+- Huge thank you to [cosystudio](https://github.com/cosystudio) for raising, researching and (describing issues)[https://github.com/Arenukvern/mcp_flutter/issues/53] with RooCode MCP server.
 
 **Major Changes in v2.2.0:**
 

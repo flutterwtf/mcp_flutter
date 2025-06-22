@@ -11,6 +11,8 @@
 - added section for RooCode in QUICK_START.md
 - disabled resources support by default for RooCode and Cline setups (for unknown reason it doesn't work)
 
+- Huge thank you to [cosystudio](https://github.com/cosystudio) for raising, researching and (describing issues)[https://github.com/Arenukvern/mcp_flutter/issues/53] with RooCode MCP server.
+
 ## 2.2.2
 
 - Added `--await-dnd` flag to wait until DND connection is established. By default `--no-await-dnd` will be applied.
