@@ -76,6 +76,17 @@
         "research",
         "code"
       ]
+    },
+    {
+      "login": "cosystudio",
+      "name": "Cosy Studio",
+      "avatar_url": "https://avatars.githubusercontent.com/u/149987661?v=4",
+      "profile": "https://github.com/cosystudio",
+      "contributions": [
+        "userTesting",
+        "bug",
+        "research"
+      ]
     }
   ]
 }
