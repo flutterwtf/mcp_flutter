@@ -1,3 +1,16 @@
+## 2.2.3
+
+- perf: added more checks for [MCPCallEntry.resourceUri] for MCPToolkit package (MCPToolkit updated to v0.2.3)
+
+## mcp_server_dart
+
+- feat: Added support for saving captured screenshots as files instead of returning them as base64 data, with automatic cleanup of old screenshots. Use (`--save-images`) flag to enable it.
+
+- fix: Fixed various issues with dynamic registry, made logs level error by default.
+
+- added section for RooCode in QUICK_START.md
+- disabled resources support by default for RooCode and Cline setups (for unknown reason it doesn't work)
+
 ## 2.2.2
 
 - Added `--await-dnd` flag to wait until DND connection is established. By default `--no-await-dnd` will be applied.

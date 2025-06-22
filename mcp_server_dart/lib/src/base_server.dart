@@ -15,6 +15,7 @@ typedef VMServiceConfigurationRecord =
       String logLevel,
       String environment,
       bool awaitDndConnection,
+      bool saveImagesToFiles,
     });
 
 abstract base class BaseMCPToolkitServer extends MCPServer

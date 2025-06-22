@@ -123,7 +123,7 @@ final class DynamicRegistryTools {
   FutureOr<CallToolResult> _handleListClientToolsAndResources(
     final CallToolRequest request,
   ) async {
-    await server.discoveryService.registerToolsAndResources();
+    await server.discoveryService?.registerToolsAndResources();
 
     final toolEntries = registry.getToolEntries();
     final resourceEntries = registry.getResourceEntries();

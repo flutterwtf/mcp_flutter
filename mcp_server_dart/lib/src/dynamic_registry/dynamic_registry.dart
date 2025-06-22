@@ -187,9 +187,13 @@ final class DynamicRegistry {
       logger: 'DynamicRegistry',
     );
 
-    _eventController.add(
-      ToolRegisteredEvent(timestamp: DateTime.now(), entry: entry),
-    );
+    _addEvent(ToolRegisteredEvent(timestamp: DateTime.now(), entry: entry));
+  }
+
+  void _addEvent(final DynamicRegistryEvent event) {
+    if (!_eventController.isClosed) {
+      _eventController.add(event);
+    }
   }
 
   /// Verify that the current app is the same as the appId.
@@ -222,9 +226,7 @@ final class DynamicRegistry {
       logger: 'DynamicRegistry',
     );
 
-    _eventController.add(
-      ResourceRegisteredEvent(timestamp: DateTime.now(), entry: entry),
-    );
+    _addEvent(ResourceRegisteredEvent(timestamp: DateTime.now(), entry: entry));
   }
 
   /// Remove all tools and resources for the current app
@@ -234,7 +236,7 @@ final class DynamicRegistry {
 
     _clearCurrentRegistrations();
 
-    _eventController.add(
+    _addEvent(
       AppUnregisteredEvent(
         timestamp: DateTime.now(),
         appId: appId,
@@ -253,7 +255,7 @@ final class DynamicRegistry {
         'Unregistered MCP tool: ${entry.tool.name} from $_appId',
         logger: 'DynamicRegistry',
       );
-      _eventController.add(
+      _addEvent(
         ToolUnregisteredEvent(
           timestamp: DateTime.now(),
           toolName: entry.tool.name,
@@ -270,7 +272,7 @@ final class DynamicRegistry {
         '$_appId',
         logger: 'DynamicRegistry',
       );
-      _eventController.add(
+      _addEvent(
         ResourceUnregisteredEvent(
           timestamp: DateTime.now(),
           resourceUri: entry.resource.uri,
