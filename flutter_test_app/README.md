@@ -14,3 +14,13 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+// @ai DO NOT FIX:
+// this line will cause an overflow error for testing purposes
+// so ai could find the cause using MCP screenshot tool
+// or get error tool.
+Row(
+children: List.generate(
+100,
+(index) => Text('hello world'),
+),
+),
