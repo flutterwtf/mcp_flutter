@@ -36,6 +36,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   mcp_toolkit:
     path: ../mcp_toolkit/mcp_toolkit
+  provider: ^6.1.5
 
 dev_dependencies:
   # The "flutter_lints" package below contains a set of recommended lints to
