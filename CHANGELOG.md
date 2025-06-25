@@ -1,3 +1,8 @@
+## 2.3.1
+
+- added new examples for MCPToolkit package dynamic tools usage see [flutter_test_app/lib/main.dart](https://github.com/Arenukvern/mcp_flutter/tree/main/flutter_test_app/lib)
+- thanks for [@marwenbk](https://github.com/marwenbk) for asking [issue](https://github.com/Arenukvern/mcp_flutter/issues/56).
+
 ## 2.3.0
 
 - perf: added more checks for [MCPCallEntry.resourceUri] for MCPToolkit package (MCPToolkit updated to v0.2.3)
