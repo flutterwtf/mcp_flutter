@@ -1536,7 +1536,7 @@ extension type NavigateToRouteEntry._(MCPCallEntry entry) implements MCPCallEntr
       }
       // 1. Try to find MaterialApp and use routerConfig for navigation
       dynamic routerConfig;
-      void findMaterialApp(Element element) {
+      void findMaterialApp(final Element element) {
         if (routerConfig != null) return;
         if (element.widget is MaterialApp) {
           routerConfig = (element.widget as MaterialApp).routerConfig;
