@@ -13,6 +13,7 @@ import '../services/application_info.dart';
 import '../services/error_monitor.dart';
 import '../services/screenshot_service.dart';
 import '../widgets/text_painter_widget.dart';
+import '../utils/router_config_storage.dart';
 
 /// Returns a set of MCPCallEntry objects for the Flutter MCP Toolkit.
 ///
@@ -37,6 +38,8 @@ Set<MCPCallEntry> getFlutterMcpToolkitEntries({
       OnGetWidgetPropertiesEntry(),
       OnGetNavigationStackEntry(),
       LongPressByTextEntry(),
+      PopScreenEntry(),
+      NavigateToRouteEntry(),
     };
 
 /// Extension on [MCPToolkitBinding] to initialize the Flutter MCP Toolkit.
@@ -1427,4 +1430,151 @@ String? _extractSemanticsLabel(final Widget widget) {
   if (widget is MergeSemantics) return null;
   // Add more if needed
   return null;
+}
+
+/// {@template pop_screen_entry}
+/// MCPCallEntry for popping the current screen (Navigator.pop) supporting Navigator 1.0, 2.0, GoRouter, and AutoRouter.
+/// {@endtemplate}
+extension type PopScreenEntry._(MCPCallEntry entry) implements MCPCallEntry {
+  /// {@macro pop_screen_entry}
+  factory PopScreenEntry() {
+    final entry = MCPCallEntry(const MCPMethodName('pop_screen'), (final parameters,) async {
+      final root = WidgetsBinding.instance.rootElement;
+      if (root == null) {
+        return MCPCallResult(
+          message: 'No root element found.',
+          parameters: {'success': false},
+        );
+      }
+      String? usedNavigator;
+      bool success = false;
+      String? error;
+
+      // --- GoRouter ---
+      try {
+        final routerContext = findRouterContext(root);
+        if (routerContext != null) {
+          final delegate = (routerContext.widget as Router).routerDelegate;
+          if (delegate is GoRouterDelegate) {
+            // ignore: avoid_dynamic_calls
+            final goRouter = (delegate as dynamic).goRouter;
+            if (goRouter != null) {
+              goRouter.pop();
+              usedNavigator = 'GoRouter';
+              success = true;
+            } else if (delegate is dynamic && delegate.canPop != null && delegate.canPop()) {
+              delegate.pop();
+              usedNavigator = 'GoRouter (delegate.pop)';
+              success = true;
+            }
+          } else if (delegate.runtimeType.toString().contains('AutoRouterDelegate')) {
+            // --- AutoRouter ---
+            try {
+              final autoRouter = _findAutoRouter(routerContext);
+              if (autoRouter != null && (autoRouter as dynamic).canPop()) {
+                (autoRouter as dynamic).pop();
+                usedNavigator = 'AutoRouter';
+                success = true;
+              }
+            } catch (e) {
+              error = 'AutoRouter pop failed: $e';
+            }
+          }
+        }
+      } catch (e) {
+        error = 'Router pop failed: $e';
+      }
+
+      // --- Navigator fallback ---
+      if (!success) {
+        try {
+          NavigatorState? foundNavigator;
+          void findNavigator(final Element element) {
+            if (foundNavigator != null) return;
+            if (element is StatefulElement && element.state is NavigatorState) {
+              foundNavigator = element.state as NavigatorState;
+              return;
+            }
+            element.visitChildren(findNavigator);
+          }
+          root.visitChildren(findNavigator);
+          if (foundNavigator != null && foundNavigator!.canPop()) {
+            foundNavigator!.pop();
+            usedNavigator = 'Navigator';
+            success = true;
+          }
+        } catch (e) {
+          error = 'Navigator pop failed: $e';
+        }
+      }
+
+      return MCPCallResult(
+        message: success
+            ? 'Successfully popped screen using $usedNavigator.'
+            : 'Failed to pop screen.' + (error != null ? ' Error: $error' : ''),
+        parameters: {'success': success, 'usedNavigator': usedNavigator, if (error != null) 'error': error},
+      );
+    });
+    return PopScreenEntry._(entry);
+  }
+}
+
+/// {@template navigate_to_route_entry}
+/// MCPCallEntry for navigating to a route by string, supporting GoRouter, AutoRoute, and Navigator.
+/// {@endtemplate}
+extension type NavigateToRouteEntry._(MCPCallEntry entry) implements MCPCallEntry {
+  /// {@macro navigate_to_route_entry}
+  factory NavigateToRouteEntry() {
+    final entry = MCPCallEntry(const MCPMethodName('navigate_to_route'), (final parameters,) async {
+      final String? route = parameters['route'];
+      if (route == null) {
+        return MCPCallResult(message: 'Missing required parameter: route', parameters: {});
+      }
+      final root = WidgetsBinding.instance.rootElement;
+      if (root == null) {
+        return MCPCallResult(message: 'No root element found.', parameters: {});
+      }
+      // 1. Try to find MaterialApp and use routerConfig for navigation
+      dynamic routerConfig;
+      void findMaterialApp(Element element) {
+        if (routerConfig != null) return;
+        if (element.widget is MaterialApp) {
+          routerConfig = (element.widget as MaterialApp).routerConfig;
+          return;
+        }
+        element.visitChildren(findMaterialApp);
+      }
+      root.visitChildren(findMaterialApp);
+      if (routerConfig != null) {
+        try {
+          // Attempt to navigate using routerConfig as GoRouter
+          routerConfig.go(route);
+          return MCPCallResult(
+            message: 'Navigated using MaterialApp routerConfig',
+            parameters: {'success': true, 'system': 'MaterialApp.routerConfig'},
+          );
+        } catch (e) {
+          // If navigation fails, fall back to customRouterConfig
+        }
+      }
+      // 2. Check customRouterConfig set by user
+      if (RouterConfigStorage.customRouterConfig != null) {
+        try {
+          RouterConfigStorage.customRouterConfig.go(route);
+          return MCPCallResult(
+            message: 'Navigated using customRouterConfig',
+            parameters: {'success': true, 'system': 'customRouterConfig'},
+          );
+        } catch (e) {
+          // If navigation fails, proceed to failure
+        }
+      }
+      // 3. If neither routerConfig nor customRouterConfig is available, return failure
+      return MCPCallResult(
+        message: 'Failed to navigate to route: No router configuration found',
+        parameters: {'success': false},
+      );
+    });
+    return NavigateToRouteEntry._(entry);
+  }
 }

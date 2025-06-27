@@ -426,6 +426,57 @@ export function createCustomRpcHandlerMap(
         ],
       };
     },
+
+    pop_screen: async (request: CallToolRequest) => {
+      const port = handlePortParam(request);
+      const result = await rpcUtils.callFlutterExtension("ext.mcp.call", {
+        dartVmPort: port,
+        params: {
+          method: "pop_screen",
+          arguments: {},
+        },
+      });
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Pop screen requested.\n\nResult:\n${JSON.stringify(result, null, 2)}`,
+          },
+        ],
+      };
+    },
+
+    navigate_to_route: async (request: CallToolRequest) => {
+      const port = handlePortParam(request);
+      const route = request.params.arguments?.route;
+      if (!route) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Missing required parameter: route`,
+            },
+          ],
+        };
+      }
+      const result = await rpcUtils.callFlutterExtension("ext.mcp.call", {
+        dartVmPort: port,
+        params: {
+          method: "navigate_to_route",
+          arguments: {
+            route,
+          },
+        },
+      });
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Navigation to route '${route}' requested.\n\nResult:\n${JSON.stringify(result, null, 2)}`,
+          },
+        ],
+      };
+    },
   };
 }
 

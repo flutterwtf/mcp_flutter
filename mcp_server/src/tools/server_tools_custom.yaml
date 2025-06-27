@@ -198,3 +198,24 @@ tools:
           type: number
           description: "Optional: Custom port number if not using default Flutter debug port 8181"
       required: ["query"]
+  - name: pop_screen
+    description: "Pops the current screen using the active navigation system (Navigator, GoRouter, AutoRouter)."
+    inputSchema:
+      type: object
+      properties:
+        port:
+          type: number
+          description: "Optional: Custom port number if not using default Flutter debug port 8181"
+      required: []
+  - name: navigate_to_route
+    description: "Navigates to a route by string, supporting GoRouter, AutoRoute, and Navigator."
+    inputSchema:
+      type: object
+      properties:
+        route:
+          type: string
+          description: "The route string to navigate to."
+        port:
+          type: number
+          description: "Optional: Custom port number if not using default Flutter debug port 8181"
+      required: ["route"]

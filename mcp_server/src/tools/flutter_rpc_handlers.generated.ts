@@ -374,6 +374,16 @@ export const rpcToolConfigs = {
     rpcMethod: 'ext.mcp.toolkit.long_press',
     needsDebugVerification: true,
     needsDartProxy: true
+  },
+  pop_screen: {
+    rpcMethod: 'ext.mcp.toolkit.pop_screen',
+    needsDebugVerification: true,
+    needsDartProxy: true
+  },
+  navigate_to_route: {
+    rpcMethod: 'ext.mcp.toolkit.navigate_to_route',
+    needsDebugVerification: true,
+    needsDartProxy: true
   }
 } as const;
 

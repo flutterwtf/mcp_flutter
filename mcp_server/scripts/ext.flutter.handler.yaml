@@ -557,3 +557,20 @@ handlers:
     parameters:
       query: "arg.query"
       duration: "arg.duration"
+
+  - name: pop_screen
+    description: Pops the current screen using the active navigation system (Navigator, GoRouter, AutoRouter).
+    rpcMethod: "ext.mcp.toolkit.pop_screen"
+    needsDartServiceExtensionProxy: true
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters: {}
+
+  - name: navigate_to_route
+    description: Navigates to a route by string, supporting GoRouter, AutoRoute, and Navigator.
+    rpcMethod: "ext.mcp.toolkit.navigate_to_route"
+    needsDartServiceExtensionProxy: true
+    needsDebugVerification: true
+    responseWrapper: true
+    parameters:
+      route: "arg.route"
