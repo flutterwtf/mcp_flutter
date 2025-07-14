@@ -1,10 +1,7 @@
-// ignore_for_file: unnecessary_null_comparison, unnecessary_async, avoid_dynamic_calls, no_dynamic_invocations
+import 'dart:async';
 
-import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:dart_mcp/client.dart';
 import 'package:from_json_to_json/from_json_to_json.dart';
-import 'package:go_router/go_router.dart';
 import 'package:is_dart_empty_or_not/is_dart_empty_or_not.dart';
 
 import '../mcp_models.dart';
@@ -12,8 +9,6 @@ import '../mcp_toolkit_binding.dart';
 import '../services/application_info.dart';
 import '../services/error_monitor.dart';
 import '../services/screenshot_service.dart';
-import '../widgets/text_painter_widget.dart';
-import '../utils/router_config_storage.dart';
 
 /// Returns a set of MCPCallEntry objects for the Flutter MCP Toolkit.
 ///
@@ -23,30 +18,30 @@ import '../utils/router_config_storage.dart';
 /// [binding] is the MCP toolkit binding instance.
 Set<MCPCallEntry> getFlutterMcpToolkitEntries({
   required final MCPToolkitBinding binding,
-}) =>
-    {
-      OnAppErrorsEntry(errorMonitor: binding),
-      OnViewScreenshotsEntry(),
-      OnViewDetailsEntry(),
-      TapByTextEntry(),
-      EnterTextByHintEntry(),
-      TapBySemanticLabelEntry(),
-      TapByCoordinateEntry(),
-      OnViewWidgetTreeEntry(),
-      ScrollByOffsetEntry(),
-      OnGetNavigationTreeEntry(),
-      OnGetWidgetPropertiesEntry(),
-      OnGetNavigationStackEntry(),
-      LongPressByTextEntry(),
-      PopScreenEntry(),
-      NavigateToRouteEntry(),
-    };
+}) => {
+  OnAppErrorsEntry(errorMonitor: binding),
+  OnViewScreenshotsEntry(),
+  OnViewDetailsEntry(),
+  TapByTextEntry(),
+  EnterTextByHintEntry(),
+  TapBySemanticLabelEntry(),
+  TapByCoordinateEntry(),
+  OnViewWidgetTreeEntry(),
+  ScrollByOffsetEntry(),
+  OnGetNavigationTreeEntry(),
+  OnGetWidgetPropertiesEntry(),
+  OnGetNavigationStackEntry(),
+  LongPressByTextEntry(),
+  PopScreenEntry(),
+  NavigateToRouteEntry(),
+};
 
 /// Extension on [MCPToolkitBinding] to initialize the Flutter MCP Toolkit.
 extension MCPToolkitBindingExtension on MCPToolkitBinding {
   /// Initializes the Flutter MCP Toolkit.
-  void initializeFlutterToolkit() =>
-      addEntries(entries: getFlutterMcpToolkitEntries(binding: this));
+  void initializeFlutterToolkit() => unawaited(
+    addEntries(entries: getFlutterMcpToolkitEntries(binding: this)),
+  );
 }
 
 /// {@template on_app_errors_entry}
@@ -55,30 +50,48 @@ extension MCPToolkitBindingExtension on MCPToolkitBinding {
 extension type OnAppErrorsEntry._(MCPCallEntry entry) implements MCPCallEntry {
   /// {@macro on_app_errors_entry}
   factory OnAppErrorsEntry({required final ErrorMonitor errorMonitor}) {
-    final entry = MCPCallEntry(const MCPMethodName('app_errors'), (final parameters,) {
-      final count = jsonDecodeInt(parameters['count'] ?? '').whenZeroUse(10);
-      final reversedErrors = errorMonitor.errors.take(count).toList();
-      final errors = reversedErrors.map((final e) => e.toJson()).toList();
-      final message = () {
-        if (errors.isEmpty) {
-          return 'No errors found. Here are possible reasons: \n'
-              '1) There were really no errors. \n'
-              '2) Errors occurred before they were captured by MCP server. \n'
-              'What you can do (choose wisely): \n'
-              '1) Try to reproduce action, which expected to cause errors. \n'
-              '2) If errors still not visible, try to navigate to another '
-              'screen and back. \n'
-              '3) If even then errors still not visible, try to restart app.';
-        }
+    final entry = MCPCallEntry.tool(
+      handler: (final parameters) {
+        final count = jsonDecodeInt(parameters['count'] ?? '').whenZeroUse(10);
+        final reversedErrors = errorMonitor.errors.take(count).toList();
+        final errors = reversedErrors.map((final e) => e.toJson()).toList();
+        final message = () {
+          if (errors.isEmpty) {
+            return 'No errors found. Here are possible reasons: \n'
+                '1) There were really no errors. \n'
+                '2) Errors occurred before they were captured by MCP server. \n'
+                'What you can do (choose wisely): \n'
+                '1) Try to reproduce action, which expected to cause errors. \n'
+                '2) If errors still not visible, try to navigate to another '
+                'screen and back. \n'
+                '3) If even then errors still not visible, try to restart app.';
+          }
 
-        return 'Errors found. \n'
-            'Take a notice: the error message may have contain '
-            'a path to file and line number. \n'
-            'Use it to find the error in codebase.';
-      }();
+          return 'Errors found. \n'
+              'Take a notice: the error message may have contain '
+              'a path to file and line number. \n'
+              'Use it to find the error in codebase.';
+        }();
 
-      return MCPCallResult(message: message, parameters: {'errors': errors});
-    });
+        return MCPCallResult(message: message, parameters: {'errors': errors});
+      },
+      definition: MCPToolDefinition(
+        name: 'app_errors',
+        description:
+        'Get application errors and diagnostics information. '
+            'Returns recent errors with file paths and line numbers '
+            'for debugging.',
+        inputSchema: ObjectSchema(
+          properties: {
+            'count': IntegerSchema(
+              description: 'Number of recent errors to retrieve',
+              minimum: 1,
+              maximum: 10,
+            ),
+          },
+        ),
+      ),
+    );
     return OnAppErrorsEntry._(entry);
   }
 }
@@ -90,19 +103,34 @@ extension type OnViewScreenshotsEntry._(MCPCallEntry entry)
 implements MCPCallEntry {
   /// {@macro on_view_screenshots_entry}
   factory OnViewScreenshotsEntry() {
-    final entry = MCPCallEntry(const MCPMethodName('view_screenshots'), (final parameters,) async {
-      final compress = jsonDecodeBool(parameters['compress']);
-      final images = await ScreenshotService.takeScreenshots(
-        compress: compress,
-      );
-      return MCPCallResult(
-        message:
-        'Screenshots taken for each view. '
-            'If you find visual errors, you can try to request errors '
-            'to get more information with stack trace',
-        parameters: {'images': images},
-      );
-    });
+    final entry = MCPCallEntry.tool(
+      handler: (final parameters) async {
+        final compress = jsonDecodeBool(parameters['compress']);
+        final images = await ScreenshotService.takeScreenshots(
+          compress: compress,
+        );
+        return MCPCallResult(
+          message:
+          'Screenshots taken for each view. '
+              'If you find visual errors, you can try to request errors '
+              'to get more information with stack trace',
+          parameters: {'images': images},
+        );
+      },
+      definition: MCPToolDefinition(
+        name: 'view_screenshots',
+        description:
+        'Take screenshots of all Flutter views/screens. '
+            'Useful for visual debugging and UI analysis.',
+        inputSchema: ObjectSchema(
+          properties: {
+            'compress': BooleanSchema(
+              description: 'Whether to compress the screenshots',
+            ),
+          },
+        ),
+      ),
+    );
     return OnViewScreenshotsEntry._(entry);
   }
 }
@@ -114,17 +142,27 @@ extension type const OnViewDetailsEntry._(MCPCallEntry entry)
 implements MCPCallEntry {
   /// {@macro on_view_details_entry}
   factory OnViewDetailsEntry() {
-    final entry = MCPCallEntry(const MCPMethodName('view_details'), (final parameters,) {
-      final details = ApplicationInfo.getViewsInformation();
-      final json = details.map((final e) => e.toJson()).toList();
-      return MCPCallResult(
-        message: 'Information about each view. ',
-        parameters: {'details': json},
-      );
-    });
+    final entry = MCPCallEntry.tool(
+      handler: (final parameters) {
+        final details = ApplicationInfo.getViewsInformation();
+        final json = details.map((final e) => e.toJson()).toList();
+        return MCPCallResult(
+          message: 'Information about each view. ',
+          parameters: {'details': json},
+        );
+      },
+      definition: MCPToolDefinition(
+        name: 'view_details',
+        description:
+        'Get detailed information about Flutter views and widgets. '
+            'Returns structural information about the current UI state.',
+        inputSchema: ObjectSchema(properties: {}),
+      ),
+    );
     return OnViewDetailsEntry._(entry);
   }
 }
+
 
 /// {@template tap_by_text_entry}
 /// MCPCallEntry for tapping widgets by their text content.
@@ -879,70 +917,70 @@ implements MCPCallEntry {
 /// MCPCallEntry for getting the current navigation stack (supports Navigator 2.0 and basic 1.0).
 /// {@endtemplate}
 extension type const OnGetNavigationStackEntry._(MCPCallEntry entry)
-    implements MCPCallEntry {
+implements MCPCallEntry {
   /// {@macro get_navigation_stack_entry}
   factory OnGetNavigationStackEntry() {
     final entry = MCPCallEntry(const MCPMethodName('get_navigation_stack'),
-        (final parameters,) {
-      final root = WidgetsBinding.instance.rootElement;
-      if (root == null) {
-        return MCPCallResult(
-          message: 'No root element found.',
-          parameters: {'stack': []},
-        );
-      }
+            (final parameters,) {
+          final root = WidgetsBinding.instance.rootElement;
+          if (root == null) {
+            return MCPCallResult(
+              message: 'No root element found.',
+              parameters: {'stack': []},
+            );
+          }
 
-      final List<Map<String, dynamic>> stackEntries = [];
+          final List<Map<String, dynamic>> stackEntries = [];
 
-      void findNavigatorElements(final Element element) {
-        if (element is StatefulElement && element.state is NavigatorState) {
-          final NavigatorState navState = element.state as NavigatorState;
-          final Navigator navigatorWidget = navState.widget;
+          void findNavigatorElements(final Element element) {
+            if (element is StatefulElement && element.state is NavigatorState) {
+              final NavigatorState navState = element.state as NavigatorState;
+              final Navigator navigatorWidget = navState.widget;
 
-          try {
-            final pages = navigatorWidget.pages;
-            if (pages.isNotEmpty) {
-              for (final page in pages) {
-                stackEntries.add({
-                  'type': 'Page',
-                  'name': page.name ?? page.runtimeType.toString(),
-                  'runtimeType': page.runtimeType.toString(),
-                  'key': page.key.toString(),
-                });
-              }
-            } else {
-              // Navigator 1.0 fallback
-              if (navigatorWidget.initialRoute != null) {
-                stackEntries.add({
-                  'type': 'InitialRoute',
-                  'name': navigatorWidget.initialRoute,
-                });
-              } else {
-                stackEntries.add({
-                  'type': 'Unknown',
-                  'message':
+              try {
+                final pages = navigatorWidget.pages;
+                if (pages.isNotEmpty) {
+                  for (final page in pages) {
+                    stackEntries.add({
+                      'type': 'Page',
+                      'name': page.name ?? page.runtimeType.toString(),
+                      'runtimeType': page.runtimeType.toString(),
+                      'key': page.key.toString(),
+                    });
+                  }
+                } else {
+                  // Navigator 1.0 fallback
+                  if (navigatorWidget.initialRoute != null) {
+                    stackEntries.add({
+                      'type': 'InitialRoute',
+                      'name': navigatorWidget.initialRoute,
+                    });
+                  } else {
+                    stackEntries.add({
+                      'type': 'Unknown',
+                      'message':
                       'Could not extract stack from NavigatorState (Navigator 1.0)',
+                    });
+                  }
+                }
+              } catch (_) {
+                stackEntries.add({
+                  'type': 'Error',
+                  'message': 'Error while accessing navigator.pages or initialRoute',
                 });
               }
             }
-          } catch (_) {
-            stackEntries.add({
-              'type': 'Error',
-              'message': 'Error while accessing navigator.pages or initialRoute',
-            });
+
+            element.visitChildren(findNavigatorElements);
           }
-        }
 
-        element.visitChildren(findNavigatorElements);
-      }
+          root.visitChildren(findNavigatorElements);
 
-      root.visitChildren(findNavigatorElements);
-
-      return MCPCallResult(
-        message: 'Collected navigation stack.',
-        parameters: {'stack': stackEntries},
-      );
-    });
+          return MCPCallResult(
+            message: 'Collected navigation stack.',
+            parameters: {'stack': stackEntries},
+          );
+        });
 
     return OnGetNavigationStackEntry._(entry);
   }
@@ -952,106 +990,106 @@ extension type const OnGetNavigationStackEntry._(MCPCallEntry entry)
 /// MCPCallEntry for viewing the navigation tree (GoRouter, AutoRoute, or fallback).
 /// {@endtemplate}
 extension type const OnGetNavigationTreeEntry._(MCPCallEntry entry)
-    implements MCPCallEntry {
+implements MCPCallEntry {
   /// {@macro on_get_navigation_tree_entry}
   factory OnGetNavigationTreeEntry() {
     final entry = MCPCallEntry(const MCPMethodName('get_navigation_tree'),
-        (final parameters,) {
-      final root = WidgetsBinding.instance.rootElement;
-      final routerContext = root != null ? findRouterContext(root) : null;
+            (final parameters,) {
+          final root = WidgetsBinding.instance.rootElement;
+          final routerContext = root != null ? findRouterContext(root) : null;
 
-      if (routerContext == null) {
-        return MCPCallResult(
-          message: 'No Router widget found in the widget tree.',
-          parameters: {'tree': []},
-        );
-      }
-
-      // Get RouterDelegate directly from RouterState
-      final delegate = (routerContext.widget as Router).routerDelegate;
-
-      if (delegate == null) {
-        return MCPCallResult(
-          message: 'RouterDelegate not found.',
-          parameters: {'tree': []},
-        );
-      }
-
-      // --- GoRouter ---
-      if (delegate is GoRouterDelegate) {
-        try {
-          final goRouter = delegate.state.topRoute;
-          final tree = _serializeGoRouter(goRouter?.routes ?? []);
-          return MCPCallResult(
-            message: 'GoRouter navigation tree.',
-            parameters: {'tree': tree},
-          );
-        } catch (e) {
-          return MCPCallResult(
-            message: 'Failed to serialize GoRouter: $e',
-            parameters: {'tree': []},
-          );
-        }
-      }
-
-      // --- AutoRoute ---
-      if (delegate.runtimeType.toString().contains('AutoRouterDelegate')) {
-        try {
-          final autoRouter = _findAutoRouter(routerContext);
-          final tree = _serializeAutoRouter(autoRouter);
-          return MCPCallResult(
-            message: 'AutoRoute navigation tree.',
-            parameters: {'tree': tree},
-          );
-        } catch (e) {
-          return MCPCallResult(
-            message: 'Failed to serialize AutoRoute: $e',
-            parameters: {'tree': []},
-          );
-        }
-      }
-
-      // --- Navigator fallback ---
-      try {
-        final navStack = <Map<String, dynamic>>[];
-        void findNavigatorElements(final Element element) {
-          if (element is StatefulElement && element.state is NavigatorState) {
-            final NavigatorState navState = element.state as NavigatorState;
-            final Navigator navigatorWidget = navState.widget;
-            try {
-              final pages = navigatorWidget.pages;
-              if (pages.isNotEmpty) {
-                for (final page in pages) {
-                  navStack.add({
-                    'type': 'Page',
-                    'name': page.name ?? page.runtimeType.toString(),
-                    'runtimeType': page.runtimeType.toString(),
-                    'key': page.key.toString(),
-                  });
-                }
-              } else if (navigatorWidget.initialRoute != null) {
-                navStack.add({
-                  'type': 'InitialRoute',
-                  'name': navigatorWidget.initialRoute,
-                });
-              }
-            } catch (_) {}
+          if (routerContext == null) {
+            return MCPCallResult(
+              message: 'No Router widget found in the widget tree.',
+              parameters: {'tree': []},
+            );
           }
-          element.visitChildren(findNavigatorElements);
-        }
 
-        (routerContext as Element).visitChildren(findNavigatorElements);
-        return MCPCallResult(
-          message: 'Navigator navigation stack.',
-          parameters: {'tree': navStack},
-        );
-      } catch (e) {
-        return MCPCallResult(
-          message: 'Unknown navigation type or error: $e',
-          parameters: {'tree': []},
-        );
-      }
-    });
+          // Get RouterDelegate directly from RouterState
+          final delegate = (routerContext.widget as Router).routerDelegate;
+
+          if (delegate == null) {
+            return MCPCallResult(
+              message: 'RouterDelegate not found.',
+              parameters: {'tree': []},
+            );
+          }
+
+          // --- GoRouter ---
+          if (delegate is GoRouterDelegate) {
+            try {
+              final goRouter = delegate.state.topRoute;
+              final tree = _serializeGoRouter(goRouter?.routes ?? []);
+              return MCPCallResult(
+                message: 'GoRouter navigation tree.',
+                parameters: {'tree': tree},
+              );
+            } catch (e) {
+              return MCPCallResult(
+                message: 'Failed to serialize GoRouter: $e',
+                parameters: {'tree': []},
+              );
+            }
+          }
+
+          // --- AutoRoute ---
+          if (delegate.runtimeType.toString().contains('AutoRouterDelegate')) {
+            try {
+              final autoRouter = _findAutoRouter(routerContext);
+              final tree = _serializeAutoRouter(autoRouter);
+              return MCPCallResult(
+                message: 'AutoRoute navigation tree.',
+                parameters: {'tree': tree},
+              );
+            } catch (e) {
+              return MCPCallResult(
+                message: 'Failed to serialize AutoRoute: $e',
+                parameters: {'tree': []},
+              );
+            }
+          }
+
+          // --- Navigator fallback ---
+          try {
+            final navStack = <Map<String, dynamic>>[];
+            void findNavigatorElements(final Element element) {
+              if (element is StatefulElement && element.state is NavigatorState) {
+                final NavigatorState navState = element.state as NavigatorState;
+                final Navigator navigatorWidget = navState.widget;
+                try {
+                  final pages = navigatorWidget.pages;
+                  if (pages.isNotEmpty) {
+                    for (final page in pages) {
+                      navStack.add({
+                        'type': 'Page',
+                        'name': page.name ?? page.runtimeType.toString(),
+                        'runtimeType': page.runtimeType.toString(),
+                        'key': page.key.toString(),
+                      });
+                    }
+                  } else if (navigatorWidget.initialRoute != null) {
+                    navStack.add({
+                      'type': 'InitialRoute',
+                      'name': navigatorWidget.initialRoute,
+                    });
+                  }
+                } catch (_) {}
+              }
+              element.visitChildren(findNavigatorElements);
+            }
+
+            (routerContext as Element).visitChildren(findNavigatorElements);
+            return MCPCallResult(
+              message: 'Navigator navigation stack.',
+              parameters: {'tree': navStack},
+            );
+          } catch (e) {
+            return MCPCallResult(
+              message: 'Unknown navigation type or error: $e',
+              parameters: {'tree': []},
+            );
+          }
+        });
 
     return OnGetNavigationTreeEntry._(entry);
   }
@@ -1081,10 +1119,10 @@ List<Map<String, dynamic>> _serializeGoRouter(final List<RouteBase> routes, [fin
       pageBuilder = route.builder?.toString();
       childrenRoutes = route.routes;
     } else    // Fallback for other RouteBase types
-    try {
-      childrenRoutes = route.routes;
-    } catch (_) {}
-  
+      try {
+        childrenRoutes = route.routes;
+      } catch (_) {}
+
 
     final path = parentPath + '/' + (routePath ?? '').replaceAll('//', '/');
     final routeInfo = <String, dynamic>{
@@ -1189,82 +1227,82 @@ BuildContext? findRouterContext(final Element root) {
 /// MCPCallEntry that returns widget properties at a specific element location.
 /// {@endtemplate}
 extension type const OnGetWidgetPropertiesEntry._(MCPCallEntry entry)
-    implements MCPCallEntry {
+implements MCPCallEntry {
   /// {@macro on_get_widget_properties_entry}
   factory OnGetWidgetPropertiesEntry() {
     final entry = MCPCallEntry(const MCPMethodName('get_widget_properties'),
-        (final parameters,) {
-      final String? key = parameters['key'];
-      if (key == null) {
-        return MCPCallResult(
-          message: 'Missing required parameter: key',
-          parameters: {},
-        );
-      }
-
-      final root = WidgetsBinding.instance.rootElement;
-      if (root == null) {
-        return MCPCallResult(
-          message: 'No root element found',
-          parameters: {},
-        );
-      }
-
-      Element? found;
-      void finder(final Element element) {
-        if (found != null) return;
-        final widgetKey = element.widget.key;
-        if (widgetKey != null) {
-          if (widgetKey.toString() == key || widgetKey.toString().contains(key)) {
-            found = element;
-            return;
+            (final parameters,) {
+          final String? key = parameters['key'];
+          if (key == null) {
+            return MCPCallResult(
+              message: 'Missing required parameter: key',
+              parameters: {},
+            );
           }
-          // Handle ValueKey specifically
-          if (widgetKey is ValueKey) {
-            if (widgetKey.value.toString() == key) {
-              found = element;
-              return;
+
+          final root = WidgetsBinding.instance.rootElement;
+          if (root == null) {
+            return MCPCallResult(
+              message: 'No root element found',
+              parameters: {},
+            );
+          }
+
+          Element? found;
+          void finder(final Element element) {
+            if (found != null) return;
+            final widgetKey = element.widget.key;
+            if (widgetKey != null) {
+              if (widgetKey.toString() == key || widgetKey.toString().contains(key)) {
+                found = element;
+                return;
+              }
+              // Handle ValueKey specifically
+              if (widgetKey is ValueKey) {
+                if (widgetKey.value.toString() == key) {
+                  found = element;
+                  return;
+                }
+              }
             }
+            element.visitChildren(finder);
           }
-        }
-        element.visitChildren(finder);
-      }
 
-      root.visitChildren(finder);
+          root.visitChildren(finder);
 
-      if (found == null) {
-        return MCPCallResult(
-          message: 'Widget with key "$key" not found.',
-          parameters: {},
-        );
-      }
+          if (found == null) {
+            return MCPCallResult(
+              message: 'Widget with key "$key" not found.',
+              parameters: {},
+            );
+          }
 
-      final widget = found!.widget;
-      final renderObject = found is RenderObjectElement ? found!.renderObject : null;
-      final diagnostics = widget.toDiagnosticsNode(style: DiagnosticsTreeStyle.singleLine).toString();
+          final widget = found!.widget;
+          final renderObject = found is RenderObjectElement ? found!.renderObject : null;
+          final diagnostics = widget.toDiagnosticsNode(style: DiagnosticsTreeStyle.singleLine).toString();
 
-      final properties = <String, dynamic>{
-        'runtimeType': widget.runtimeType.toString(),
-        'key': widget.key.toString(),
-        'diagnostics': diagnostics,
-      };
+          final properties = <String, dynamic>{
+            'runtimeType': widget.runtimeType.toString(),
+            'key': widget.key.toString(),
+            'diagnostics': diagnostics,
+          };
 
-      if (renderObject is RenderBox) {
-        properties['size'] = {
-          'width': renderObject.size.width,
-          'height': renderObject.size.height,
-        };
-        try {
-          final offset = renderObject.localToGlobal(Offset.zero);
-          properties['offset'] = {'dx': offset.dx, 'dy': offset.dy};
-        } catch (_) {}
-      }
+          if (renderObject is RenderBox) {
+            properties['size'] = {
+              'width': renderObject.size.width,
+              'height': renderObject.size.height,
+            };
+            try {
+              final offset = renderObject.localToGlobal(Offset.zero);
+              properties['offset'] = {'dx': offset.dx, 'dy': offset.dy};
+            } catch (_) {}
+          }
 
-      return MCPCallResult(
-        message: 'Widget properties for key "$key"',
-        parameters: properties,
-      );
-    });
+          return MCPCallResult(
+            message: 'Widget properties for key "$key"',
+            parameters: properties,
+          );
+        });
 
     return OnGetWidgetPropertiesEntry._(entry);
   }

@@ -37,7 +37,8 @@ final class ErrorDevtoolsService extends BaseDevtoolsService {
             '2) Errors occurred before they were captured by MCP server. \n'
             'What you can do (choose wisely): \n'
             '1) Try to reproduce action, which expected to cause errors. \n'
-            '2) If errors still not visible, try to navigate to another screen and back. \n'
+            '2) If errors still not visible, try to navigate to another '
+            'screen and back. \n'
             '3) If even then errors still not visible, try to restart app.',
       });
     }

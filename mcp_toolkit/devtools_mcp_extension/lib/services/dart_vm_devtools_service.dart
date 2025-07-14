@@ -23,7 +23,6 @@ const _freelyForwardingExtensions = [
   WidgetInspectorServiceExtensions.disposeGroup,
   WidgetInspectorServiceExtensions.isWidgetTreeReady,
   WidgetInspectorServiceExtensions.disposeId,
-  WidgetInspectorServiceExtensions.setPubRootDirectories,
   WidgetInspectorServiceExtensions.addPubRootDirectories,
   WidgetInspectorServiceExtensions.removePubRootDirectories,
   WidgetInspectorServiceExtensions.getPubRootDirectories,

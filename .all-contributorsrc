@@ -64,6 +64,29 @@
         "userTesting",
         "bug"
       ]
+    },
+    {
+      "login": "rednikisfun",
+      "name": "Isfun",
+      "avatar_url": "https://avatars.githubusercontent.com/u/53967674?v=4",
+      "profile": "https://github.com/rednikisfun",
+      "contributions": [
+        "userTesting",
+        "bug",
+        "research",
+        "code"
+      ]
+    },
+    {
+      "login": "cosystudio",
+      "name": "Cosy Studio",
+      "avatar_url": "https://avatars.githubusercontent.com/u/149987661?v=4",
+      "profile": "https://github.com/cosystudio",
+      "contributions": [
+        "userTesting",
+        "bug",
+        "research"
+      ]
     }
   ]
 }

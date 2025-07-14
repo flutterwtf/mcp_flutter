@@ -39,7 +39,8 @@ class FlutterErrorMonitor {
     try {
       // Enable structured errors
       await serviceManager.callServiceExtensionOnMainIsolate(
-        'ext.flutter.inspector.${WidgetInspectorServiceExtensions.structuredErrors.name}',
+        'ext.flutter.inspector.'
+        '${WidgetInspectorServiceExtensions.structuredErrors.name}',
         args: {'enabled': 'true'},
       );
 
@@ -122,6 +123,7 @@ class FlutterErrorMonitor {
   }
 
   /// Get an Instance object from error data.
+  // ignore: unused_element
   Future<Instance?> _getErrorInstance(final Map<String, Object?> data) async {
     final vm = vmService;
     final id = isolateId;
@@ -231,7 +233,8 @@ class FlutterErrorMonitor {
   //     return ErrorSeverity.error;
   //   }
 
-  //   if (level == DiagnosticLevel.warning || description.contains('warning')) {
+  //   if (level == DiagnosticLevel.warning ||
+  // description.contains('warning')) {
   //     return ErrorSeverity.warning;
   //   }
 

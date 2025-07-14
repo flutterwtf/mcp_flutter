@@ -30,26 +30,41 @@ _For AI-Powered Development_
 - [Configuration](CONFIGURATION.md)
 
 > [!NOTE]
-> There is a new [experimental package in development from Flutter team](https://github.com/dart-lang/ai/tree/main/pkgs/dart_tooling_mcp_server) which exposes Dart tooling development.
+> There is official [MCP Server for Flutter from Flutter team](https://github.com/dart-lang/ai/tree/main/pkgs/dart_mcp_server) which exposes Dart tooling.
 >
-> Therefore my current focus is
+> The **main goal of this project** is to bring power of MCP server tools by creating them in Flutter app, using **dynamic MCP tools registration** . See how it works in [short YouTube video](https://www.youtube.com/watch?v=Qog3x2VcO98). See [Quick Start](QUICK_START.md) for more details. See [original motivation](https://github.com/Arenukvern/mcp_flutter/blob/main/CHANGELOG.md#210) behind the idea.
 >
-> 1. to stabilize and polish tools which are useful in development (so it would be more plug & play, for example: it will return not only the errors, but prompt for AI how to work with that error) [see more in MCP_RPC_DESCRIPTION.md](MCP_RPC_DESCRIPTION.md)
-> 2. fine-tune process of MCP server tools creation by making it customizable.
+> Also, secondary goal is to stabilize and polish tools which are useful in development (so it would be specifically targeted for AI Assistants, for example: it will return not only the errors, but prompt for AI how to work with that error) [see more in MCP_RPC_DESCRIPTION.md](MCP_RPC_DESCRIPTION.md)
+>
+> Please share your feedback, ideas and suggestions in issues!
 >
 > Hope it will be useful for you,
 >
 > Have a nice day!
 
-## 🎉 v2.1.0 released! 🎉
+## 🎉 v2.3.0 released! 🎉
 
-Added Dart MCP Server to replace in future Typescript one. Already working, will migrate to it in the future. See more about it in [CHANGELOG.md](CHANGELOG.md).
+- feature: Added support for saving captured screenshots as files instead of returning them as base64 data, with automatic cleanup of old screenshots. Use (`--save-images`) flag to enable it.
+
+- fix: Fixed various issues with dynamic registry, made logs level error by default.
+
+- perf: v0.2.3 - added more checks for [MCPCallEntry.resourceUri] for MCPToolkit package (MCPToolkit updated to v0.2.3)
+- disabled resources support by default for RooCode and Cline setups (for unknown reason it doesn't work)
+- added section for RooCode in QUICK_START.md
+- Huge thank you to [cosystudio](https://github.com/cosystudio) for raising, researching and (describing issues)[https://github.com/Arenukvern/mcp_flutter/issues/53] with RooCode MCP server.
+
+**Major Changes in v2.2.0:**
+
+- **Dart-based MCP Server now is the main server**: Typescript server removed, and `mcp_server_dart` is the main server.
+- **Dynamic Tools Registration**: Flutter apps can now register custom tools at the MCP server. See how it works in [short YouTube video](https://www.youtube.com/watch?v=Qog3x2VcO98). See [Dynamic Tools Registration Docs](https://github.com/Arenukvern/mcp_flutter/blob/main/QUICK_START.md#dynamic-tools-registration) for more details.
+
+See more details in [CHANGELOG.md](CHANGELOG.md).
 
 ## ⚠️ WARNING
 
-Dump RPC methods (like `dump_render_tree`), may cause huge amount of tokens usage or overload context. Therefore now they are disabled by default, but can be enabled via environment variable `DUMPS_SUPPORTED=true`.
+Dump RPC methods (like `dump_render_tree`), may cause huge amount of tokens usage or overload context. Therefore now they are disabled by default, but can be enabled via `--dumps` flag.
 
-See more details about environment variables in [.env.example](mcp_server/.env.example).
+See more details about command line options in [mcp_server_dart README](mcp_server_dart/README.md).
 
 ## 🚀 Getting Started
 
@@ -63,7 +78,7 @@ See more details about environment variables in [.env.example](mcp_server/.env.e
 
 ## 🎯 AI Agent Tools
 
-### Error Analysis
+### Core Flutter Tools
 
 - `get_app_errors` [Resource|Tool] - Retrieves precise and condensed error information from your Flutter app
   **Usage**:
@@ -77,135 +92,19 @@ See more details about environment variables in [.env.example](mcp_server/.env.e
   🚧 Android, 🤔 Windows, 🤔 Linux, ❌ Web
   [See issue](https://github.com/Arenukvern/mcp_flutter/issues/23)
 
-### Development Tools
-
-- `view_screenshot` [Resource|Tool] - Captures a screenshots of the running application.
+- `view_screenshot` [Resource|Tool] - Captures screenshots of the running application.
   **Configuration**:
 
-  - Enable with `--images` flag or `IMAGES_SUPPORTED=true` environment variable
+  - Enable with `--images` flag
   - Will use PNG compression to optimize image size.
 
+- `get_view_details` [Resource|Tool] - size of screen, pixel ratio. May unlock ability for an Agent to use widget selection. Will return details about each view in the app.
 
-- `get_view_details` [Resource|Tool] - size of screen, pixel ratio. May unlock ability for an Agent to use widget selection.
+### Dynamic Tools Registration 🆕
 
+**Dynamic Registration Features:**
 
-- `view_widget_tree` [Tool] - json tree of widgets with small information about them. May unlock ability for an Agent to use widget selection.
-
-- `get_widget_properties` [Tool] - Returns detailed properties of a widget identified by its key.
-
-
-<!-- - `hot_reload` [Tool] - Performs hot reload of the Flutter application
-  **Tested on**:
-  ✅ macOS, ✅ iOS, ✅ Android
-  **Not tested on**:
-  🤔 Windows, 🤔 Linux, ❌ Web
-  [See issue](https://github.com/Arenukvern/mcp_flutter/issues/23)
-
-  **Tested on**:
-  ✅ macOS, ✅ iOS
-  **Not tested on**:
-  🚧 Android, 🤔 Windows, 🤔 Linux, ❌ Web
-  [See issue](https://github.com/Arenukvern/mcp_flutter/issues/23) -->
-
-### Testing Tools
-
-- `tap_by_text` [Tool] - Find TextButton, ElevatedButton or GestureDetector with child widget Text with the passed string 
-  **Usage**:
-
-    - Write the AI agent the text that is on the button and wait.
-    - Write action instructions to the AI agent, telling it to call `view_screenshots` after each action so that it continues to follow the script itself by clicking buttons.
-
-  **Tested on**:
-  ✅ Android
-  **Not tested on**:
-  🤔 iOS, 🤔 macOs 🤔 Windows, 🤔 Linux, ❌ Web
-
-
-- `enter_text_by_hint` [Tool] - Looks for a TextField that has `hintText` equal to the `hint` parameter. If found and if TextField has controller, sets `text` to controller. If there is no controller but element is a StatefulElement, tries to reach EditableTextState and manually update TextEditingValue. If onChanged is set, manually calls it.
-  **Usage**:
-
-    - Write the AI agent the hint text of TextField and text that you want to write in it and wait.
-    - Write input data as well as action instructions to the AI agent, instructing it to call 'view_screenshots' after each action so that it continues to follow the script and determine its next step.
-
-  **Tested on**:
-  ✅ Android
-  **Not tested on**:
-  🤔 iOS, 🤔 macOs 🤔 Windows, 🤔 Linux, ❌ Web
-
-
-- `tap_by_semantic_label` [Tool] - Looks for a Semantics that has label equal to the `text` parameter. Tap on ancestor widget that has tappable methods
-  **Usage**:
-
-  - Write the AI agent the semantic label of widget.
-  - Write action instructions to the AI agent, telling it to call view_screenshots after each action so that it continues to follow the script itself by clicking buttons.
-
-  **Tested on**:
-  ✅ Android
-  **Not tested on**:
-  🤔 iOS, 🤔 macOs 🤔 Windows, 🤔 Linux, ❌ Web
-
-
-- `tap_by_coordinate` [Tool] - Looks for a tappable widget on `dx` and `dy`. Tap on it if it has tappable methods
-  **Usage**:
-
-  - Write the AI agent the coordinates of widget.
-  - Write action instructions to the AI agent, telling it to call view_screenshots after each action so that it continues to follow the script itself by clicking on coordinates.
-
-  **Tested on**:
-  ✅ Android
-  **Not tested on**:
-  🤔 iOS, 🤔 macOs 🤔 Windows, 🤔 Linux, ❌ Web
-
-
-- `scroll_by_offset` [Tool] - Scrolls a scrollable widget (like ListView, GridView, etc.) by a specified horizontal (`dx`) or vertical (`dy`) offset. You can optionally filter the target scrollable by its key, semantic label, or by searching for a child widget containing specific text.
-  **Usage**:
-  - Provide `dx` and/or `dy` to specify the scroll amount. The scroll will be applied along the widget's scroll direction (vertical or horizontal).
-  - Optionally, provide a `key`, `semanticLabel`, or `text` to target a specific scrollable widget.
-  - If no filter is provided, the first scrollable found will be scrolled.
-  - Useful for programmatically scrolling lists, grids, or other scrollable areas in your app.
-  - After scrolling, you can call `view_screenshots` to verify the new UI state.
-
-  **Tested on**:
-  ✅ Android
-  **Not tested on**:
-  🤔 iOS, 🤔 macOs 🤔 Windows, 🤔 Linux, ❌ Web
-
-- `long_press` [Tool] - Performs a long press on a widget identified by text, key, or semantic label.
-  **Usage**:
-  - Provide the `query` parameter to match the widget (by text, key, semantic label, hint, or tooltip).
-  - Optionally, provide `duration` (in milliseconds) to control the long press duration (default: 500ms).
-  - Useful for testing context menus, drag-and-drop, or any UI that responds to long press gestures.
-  - Returns success status, matched widget type, and matching criteria.
-
-  **Tested on**:
-  ✅ Android
-  **Not tested on**:
-  🤔 iOS, 🤔 macOs 🤔 Windows, 🤔 Linux, ❌ Web
-
-### Navigation Tools
-
-- `get_navigation_tree` [Tool] - Returns a tree structure representing the current navigation hierarchy of your app. Supports GoRouter, AutoRoute, or falls back to Navigator. Useful for understanding the full navigation structure and available routes.
-  **Usage**:
-
-  - Call this tool to get a JSON tree of all navigation routes and their relationships.
-  - Helps AI agents reason about possible navigation paths and available screens.
-
-  **Tested on**:
-  ✅ Android
-  **Not tested on**:
-  🤔 iOS, 🤔 macOs 🤔 Windows, 🤔 Linux, ❌ Web
-
-
-- `get_navigation_stack` [Tool] - Returns the current navigation stack, showing the active pages/screens in the app. Supports both Navigator 2.0 and basic Navigator 1.0.
-  **Usage**:
-
-  - Call this tool to get a list of the current stack of pages/screens.
-  - Useful for understanding the current navigation state and back stack.
-
-  **Tested on**:
-  ✅ Android
-  **Not tested on**:
-  🤔 iOS, 🤔 macOs 🤔 Windows, 🤔 Linux, ❌ Web
+Flutter apps can now register custom tools and resources at runtime. See how it works in [short YouTube video](https://www.youtube.com/watch?v=Qog3x2VcO98). See [Dynamic Tools Registration Docs](#dynamic-tools-registration-🆕) for more details.
 
 All tools default to using port 8181 if no port is specified. You can override this by providing a specific port number.
 
@@ -228,9 +127,16 @@ This MCP server is verified by [MseeP.ai](https://mseep.ai).
    - Check if the port is not being used by another process
 
 2. **AI Tool Not Detecting Inspector**
+
    - Restart the AI tool after configuration changes
    - Verify the configuration JSON syntax
    - Check the tool's logs for connection errors
+
+3. **Dynamic Tools Not Appearing**
+   - Ensure `mcp_toolkit` package is properly initialized in your Flutter app
+   - Check that tools are registered using `MCPToolkitBinding.instance.addEntries()`
+   - Use `listClientToolsAndResources` to verify registration
+   - Hot reload your Flutter app after adding new tools
 
 The Flutter MCP Server is registered with Smithery's registry, making it discoverable and usable by other AI tools through a standardized interface.
 
@@ -239,9 +145,9 @@ The Flutter MCP Server is registered with Smithery's registry, making it discove
 ```
 ┌─────────────────┐     ┌───────────────────────┐     ┌─────────────────┐
 │                 │     │  Flutter App with     │     │                 │
-│  Flutter App    │<--->│  mcp_toolkit (VM Svc.  │<--->│   MCP Server   │
-│  (Debug Mode)   │     │  Extensions)          │     │                 │
-│                 │     │                       │     │                 │
+│  Flutter App    │<--->│  mcp_toolkit (VM Svc.  │<--->│ MCP Server Dart │
+│  (Debug Mode)   │     │  Extensions + Dynamic │     │                 │
+│                 │     │  Tool Registration)   │     │                 │
 └─────────────────┘     └───────────────────────┘     └─────────────────┘
 ```
 
@@ -267,6 +173,10 @@ Huge thanks to all contributors for making this project better!
       <td align="center" valign="top" width="14.28%"><a href="https://glama.ai"><img src="https://avatars.githubusercontent.com/u/108313943?v=4?s=100" width="100px;" alt="Frank Fiegel"/><br /><sub><b>Frank Fiegel</b></sub></a><br /><a href="#infra-punkpeye" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Harishwarrior"><img src="https://avatars.githubusercontent.com/u/38380040?v=4?s=100" width="100px;" alt="Harish Anbalagan"/><br /><sub><b>Harish Anbalagan</b></sub></a><br /><a href="#userTesting-Harishwarrior" title="User Testing">📓</a> <a href="#bug-Harishwarrior" title="Bug reports">🐛</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/torbenkeller"><img src="https://avatars.githubusercontent.com/u/33001558?v=4?s=100" width="100px;" alt="Torben Keller"/><br /><sub><b>Torben Keller</b></sub></a><br /><a href="#userTesting-torbenkeller" title="User Testing">📓</a> <a href="#bug-torbenkeller" title="Bug reports">🐛</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/rednikisfun"><img src="https://avatars.githubusercontent.com/u/53967674?v=4?s=100" width="100px;" alt="Isfun"/><br /><sub><b>Isfun</b></sub></a><br /><a href="#userTesting-rednikisfun" title="User Testing">📓</a> <a href="#bug-rednikisfun" title="Bug reports">🐛</a> <a href="#research-rednikisfun" title="Research">🔬</a> <a href="#code-rednikisfun" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/cosystudio"><img src="https://avatars.githubusercontent.com/u/149987661?v=4?s=100" width="100px;" alt="Cosy Studio"/><br /><sub><b>Cosy Studio</b></sub></a><br /><a href="#userTesting-cosystudio" title="User Testing">📓</a> <a href="#bug-cosystudio" title="Bug reports">🐛</a> <a href="#research-cosystudio" title="Research">🔬</a></td>
     </tr>
   </tbody>
 </table>

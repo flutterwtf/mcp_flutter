@@ -36,6 +36,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   mcp_toolkit:
     path: ../mcp_toolkit/mcp_toolkit
+  provider: ^6.1.5
 
 dev_dependencies:
   # The "flutter_lints" package below contains a set of recommended lints to
@@ -44,8 +45,6 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
-  devtools_mcp_extension:
-    path: ../mcp_toolkit/devtools_mcp_extension
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

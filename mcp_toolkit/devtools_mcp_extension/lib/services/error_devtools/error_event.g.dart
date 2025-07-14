@@ -1,5 +1,7 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
+// ignore_for_file: prefer_final_parameters
+
 part of 'error_event.dart';
 
 // **************************************************************************
@@ -14,7 +16,7 @@ Map<String, dynamic> _$FlutterErrorEventToJson(_FlutterErrorEvent instance) =>
       'type': instance.type,
       'message': instance.message,
       'timestamp': instance.timestamp.toIso8601String(),
-      'severity': _$ErrorSeverityEnumMap[instance.severity]!,
+      'severity': _$ErrorSeverityEnumMap[instance.severity],
     };
 
 const _$ErrorSeverityEnumMap = {

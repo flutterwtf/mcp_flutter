@@ -1,7 +1,7 @@
 name: mcp_toolkit
 description: "Flutter MCP Toolkit to add Flutter-specific methods to the MCP server"
 repository: https://github.com/Arenukvern/mcp_flutter/tree/main/mcp_toolkit/mcp_toolkit
-version: 0.1.2
+version: 0.2.3
 
 environment:
   sdk: ">=3.7.0 <4.0.0"
@@ -10,11 +10,12 @@ dependencies:
   auto_route: ^10.1.0+1
   go_router: ^15.2.3
   collection: ^1.19.1
+  dart_mcp: ^0.2.2
   equatable: ^2.0.7
   flutter:
     sdk: flutter
-  from_json_to_json: ^0.1.0
-  is_dart_empty_or_not: ^0.2.2
+  from_json_to_json: ^0.2.1
+  is_dart_empty_or_not: ^0.2.3
   universal_io: ^2.2.2
 
 dev_dependencies:

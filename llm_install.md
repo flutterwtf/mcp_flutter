@@ -18,8 +18,7 @@ This guide provides step-by-step instructions for AI agents to install and confi
 
 Before starting the installation, ensure the following requirements are met:
 
-- **Node.js**: Version 14 or later
-- **Flutter SDK**: Installed and configured
+- **Flutter SDK**: Installed and configured (includes Dart SDK)
 - **Flutter App**: Running in debug mode (the USER will specify which app).
 - **AI Assistant**: Cursor, Claude, Cline AI, Windsurf, RooCode, or any MCP-compatible tool
 - **Git**: For cloning the repository
@@ -57,8 +56,9 @@ make install
 
 This command will:
 
-- Install all necessary Node.js dependencies from `package.json`
+- Install all necessary Dart dependencies from `pubspec.yaml`
 - Build the MCP server automatically
+- Create the executable at `mcp_server_dart/build/flutter_inspector_mcp`
 
 ### 4. Add MCP Toolkit to the User's Flutter App
 
@@ -76,7 +76,7 @@ dependencies:
   flutter:
     sdk: flutter
   # ... other dependencies
-  mcp_toolkit: ^0.1.2
+  mcp_toolkit: ^0.2.0
 ```
 
 Then, AI Agent, run the following within `[FLUTTER_APP_PATH]`:
@@ -140,14 +140,15 @@ AI Agent: Ask the USER which AI assistant they are using (Cursor, Cline AI, Clau
 {
   "mcpServers": {
     "flutter-inspector": {
-      "command": "node",
-      "args": ["[CLONED_MCP_FLUTTER_PATH]/mcp_server/build/index.js"],
-      "env": {
-        "PORT": "3334",
-        "LOG_LEVEL": "critical",
-        "RESOURCES_SUPPORTED": "true",
-        "IMAGES_SUPPORTED": "true"
-      },
+      "command": "[CLONED_MCP_FLUTTER_PATH]/mcp_server_dart/build/flutter_inspector_mcp",
+      "args": [
+        "--dart-vm-host=localhost",
+        "--dart-vm-port=8181",
+        "--resources",
+        "--images",
+        "--dynamics"
+      ],
+      "env": {},
       "disabled": false,
       "autoApprove": []
     }
@@ -160,7 +161,7 @@ AI Agent: Ask the USER which AI assistant they are using (Cursor, Cline AI, Clau
 
 #### For Cursor
 
-**⚠️ Important (Relay to USER):** Cursor doesn't support resources, so `RESOURCES_SUPPORTED` must be `false`.
+**⚠️ Important (Relay to USER):** Cursor doesn't support resources well, so use `--no-resources`.
 
 1.  AI Agent: Instruct the USER that the configuration for MCP servers with Cursor AI is typically managed in a file named `~/.cursor/mcp.json`.
 
@@ -170,22 +171,24 @@ AI Agent: Ask the USER which AI assistant they are using (Cursor, Cline AI, Clau
 {
   "mcpServers": {
     "flutter-inspector": {
-      "command": "node",
-      "args": ["[CLONED_MCP_FLUTTER_PATH]/mcp_server/build/index.js"],
-      "env": {
-        "RESOURCES_SUPPORTED": "false",
-        "IMAGES_SUPPORTED": "true",
-        "LOG_LEVEL": "critical"
-      },
+      "command": "[CLONED_MCP_FLUTTER_PATH]/mcp_server_dart/build/flutter_inspector_mcp",
+      "args": [
+        "--dart-vm-host=localhost",
+        "--dart-vm-port=8181",
+        "--no-resources",
+        "--images",
+        "--dynamics"
+      ],
+      "env": {},
       "disabled": false
     }
   }
 }
 ```
 
-4.  AI Agent: Instruct the USER to restart Cursor.
-5.  Open Agent Panel (Cmd+L on macOS).
-6.  Test with commands like "call view_screenshots".
+2.  AI Agent: Instruct the USER to restart Cursor.
+3.  Open Agent Panel (Cmd+L on macOS).
+4.  Test with commands like "List all available tools from my Flutter app" or "Take a screenshot of my app".
 
 #### For Claude Desktop
 
@@ -195,14 +198,15 @@ AI Agent: Ask the USER which AI assistant they are using (Cursor, Cline AI, Clau
 {
   "mcpServers": {
     "flutter-inspector": {
-      "command": "node",
-      "args": ["[CLONED_MCP_FLUTTER_PATH]/mcp_server/build/index.js"],
-      "env": {
-        "PORT": "3334",
-        "LOG_LEVEL": "critical",
-        "RESOURCES_SUPPORTED": "true", // Assuming Claude supports this, adjust if known otherwise
-        "IMAGES_SUPPORTED": "true" // Assuming Claude supports this
-      },
+      "command": "[CLONED_MCP_FLUTTER_PATH]/mcp_server_dart/build/flutter_inspector_mcp",
+      "args": [
+        "--dart-vm-host=localhost",
+        "--dart-vm-port=8181",
+        "--resources",
+        "--images",
+        "--dynamics"
+      ],
+      "env": {},
       "disabled": false
     }
   }
@@ -212,6 +216,59 @@ AI Agent: Ask the USER which AI assistant they are using (Cursor, Cline AI, Clau
 2.  AI Agent: Instruct the USER to restart Claude Desktop.
 3.  Flutter inspector tools will be automatically available.
 
+## Dynamic Tools Registration
+
+AI Agent: Inform the USER about the new dynamic tools registration feature:
+
+### What is Dynamic Tools Registration?
+
+The v2.2.0 release introduces the ability for Flutter apps to register custom tools and resources at runtime. This means:
+
+- Tools can be added while the app is running. However MCP Server may need to be restarted to see the new tools.
+- **Hot Reload Support**: Tools update automatically during development
+- **Custom Functionality**: Apps can expose app-specific debugging and inspection tools
+
+### Basic Example for the USER
+
+AI Agent: Show the USER how to register a custom tool in their Flutter app:
+
+```dart
+// Add this to your Flutter app after MCPToolkitBinding initialization
+final customTool = MCPCallEntry.tool(
+  handler: (request) {
+    final name = request['name'] ?? 'World';
+    return MCPCallResult(
+      message: 'Hello, $name!',
+      parameters: {'greeting': 'Hello, $name!'},
+    );
+  },
+  definition: MCPToolDefinition(
+    name: 'say_hello',
+    description: 'Say hello to someone',
+    inputSchema: {
+      'type': 'object',
+      'properties': {
+        'name': {
+          'type': 'string',
+          'description': 'Name to greet',
+        },
+      },
+    },
+  ),
+);
+
+// Register the tool
+await MCPToolkitBinding.instance.addEntries(entries: {customTool});
+```
+
+### Using Dynamic Tools
+
+AI Agent: Explain to the USER how to use dynamic tools:
+
+1. **Discover Tools**: Use `listClientToolsAndResources` to see all available tools
+2. **Execute Tools**: Use `runClientTool` with the tool name and parameters
+3. **Hot Reload**: Tools update automatically when you hot reload your Flutter app
+
 ## Verification
 
 AI Agent: To verify with the USER that the installation is successful:
@@ -219,7 +276,7 @@ AI Agent: To verify with the USER that the installation is successful:
 1.  Confirm their Flutter app (from `[FLUTTER_APP_PATH]`) is running with the specified flags.
 2.  Confirm their AI assistant has been restarted after configuration.
 3.  Ask them to try commands like:
-    - "Show me the widget tree"
+    - "List all available tools from my Flutter app"
     - "Take a screenshot of the app"
     - "Get runtime errors"
 
@@ -228,25 +285,39 @@ AI Agent: To verify with the USER that the installation is successful:
 - **Path Configuration**: Ensure all paths like `[CLONED_MCP_FLUTTER_PATH]` and `[FLUTTER_APP_PATH]` were correctly substituted with your actual absolute paths.
 - **Security**: The `--disable-service-auth-codes` flag is a temporary workaround.
 - **Debug Mode**: The Flutter app must be running in debug mode for the inspector to work.
-- **Port Configuration**: Default ports used by the Flutter app are 8182 (VM service) and 8181 (DDS). The MCP server itself defaults to port 3334 if not overridden by the AI tool's config.
+- **Port Configuration**: Default ports used by the Flutter app are 8182 (VM service) and 8181 (DDS).
+- **Dynamic Tools**: The `--dynamics` flag enables dynamic tools registration support.
 
 ## Troubleshooting (AI Agent: Use this to help USER)
 
 - **Connection Issues**:
   - Verify Flutter app is running with correct flags and ports (`--host-vmservice-port=8182 --dds-port=8181`).
-  - Check AI tool's MCP server configuration for correct command, arguments (path to `index.js`), and environment variables (especially `PORT` if manually set).
+  - Check AI tool's MCP server configuration for correct command and arguments.
 - **MCP Server Not Found**:
-  - Double-check that `[CLONED_MCP_FLUTTER_PATH]/mcp_server/build/index.js` is the correct and absolute path to the built server script.
+  - Double-check that `[CLONED_MCP_FLUTTER_PATH]/mcp_server_dart/build/flutter_inspector_mcp` is the correct and absolute path to the built server executable.
   - Ensure `make install` in Step 3 completed successfully and created the `build` directory.
 - **Permission Errors**:
   - Check file permissions for `[CLONED_MCP_FLUTTER_PATH]` and its subdirectories.
+  - Ensure the `flutter_inspector_mcp` executable has execute permissions.
 - **Tool Not Available in AI Assistant**:
   - Ensure the AI assistant was restarted after its MCP configuration was updated.
   - Verify the `disabled: false` flag in the MCP server configuration for the AI tool.
+- **Dynamic Tools Not Appearing**:
+  - Ensure `mcp_toolkit` package is properly initialized in your Flutter app.
+  - Check that tools are registered using `MCPToolkitBinding.instance.addEntries()`.
+  - Use `listClientToolsAndResources` to verify registration.
+  - Hot reload your Flutter app after adding new tools.
 
-## Environment Variables Reference (for MCP Server `index.js`)
+## Command Line Options Reference
 
-- `PORT`: MCP server listening port (default: 3334).
-- `LOG_LEVEL`: Logging level (options: critical, error, warn, info, debug).
-- `RESOURCES_SUPPORTED`: Enable/disable resource support (true/false). Crucial for tools like Cursor (`false`).
-- `IMAGES_SUPPORTED`: Enable/disable image support (true/false).
+The Dart-based MCP server supports the following command-line options:
+
+- `--dart-vm-host`: Host for Dart VM connection (default: localhost)
+- `--dart-vm-port`: Port for Dart VM connection (default: 8181)
+- `--resources`: Enable resources support (default: true)
+- `--no-resources`: Disable resources support (useful for Cursor)
+- `--images`: Enable images support (default: true)
+- `--dumps`: Enable dumps support (default: false)
+- `--dynamics`: Enable dynamic tools registration (default: true)
+- `--log-level`: Logging level (default: info)
+- `--environment`: Environment (default: production)

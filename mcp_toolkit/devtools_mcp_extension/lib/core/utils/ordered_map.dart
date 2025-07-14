@@ -60,6 +60,7 @@ class MutableOrderedMap<K, V> with Iterable<K> {
 /// {@endtemplate}
 class ImmutableOrderedMap<K, V> with Iterable<K> {
   ImmutableOrderedMap({required this.toKey});
+  // ignore: unsafe_variance
   final MutableOrderedMapToKeyFunction<K, V> toKey;
   Map<K, V> _items = const {};
   List<K> _orderedKeys = const [];

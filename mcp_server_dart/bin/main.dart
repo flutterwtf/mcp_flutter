@@ -7,18 +7,19 @@ import 'dart:io' as io;
 
 import 'package:args/args.dart';
 import 'package:async/async.dart';
+import 'package:dart_mcp/server.dart';
 import 'package:flutter_inspector_mcp_server/flutter_inspector_mcp_server.dart';
 import 'package:stream_channel/stream_channel.dart';
 
-void main(final List<String> args) {
+Future<void> main(final List<String> args) async {
   final parsedArgs = argParser.parse(args);
   if (parsedArgs.flag(help)) {
-    print(argParser.usage);
+    io.stdout.writeln(argParser.usage);
     io.exit(0);
   }
 
-  runZonedGuarded(
-    () {
+  await runZonedGuarded(
+    () async {
       final VMServiceConfigurationRecord configuration = (
         vmHost: parsedArgs.option(dartVMHost) ?? defaultHost,
         vmPort:
@@ -28,8 +29,11 @@ void main(final List<String> args) {
         dumpsSupported: parsedArgs.flag(dumpsSupported),
         logLevel: parsedArgs.option(logLevel) ?? defaultLogLevel,
         environment: parsedArgs.option(environment) ?? defaultEnvironment,
+        dynamicRegistrySupported: parsedArgs.flag(dynamicRegistrySupported),
+        awaitDndConnection: parsedArgs.flag(awaitDndConnection),
+        saveImagesToFiles: parsedArgs.flag(saveImagesToFiles),
       );
-      MCPToolkitServer.connect(
+      final server = MCPToolkitServer.fromStreamChannel(
         StreamChannel.withCloseGuarantee(io.stdin, io.stdout)
             .transform(StreamChannelTransformer.fromCodec(utf8))
             .transformStream(const LineSplitter())
@@ -41,6 +45,21 @@ void main(final List<String> args) {
               ),
             ),
         configuration: configuration,
+      );
+      await server.handleSetLevel(
+        SetLevelRequest(
+          level: switch (configuration.logLevel) {
+            'debug' => LoggingLevel.debug,
+            'info' => LoggingLevel.info,
+            'notice' => LoggingLevel.notice,
+            'warning' => LoggingLevel.warning,
+            'error' => LoggingLevel.error,
+            'critical' => LoggingLevel.critical,
+            'alert' => LoggingLevel.alert,
+            'emergency' => LoggingLevel.emergency,
+            _ => LoggingLevel.critical,
+          },
+        ),
       );
     },
     (final e, final s) {
@@ -78,7 +97,28 @@ final argParser =
         defaultsTo: true,
         help: 'Enable images support for screenshots',
       )
+      ..addFlag(
+        dynamicRegistrySupported,
+        help: 'Enable dynamic registry support',
+        defaultsTo: true,
+      )
+      ..addFlag(
+        awaitDndConnection,
+        help:
+            'Await until DND connection is established. '
+            'Will block server startup until DND is connected. '
+            "This is workaround for MCP Clients which don't "
+            'support tools updates. '
+            "Important: some clients doesn't support it. "
+            'Use with caution. (disable for Windsurf, works with Cursor)',
+      )
       ..addFlag(dumpsSupported, help: 'Enable debug dump operations')
+      ..addFlag(
+        saveImagesToFiles,
+        help:
+            'Save captured images as files in temporal folder instead of'
+            ' returning base64 data',
+      )
       ..addOption(
         logLevel,
         defaultsTo: defaultLogLevel,
@@ -95,7 +135,7 @@ final argParser =
 
 const defaultHost = 'localhost';
 const defaultPort = 8181;
-const defaultLogLevel = 'critical';
+const defaultLogLevel = 'error';
 const defaultEnvironment = 'production';
 const dartVMHost = 'dart-vm-host';
 const dartVMPort = 'dart-vm-port';
@@ -105,3 +145,6 @@ const dumpsSupported = 'dumps';
 const logLevel = 'log-level';
 const environment = 'environment';
 const help = 'help';
+const dynamicRegistrySupported = 'dynamics';
+const awaitDndConnection = 'await-dnd';
+const saveImagesToFiles = 'save-images';

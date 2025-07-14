@@ -19,7 +19,7 @@ class _InspectorAppState extends State<InspectorApp> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((final timeStamp) async {
+    WidgetsBinding.instance.addPostFrameCallback((final timeStamp) {
       _rpcClientsOrchestratorFuture = _initRpcClients().whenComplete(() {
         setState(() {});
       });

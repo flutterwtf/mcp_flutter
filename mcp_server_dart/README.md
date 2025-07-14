@@ -18,7 +18,7 @@ For developers who want to contribute to the project or run the latest version d
 2. **Install and build dependencies:**
 
    ```bash
-   make install-dart
+   make install
    ```
 
    This command installs all necessary dependencies listed in `pubspec.yaml` and then builds the MCP server.
@@ -117,9 +117,21 @@ For developers who want to contribute to the project or run the latest version d
 
    #### Cursor Setup
 
+   ##### Badge
+
+   You can use this badge to add Flutter Inspector to Cursor:
+
+   [![Install MCP Server](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/install-mcp?name=flutter-inspector&config=eyJjb21tYW5kIjoiL3BhdGgvdG8veW91ci9jbG9uZWQvbWNwX2ZsdXR0ZXIvbWNwX3NlcnZlcl9kYXJ0L2J1aWxkL2ZsdXR0ZXJfaW5zcGVjdG9yX21jcCAtLWRhcnQtdm0taG9zdD1sb2NhbGhvc3QgLS1kYXJ0LXZtLXBvcnQ9ODE4MSAtLW5vLXJlc291cmNlcyAtLWltYWdlcyIsImVudiI6e30sImRpc2FibGVkIjpmYWxzZX0%3D)
+   <!-- to update use: https://docs.cursor.com/deeplinks#markdown -->
+
+   Note: fix path after installation.
+
+   ##### Manual Setup
+
    1. Open Cursor's settings
    2. Go to the Features tab
    3. Under "Model Context Protocol", add the server:
+
       ```json
       {
         "mcpServers": {
@@ -138,6 +150,7 @@ For developers who want to contribute to the project or run the latest version d
         }
       }
       ```
+
    4. Restart Cursor
    5. Open Agent Panel (cmd + L on macOS)
    6. You're ready! Try commands like "Please get screenshot of my app"
@@ -179,11 +192,28 @@ Options:
   --dart-vm-port                Port for Dart VM connection (default: 8181)
   --resources                   Enable resources support (default: true)
   --images                      Enable images support (default: true)
+  --save-images        Save captured images as files in temporal folder instead of returning base64 data (default: false)
   --dumps                       Enable dumps support (default: false)
+  --await-dnd                   Wait until DND connection is established (default: false). Do not use with Windsurf. Workaround for MCP Clients which don't support tools updates. Important: some clients doesn't support it. Use with caution. (disable for Windsurf, works with Cursor)
   --log-level                   Logging level (default: critical)
   --environment                 Environment (default: production)
   -h, --help                    Show usage text
 ```
+
+#### Image File Saving Mode
+
+When `--save-images` is enabled, the server will:
+
+- Save all captured screenshots as PNG files in a `.mcp_screenshots` folder in the current working directory
+- Return file URLs (`file://`) instead of base64 encoded image data
+- Automatically clean up screenshots older than 24 hours
+- Use timestamped filenames like `screenshot-2025-01-27T10-30-15.123Z.png`
+
+This mode is useful when:
+
+- Working with AI tools that prefer file references over base64 data
+- Needing to persist screenshots for later analysis
+- Reducing memory usage by avoiding large base64 strings in responses
 
 ### Basic Usage
 

@@ -56,7 +56,7 @@ class RpcClient extends ChangeNotifier {
           Future.delayed(const Duration(seconds: 2), () {
             if (!_connected) {
               print('Attempting to reconnect...');
-              connect(port: port, host: host, path: path);
+              unawaited(connect(port: port, host: host, path: path));
             }
           });
         },
@@ -70,7 +70,7 @@ class RpcClient extends ChangeNotifier {
           Future.delayed(const Duration(seconds: 2), () {
             if (!_connected) {
               print('Attempting to reconnect after error...');
-              connect(port: port, host: host, path: path);
+              unawaited(connect(port: port, host: host, path: path));
             }
           });
         },
@@ -86,7 +86,7 @@ class RpcClient extends ChangeNotifier {
       Future.delayed(const Duration(seconds: 2), () {
         if (!_connected) {
           print('Attempting to reconnect after failure...');
-          connect(port: port, host: host, path: path);
+          unawaited(connect(port: port, host: host, path: path));
         }
       });
     }
