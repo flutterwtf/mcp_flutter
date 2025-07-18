@@ -63,6 +63,13 @@ base mixin FlutterInspector
     registerTool(getExtensionRpcsTool, _getExtensionRpcs);
     registerTool(getActivePortsTool, _getActivePorts);
 
+    // Register app control tools
+    log(
+      LoggingLevel.debug,
+      'Registering app control tools',
+      logger: 'FlutterInspector',
+    );
+
     // Register debug dump tools
     if (configuration.dumpsSupported) {
       log(
@@ -791,6 +798,20 @@ base mixin FlutterInspector
     inputSchema: Schema.object(properties: {}),
   );
 
+  @visibleForTesting
+  static final tapByTextTool = Tool(
+    name: 'tap_by_text',
+    description: 'Taps a widget containing the specified text in the Flutter app.',
+    inputSchema: ObjectSchema(
+      required: ['text'],
+      properties: {
+        'text': Schema.string(
+          description: 'The text to search for in the widget tree',
+        ),
+      },
+    ),
+  );
+
   /// Debug dump layer tree.
   Future<CallToolResult> _debugDumpLayerTree(
     final CallToolRequest request,
@@ -1259,6 +1280,665 @@ base mixin FlutterInspector
       return CallToolResult(
         isError: true,
         content: [TextContent(text: 'Failed to get view details: $e')],
+      );
+    }
+  }
+}
+
+// App Control Tool Definitions
+
+final enterTextByHintTool = Tool(
+  name: 'enter_text_by_hint',
+  description: 'Enters text into a text field identified by its hint text in the Flutter app.',
+  inputSchema: ObjectSchema(
+    required: ['hint', 'text'],
+    properties: {
+      'hint': Schema.string(
+        description: 'The hint text to identify the text field',
+      ),
+      'text': Schema.string(
+        description: 'The text to enter into the field',
+      ),
+    },
+  ),
+);
+
+final tapBySemanticLabelTool = Tool(
+  name: 'tap_by_semantic_label',
+  description: 'Taps a widget containing the specified semantic label in the Flutter app.',
+  inputSchema: ObjectSchema(
+    required: ['label'],
+    properties: {
+      'label': Schema.string(
+        description: 'The semantic label to search for in the widget tree',
+      ),
+    },
+  ),
+);
+
+final tapByCoordinateTool = Tool(
+  name: 'tap_by_coordinate',
+  description: 'Taps a widget at the specified coordinates in the Flutter app.',
+  inputSchema: ObjectSchema(
+    required: ['x', 'y'],
+    properties: {
+      'x': Schema.int(
+        description: 'The x coordinate to tap',
+      ),
+      'y': Schema.int(
+        description: 'The y coordinate to tap',
+      ),
+    },
+  ),
+);
+
+final scrollByOffsetTool = Tool(
+  name: 'scroll_by_offset',
+  description: 'Scrolls a scrollable widget by the specified offset. Can filter by key, semantic label, or text content.',
+  inputSchema: ObjectSchema(
+    properties: {
+      'dx': Schema.int(
+        description: 'The horizontal offset to scroll by',
+      ),
+      'dy': Schema.int(
+        description: 'The vertical offset to scroll by',
+      ),
+      'key': Schema.string(
+        description: 'Optional: Filter by widget key',
+      ),
+      'semanticLabel': Schema.string(
+        description: 'Optional: Filter by semantic label',
+      ),
+      'text': Schema.string(
+        description: 'Optional: Filter by text content within the scrollable widget',
+      ),
+    },
+  ),
+);
+
+final longPressTool = Tool(
+  name: 'long_press',
+  description: 'Performs a long press on a widget identified by text, key, or semantic label.',
+  inputSchema: ObjectSchema(
+    required: ['query'],
+    properties: {
+      'query': Schema.string(
+        description: 'The query to identify the widget (text, key, or semantic label).',
+      ),
+      'duration': Schema.int(
+        description: 'Optional: Duration of the long press in milliseconds (default: 500).',
+      ),
+    },
+  ),
+);
+
+final popScreenTool = Tool(
+  name: 'pop_screen',
+  description: 'Pops the current screen using the active navigation system (Navigator, GoRouter, AutoRouter).',
+  inputSchema: ObjectSchema(
+    properties: {},
+  ),
+);
+
+final navigateToRouteTool = Tool(
+  name: 'navigate_to_route',
+  description: 'Navigates to a route by string, supporting GoRouter, AutoRoute, and Navigator.',
+  inputSchema: ObjectSchema(
+    required: ['route'],
+    properties: {
+      'route': Schema.string(
+        description: 'The route string to navigate to.',
+      ),
+    },
+  ),
+);
+
+// App Control Handler Methods
+extension AppControlHandlers on FlutterInspector {
+  /// Tap a widget by text content.
+  Future<CallToolResult> _tapByText(final CallToolRequest request) async {
+    log(
+      LoggingLevel.info,
+      'Executing tap by text tool',
+      logger: 'FlutterInspector',
+    );
+
+    final connected = await ensureVMServiceConnected();
+    if (!connected) {
+      log(
+        LoggingLevel.error,
+        'Tap by text tool failed: VM service not connected',
+        logger: 'FlutterInspector',
+      );
+      return CallToolResult(
+        isError: true,
+        content: [TextContent(text: 'VM service not connected')],
+      );
+    }
+
+    try {
+      final searchText = jsonDecodeString(request.arguments?['text']);
+      if (searchText.isEmpty) {
+        return CallToolResult(
+          isError: true,
+          content: [TextContent(text: 'Missing required parameter: text')],
+        );
+      }
+
+      log(
+        LoggingLevel.debug,
+        'Tapping widget with text: $searchText',
+        logger: 'FlutterInspector',
+      );
+
+      final result = await callFlutterExtension(
+        'ext.mcp.call',
+        args: {
+          'method': 'tap_by_text',
+          'arguments': {'text': searchText},
+        },
+      );
+
+      log(
+        LoggingLevel.info,
+        'Tap by text tool completed successfully',
+        logger: 'FlutterInspector',
+      );
+
+      return CallToolResult(
+        content: [
+          TextContent(text: 'The click was performed by Text(\'$searchText\').'),
+          TextContent(text: jsonEncode(result.json)),
+        ],
+      );
+    } on Exception catch (e) {
+      log(
+        LoggingLevel.error,
+        'Tap by text tool failed: $e',
+        logger: 'FlutterInspector',
+      );
+      return CallToolResult(
+        isError: true,
+        content: [TextContent(text: 'Tap by text failed: $e')],
+      );
+    }
+  }
+
+  /// Enter text by hint.
+  Future<CallToolResult> _enterTextByHint(final CallToolRequest request) async {
+    log(
+      LoggingLevel.info,
+      'Executing enter text by hint tool',
+      logger: 'FlutterInspector',
+    );
+
+    final connected = await ensureVMServiceConnected();
+    if (!connected) {
+      log(
+        LoggingLevel.error,
+        'Enter text by hint tool failed: VM service not connected',
+        logger: 'FlutterInspector',
+      );
+      return CallToolResult(
+        isError: true,
+        content: [TextContent(text: 'VM service not connected')],
+      );
+    }
+
+    try {
+      final searchHint = jsonDecodeString(request.arguments?['hint']);
+      final inputText = jsonDecodeString(request.arguments?['text']);
+      
+      if (searchHint.isEmpty || inputText.isEmpty) {
+        return CallToolResult(
+          isError: true,
+          content: [TextContent(text: 'Missing required parameters: hint and text')],
+        );
+      }
+
+      log(
+        LoggingLevel.debug,
+        'Entering text "$inputText" in field with hint "$searchHint"',
+        logger: 'FlutterInspector',
+      );
+
+      final result = await callFlutterExtension(
+        'ext.mcp.call',
+        args: {
+          'method': 'enter_text_by_hint',
+          'arguments': {'hint': searchHint, 'text': inputText},
+        },
+      );
+
+      log(
+        LoggingLevel.info,
+        'Enter text by hint tool completed successfully',
+        logger: 'FlutterInspector',
+      );
+
+      return CallToolResult(
+        content: [
+          TextContent(text: 'TextField with hint \'$searchHint\' updated.'),
+          TextContent(text: 'Text inserted: \'$inputText\'.'),
+          TextContent(text: jsonEncode(result.json)),
+        ],
+      );
+    } on Exception catch (e) {
+      log(
+        LoggingLevel.error,
+        'Enter text by hint tool failed: $e',
+        logger: 'FlutterInspector',
+      );
+      return CallToolResult(
+        isError: true,
+        content: [TextContent(text: 'Enter text by hint failed: $e')],
+      );
+    }
+  }
+
+  /// Tap by semantic label.
+  Future<CallToolResult> _tapBySemanticLabel(final CallToolRequest request) async {
+    log(
+      LoggingLevel.info,
+      'Executing tap by semantic label tool',
+      logger: 'FlutterInspector',
+    );
+
+    final connected = await ensureVMServiceConnected();
+    if (!connected) {
+      log(
+        LoggingLevel.error,
+        'Tap by semantic label tool failed: VM service not connected',
+        logger: 'FlutterInspector',
+      );
+      return CallToolResult(
+        isError: true,
+        content: [TextContent(text: 'VM service not connected')],
+      );
+    }
+
+    try {
+      final label = jsonDecodeString(request.arguments?['label']);
+      if (label.isEmpty) {
+        return CallToolResult(
+          isError: true,
+          content: [TextContent(text: 'Missing required parameter: label')],
+        );
+      }
+
+      log(
+        LoggingLevel.debug,
+        'Tapping widget with semantic label: $label',
+        logger: 'FlutterInspector',
+      );
+
+      final result = await callFlutterExtension(
+        'ext.mcp.call',
+        args: {
+          'method': 'tap_by_semantic_label',
+          'arguments': {'label': label},
+        },
+      );
+
+      log(
+        LoggingLevel.info,
+        'Tap by semantic label tool completed successfully',
+        logger: 'FlutterInspector',
+      );
+
+      return CallToolResult(
+        content: [
+          TextContent(text: 'The click was performed by SemanticLabel(\'$label\').'),
+          TextContent(text: jsonEncode(result.json)),
+        ],
+      );
+    } on Exception catch (e) {
+      log(
+        LoggingLevel.error,
+        'Tap by semantic label tool failed: $e',
+        logger: 'FlutterInspector',
+      );
+      return CallToolResult(
+        isError: true,
+        content: [TextContent(text: 'Tap by semantic label failed: $e')],
+      );
+    }
+  }
+
+  /// Tap by coordinate.
+  Future<CallToolResult> _tapByCoordinate(final CallToolRequest request) async {
+    log(
+      LoggingLevel.info,
+      'Executing tap by coordinate tool',
+      logger: 'FlutterInspector',
+    );
+
+    final connected = await ensureVMServiceConnected();
+    if (!connected) {
+      log(
+        LoggingLevel.error,
+        'Tap by coordinate tool failed: VM service not connected',
+        logger: 'FlutterInspector',
+      );
+      return CallToolResult(
+        isError: true,
+        content: [TextContent(text: 'VM service not connected')],
+      );
+    }
+
+    try {
+      final x = jsonDecodeInt(request.arguments?['x']).whenZeroUse(0);
+      final y = jsonDecodeInt(request.arguments?['y']).whenZeroUse(0);
+
+      log(
+        LoggingLevel.debug,
+        'Tapping at coordinates: ($x, $y)',
+        logger: 'FlutterInspector',
+      );
+
+      final result = await callFlutterExtension(
+        'ext.mcp.call',
+        args: {
+          'method': 'tap_by_coordinate',
+          'arguments': {'x': x, 'y': y},
+        },
+      );
+
+      log(
+        LoggingLevel.info,
+        'Tap by coordinate tool completed successfully',
+        logger: 'FlutterInspector',
+      );
+
+      return CallToolResult(
+        content: [
+          TextContent(text: 'The click was performed at coordinate ($x, $y).'),
+          TextContent(text: jsonEncode(result.json)),
+        ],
+      );
+    } on Exception catch (e) {
+      log(
+        LoggingLevel.error,
+        'Tap by coordinate tool failed: $e',
+        logger: 'FlutterInspector',
+      );
+      return CallToolResult(
+        isError: true,
+        content: [TextContent(text: 'Tap by coordinate failed: $e')],
+      );
+    }
+  }
+
+  /// Scroll by offset.
+  Future<CallToolResult> _scrollByOffset(final CallToolRequest request) async {
+    log(
+      LoggingLevel.info,
+      'Executing scroll by offset tool',
+      logger: 'FlutterInspector',
+    );
+
+    final connected = await ensureVMServiceConnected();
+    if (!connected) {
+      log(
+        LoggingLevel.error,
+        'Scroll by offset tool failed: VM service not connected',
+        logger: 'FlutterInspector',
+      );
+      return CallToolResult(
+        isError: true,
+        content: [TextContent(text: 'VM service not connected')],
+      );
+    }
+
+    try {
+      final dx = jsonDecodeDouble(request.arguments?['dx']).whenZeroUse(0.0);
+      final dy = jsonDecodeDouble(request.arguments?['dy']).whenZeroUse(0.0);
+      final key = jsonDecodeString(request.arguments?['key']);
+      final semanticLabel = jsonDecodeString(request.arguments?['semanticLabel']);
+      final text = jsonDecodeString(request.arguments?['text']);
+
+      log(
+        LoggingLevel.debug,
+        'Scrolling by offset: dx=$dx, dy=$dy',
+        logger: 'FlutterInspector',
+      );
+
+      final result = await callFlutterExtension(
+        'ext.mcp.call',
+        args: {
+          'method': 'scroll_by_offset',
+          'arguments': {
+            'dx': dx,
+            'dy': dy,
+            if (key.isNotEmpty) 'key': key,
+            if (semanticLabel.isNotEmpty) 'semanticLabel': semanticLabel,
+            if (text.isNotEmpty) 'text': text,
+          },
+        },
+      );
+
+      log(
+        LoggingLevel.info,
+        'Scroll by offset tool completed successfully',
+        logger: 'FlutterInspector',
+      );
+
+      return CallToolResult(
+        content: [
+          TextContent(text: 'Scrolled by offset: dx=$dx, dy=$dy'),
+          TextContent(text: jsonEncode(result.json)),
+        ],
+      );
+    } on Exception catch (e) {
+      log(
+        LoggingLevel.error,
+        'Scroll by offset tool failed: $e',
+        logger: 'FlutterInspector',
+      );
+      return CallToolResult(
+        isError: true,
+        content: [TextContent(text: 'Scroll by offset failed: $e')],
+      );
+    }
+  }
+
+  /// Long press.
+  Future<CallToolResult> _longPress(final CallToolRequest request) async {
+    log(
+      LoggingLevel.info,
+      'Executing long press tool',
+      logger: 'FlutterInspector',
+    );
+
+    final connected = await ensureVMServiceConnected();
+    if (!connected) {
+      log(
+        LoggingLevel.error,
+        'Long press tool failed: VM service not connected',
+        logger: 'FlutterInspector',
+      );
+      return CallToolResult(
+        isError: true,
+        content: [TextContent(text: 'VM service not connected')],
+      );
+    }
+
+    try {
+      final query = jsonDecodeString(request.arguments?['query']);
+      final duration = jsonDecodeInt(request.arguments?['duration']).whenZeroUse(500);
+      
+      if (query.isEmpty) {
+        return CallToolResult(
+          isError: true,
+          content: [TextContent(text: 'Missing required parameter: query')],
+        );
+      }
+
+      log(
+        LoggingLevel.debug,
+        'Long pressing widget with query: $query, duration: $duration',
+        logger: 'FlutterInspector',
+      );
+
+      final result = await callFlutterExtension(
+        'ext.mcp.call',
+        args: {
+          'method': 'long_press',
+          'arguments': {'query': query, 'duration': duration},
+        },
+      );
+
+      log(
+        LoggingLevel.info,
+        'Long press tool completed successfully',
+        logger: 'FlutterInspector',
+      );
+
+      return CallToolResult(
+        content: [
+          TextContent(text: 'Long press performed on widget: $query'),
+          TextContent(text: jsonEncode(result.json)),
+        ],
+      );
+    } on Exception catch (e) {
+      log(
+        LoggingLevel.error,
+        'Long press tool failed: $e',
+        logger: 'FlutterInspector',
+      );
+      return CallToolResult(
+        isError: true,
+        content: [TextContent(text: 'Long press failed: $e')],
+      );
+    }
+  }
+
+  /// Pop screen.
+  Future<CallToolResult> _popScreen(final CallToolRequest request) async {
+    log(
+      LoggingLevel.info,
+      'Executing pop screen tool',
+      logger: 'FlutterInspector',
+    );
+
+    final connected = await ensureVMServiceConnected();
+    if (!connected) {
+      log(
+        LoggingLevel.error,
+        'Pop screen tool failed: VM service not connected',
+        logger: 'FlutterInspector',
+      );
+      return CallToolResult(
+        isError: true,
+        content: [TextContent(text: 'VM service not connected')],
+      );
+    }
+
+    try {
+      log(
+        LoggingLevel.debug,
+        'Popping current screen',
+        logger: 'FlutterInspector',
+      );
+
+      final result = await callFlutterExtension(
+        'ext.mcp.call',
+        args: {
+          'method': 'pop_screen',
+          'arguments': {},
+        },
+      );
+
+      log(
+        LoggingLevel.info,
+        'Pop screen tool completed successfully',
+        logger: 'FlutterInspector',
+      );
+
+      return CallToolResult(
+        content: [
+          TextContent(text: 'Screen popped successfully'),
+          TextContent(text: jsonEncode(result.json)),
+        ],
+      );
+    } on Exception catch (e) {
+      log(
+        LoggingLevel.error,
+        'Pop screen tool failed: $e',
+        logger: 'FlutterInspector',
+      );
+      return CallToolResult(
+        isError: true,
+        content: [TextContent(text: 'Pop screen failed: $e')],
+      );
+    }
+  }
+
+  /// Navigate to route.
+  Future<CallToolResult> _navigateToRoute(final CallToolRequest request) async {
+    log(
+      LoggingLevel.info,
+      'Executing navigate to route tool',
+      logger: 'FlutterInspector',
+    );
+
+    final connected = await ensureVMServiceConnected();
+    if (!connected) {
+      log(
+        LoggingLevel.error,
+        'Navigate to route tool failed: VM service not connected',
+        logger: 'FlutterInspector',
+      );
+      return CallToolResult(
+        isError: true,
+        content: [TextContent(text: 'VM service not connected')],
+      );
+    }
+
+    try {
+      final route = jsonDecodeString(request.arguments?['route']);
+      if (route.isEmpty) {
+        return CallToolResult(
+          isError: true,
+          content: [TextContent(text: 'Missing required parameter: route')],
+        );
+      }
+
+      log(
+        LoggingLevel.debug,
+        'Navigating to route: $route',
+        logger: 'FlutterInspector',
+      );
+
+      final result = await callFlutterExtension(
+        'ext.mcp.call',
+        args: {
+          'method': 'navigate_to_route',
+          'arguments': {'route': route},
+        },
+      );
+
+      log(
+        LoggingLevel.info,
+        'Navigate to route tool completed successfully',
+        logger: 'FlutterInspector',
+      );
+
+      return CallToolResult(
+        content: [
+          TextContent(text: 'Navigation to route \'$route\' requested.'),
+          TextContent(text: jsonEncode(result.json)),
+        ],
+      );
+    } on Exception catch (e) {
+      log(
+        LoggingLevel.error,
+        'Navigate to route tool failed: $e',
+        logger: 'FlutterInspector',
+      );
+      return CallToolResult(
+        isError: true,
+        content: [TextContent(text: 'Navigate to route failed: $e')],
       );
     }
   }
