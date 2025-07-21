@@ -33,6 +33,7 @@ Set<MCPCallEntry> getFlutterMcpToolkitEntries({
   TapByTextEntry(),
   EnterTextByHintEntry(),
   TapBySemanticLabelEntry(),
+  TapByKeyEntry(),
   TapByCoordinateEntry(),
   OnViewWidgetTreeEntry(),
   ScrollByOffsetEntry(),
@@ -473,6 +474,147 @@ implements MCPCallEntry {
       ),
     );
     return TapBySemanticLabelEntry._(entry);
+  }
+}
+
+/// {@template tap_by_key_entry}
+/// MCPCallEntry for tapping widgets by their key.
+/// {@endtemplate}
+extension type TapByKeyEntry._(MCPCallEntry entry) implements MCPCallEntry {
+  /// {@macro tap_by_key_entry}
+  factory TapByKeyEntry() {
+    final entry = MCPCallEntry.tool(
+      handler: (final parameters) {
+        final searchKey = parameters['key'];
+        var found = false;
+
+        // Проверяет, можно ли кликнуть по элементу (аналогично simulateGesture)
+        bool trySimulateGesture(final Element target) {
+          final renderObject = target.renderObject;
+          if (renderObject is! RenderBox) return false;
+
+          final position = renderObject.localToGlobal(renderObject.size.center(Offset.zero));
+          bool handled = false;
+
+          target.visitAncestorElements((final ancestor) {
+            final w = ancestor.widget;
+
+            // GestureDetector
+            if (w is GestureDetector) {
+              final downDetails = TapDownDetails(globalPosition: position);
+              final upDetails = TapUpDetails(globalPosition: position, kind: PointerDeviceKind.touch);
+
+              w.onTapDown?.call(downDetails);
+              w.onTapUp?.call(upDetails);
+              w.onTap?.call();
+              if (w.onTap == null && w.onTapDown == null && w.onTapUp == null) {
+                w.onTapCancel?.call();
+              }
+
+              handled = true;
+              return false;
+            }
+
+            bool tryCall(final VoidCallback? callback) {
+              if (callback != null) {
+                callback();
+                return true;
+              }
+              return false;
+            }
+
+            // Button-like widgets
+            if (w is TextButton ||
+                w is ElevatedButton ||
+                w is OutlinedButton ||
+                w is IconButton ||
+                w is FloatingActionButton) {
+              handled = tryCall((w as dynamic).onPressed);
+              if (handled) return false;
+            }
+
+            // Ink variants
+            if (w is InkWell || w is InkResponse) {
+              handled = tryCall((w as dynamic).onTap);
+              if (handled) return false;
+            }
+
+            return true;
+          });
+
+          return handled;
+        }
+
+        // Рекурсивно ищет первого кликабельного среди детей и кликает по нему
+        bool tapFirstClickableChild(final Element element) {
+          bool tapped = false;
+          void search(Element el) {
+            if (tapped) return;
+            if (trySimulateGesture(el)) {
+              tapped = true;
+              return;
+            }
+            el.visitChildren(search);
+          }
+          element.visitChildren(search);
+          return tapped;
+        }
+
+        void visitor(final Element element) {
+          if (found) return;
+
+          final widget = element.widget;
+
+          bool matchesKey() {
+            final widgetKey = widget.key;
+            if (widgetKey == null) return false;
+            // Handle ValueKey specifically
+            if (widgetKey is ValueKey) {
+              return widgetKey.value.toString() == searchKey;
+            }
+            // Handle other key types by string comparison
+            return widgetKey.toString().contains(searchKey ?? '');
+          }
+
+          if (matchesKey()) {
+            // Сначала пытаемся кликнуть по самому элементу
+            if (trySimulateGesture(element)) {
+              found = true;
+              return;
+            }
+            // Если не получилось — ищем первого кликабельного среди детей
+            if (tapFirstClickableChild(element)) {
+              found = true;
+              return;
+            }
+            // Если не нашли — продолжаем обход по дереву
+          }
+
+          element.visitChildren(visitor);
+        }
+
+        final root = WidgetsBinding.instance.rootElement;
+        if (root != null) {
+          root.visitChildren(visitor);
+        }
+
+        final message = found
+            ? 'Successfully tapped widget with key: $searchKey'
+            : 'Could not find tappable widget with key: $searchKey';
+
+        return MCPCallResult(message: message, parameters: {'success': found});
+      },
+      definition: MCPToolDefinition(
+        name: 'tap_by_key',
+        description: 'Tap a widget by its key.',
+        inputSchema: ObjectSchema(
+          properties: {
+            'key': StringSchema(description: 'The key to search for'),
+          },
+        ),
+      ),
+    );
+    return TapByKeyEntry._(entry);
   }
 }
 

@@ -1332,6 +1332,8 @@ final tapByCoordinateTool = Tool(
   ),
 );
 
+
+
 final scrollByOffsetTool = Tool(
   name: 'scroll_by_offset',
   description: 'Scrolls a scrollable widget by the specified offset. Can filter by key, semantic label, or text content.',
@@ -1668,6 +1670,8 @@ extension AppControlHandlers on FlutterInspector {
       );
     }
   }
+
+
 
   /// Scroll by offset.
   Future<CallToolResult> _scrollByOffset(final CallToolRequest request) async {
