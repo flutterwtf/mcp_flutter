@@ -1,21 +1,14 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'package:flutter/rendering.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/foundation.dart';
-
-import 'package:dart_mcp/client.dart';
+import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:from_json_to_json/from_json_to_json.dart';
 import 'package:is_dart_empty_or_not/is_dart_empty_or_not.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../mcp_toolkit.dart';
-import '../mcp_models.dart';
-import '../mcp_toolkit_binding.dart';
 import '../services/application_info.dart';
-import '../services/error_monitor.dart';
 import '../services/screenshot_service.dart';
 
 /// Returns a set of MCPCallEntry objects for the Flutter MCP Toolkit.
@@ -1174,7 +1167,7 @@ implements MCPCallEntry {
                   stackEntries.add({
                     'type': 'Unknown',
                     'message':
-                    'Could not extract stack from NavigatorState (Navigator 1.0)',
+                        'Could not extract stack from NavigatorState (Navigator 1.0)',
                   });
                 }
               }
@@ -1213,65 +1206,83 @@ extension type const OnGetNavigationTreeEntry._(MCPCallEntry entry)
 implements MCPCallEntry {
   /// {@macro on_get_navigation_tree_entry}
   factory OnGetNavigationTreeEntry() {
+    List<Map<String, dynamic>> serializeRoutes(dynamic routes, [String parentPath = '']) {
+      final List<Map<String, dynamic>> result = [];
+      if (routes is! List) return result;
+      for (final route in routes) {
+        String? routePath;
+        String? routeName;
+        String? pageBuilder;
+        List<dynamic>? childrenRoutes;
+        try { routePath = (route as dynamic).path; } catch (_) {}
+        try { routeName = (route as dynamic).name; } catch (_) {}
+        try { pageBuilder = (route as dynamic).page; } catch (_) {}
+        if (pageBuilder == null) {
+          try { pageBuilder = (route as dynamic).builder; } catch (_) {}
+        }
+        try { childrenRoutes = (route as dynamic).routes; } catch (_) {}
+        if (childrenRoutes == null) {
+          try { childrenRoutes = (route as dynamic).children; } catch (_) {}
+        }
+        final path = parentPath + '/' + (routePath ?? '').replaceAll('//', '/');
+        final routeInfo = <String, dynamic>{
+          'type': route.runtimeType.toString(),
+          'path': path,
+          'name': routeName,
+          'page': pageBuilder,
+        };
+        if (childrenRoutes != null && childrenRoutes.isNotEmpty) {
+          routeInfo['children'] = serializeRoutes(childrenRoutes, path);
+        }
+        result.add(routeInfo);
+      }
+      return result;
+    }
     final entry = MCPCallEntry.tool(
       handler: (final parameters) {
         final root = WidgetsBinding.instance.rootElement;
-        final routerContext = root != null ? findRouterContext(root) : null;
+        String? usedSystem;
+        dynamic tree;
+        String? error;
+        String? treeType;
 
-        if (routerContext == null) {
-          return MCPCallResult(
-            message: 'No Router widget found in the widget tree.',
-            parameters: {'tree': []},
-          );
+        // 1. Пробуем найти Router и delegate
+        BuildContext? routerContext;
+        void visitor(Element element) {
+          if (routerContext != null) return;
+          if (element.widget is Router) {
+            routerContext = element;
+            return;
+          }
+          element.visitChildren(visitor);
         }
-
-        // Get RouterDelegate directly from RouterState
-        final delegate = (routerContext.widget as Router).routerDelegate;
-
-        if (delegate == null) {
-          return MCPCallResult(
-            message: 'RouterDelegate not found.',
-            parameters: {'tree': []},
-          );
-        }
-
-        // --- GoRouter ---
-        if (delegate is GoRouterDelegate) {
+        if (root != null) root.visitChildren(visitor);
+        if (routerContext != null) {
           try {
-            final goRouter = delegate.state.topRoute;
-            final tree = _serializeGoRouter(goRouter?.routes ?? []);
-            return MCPCallResult(
-              message: 'GoRouter navigation tree.',
-              parameters: {'tree': tree},
-            );
+            final delegate = (routerContext!.widget as dynamic).routerDelegate;
+            dynamic routes;
+            // Пробуем разные варианты доступа к routes через try/catch
+            try { routes = (delegate as dynamic).state; } catch (_) {}
+            try { routes = (routes as dynamic).topRoute; } catch (_) {}
+            try { routes = (routes as dynamic).routes; } catch (_) {}
+            if (routes == null) try { routes = (delegate as dynamic).routes; } catch (_) {}
+            if (routes == null) try { routes = (delegate as dynamic).state; } catch (_) {}
+            if (routes == null) try { routes = (routes as dynamic).routes; } catch (_) {}
+            if (routes == null) try { routes = (delegate as dynamic).config; } catch (_) {}
+            if (routes == null) try { routes = (routes as dynamic).routes; } catch (_) {}
+            if (routes != null) {
+              tree = serializeRoutes(routes);
+              usedSystem = 'RouterDelegate';
+              treeType = 'serialized';
+            }
           } catch (e) {
-            return MCPCallResult(
-              message: 'Failed to serialize GoRouter: $e',
-              parameters: {'tree': []},
-            );
+            error = 'RouterDelegate navigation tree failed: $e';
           }
         }
 
-        // --- AutoRoute ---
-        if (delegate.runtimeType.toString().contains('AutoRouterDelegate')) {
-          try {
-            final autoRouter = _findAutoRouter(routerContext);
-            final tree = _serializeAutoRouter(autoRouter);
-            return MCPCallResult(
-              message: 'AutoRoute navigation tree.',
-              parameters: {'tree': tree},
-            );
-          } catch (e) {
-            return MCPCallResult(
-              message: 'Failed to serialize AutoRoute: $e',
-              parameters: {'tree': []},
-            );
-          }
-        }
-
-        // --- Navigator fallback ---
-        try {
-          final navStack = <Map<String, dynamic>>[];
+        // 2. Fallback: получить стек Navigator
+        if (tree == null && root != null) {
+          final List<Map<String, dynamic>> stackEntries = [];
           void findNavigatorElements(final Element element) {
             if (element is StatefulElement && element.state is NavigatorState) {
               final NavigatorState navState = element.state as NavigatorState;
@@ -1280,7 +1291,7 @@ implements MCPCallEntry {
                 final pages = navigatorWidget.pages;
                 if (pages.isNotEmpty) {
                   for (final page in pages) {
-                    navStack.add({
+                    stackEntries.add({
                       'type': 'Page',
                       'name': page.name ?? page.runtimeType.toString(),
                       'runtimeType': page.runtimeType.toString(),
@@ -1288,7 +1299,7 @@ implements MCPCallEntry {
                     });
                   }
                 } else if (navigatorWidget.initialRoute != null) {
-                  navStack.add({
+                  stackEntries.add({
                     'type': 'InitialRoute',
                     'name': navigatorWidget.initialRoute,
                   });
@@ -1297,153 +1308,32 @@ implements MCPCallEntry {
             }
             element.visitChildren(findNavigatorElements);
           }
-
-          (routerContext as Element).visitChildren(findNavigatorElements);
-          return MCPCallResult(
-            message: 'Navigator navigation stack.',
-            parameters: {'tree': navStack},
-          );
-        } catch (e) {
-          return MCPCallResult(
-            message: 'Unknown navigation type or error: $e',
-            parameters: {'tree': []},
-          );
+          root.visitChildren(findNavigatorElements);
+          tree = stackEntries;
+          usedSystem = 'NavigatorStack';
+          treeType = 'stack';
         }
+
+        return MCPCallResult(
+          message: tree != null
+              ? 'Navigation tree collected using $usedSystem.'
+              : 'No navigation tree found.' + (error != null ? ' Error: $error' : ''),
+          parameters: {
+            'tree': tree ?? [],
+            'usedSystem': usedSystem,
+            'treeType': treeType,
+            if (error != null) 'error': error,
+          },
+        );
       },
       definition: MCPToolDefinition(
         name: 'get_navigation_tree',
-        description: 'Get the navigation tree (GoRouter, AutoRoute, or fallback).',
+        description: 'Get the navigation tree (universal: RouterDelegate, Navigator stack, etc).',
         inputSchema: ObjectSchema(properties: {}),
       ),
     );
     return OnGetNavigationTreeEntry._(entry);
   }
-}
-
-
-// ==== GoRouter support ====
-
-List<Map<String, dynamic>> _serializeGoRouter(final List<RouteBase> routes, [final String parentPath = '']) {
-  final List<Map<String, dynamic>> result = [];
-
-  for (final route in routes) {
-    String? routePath;
-    String? routeName;
-    String? pageBuilder;
-    List<RouteBase>? childrenRoutes;
-
-    if (route is GoRoute) {
-      routePath = route.path;
-      routeName = route.name?.toString();
-      pageBuilder = route.builder?.toString();
-      childrenRoutes = route.routes;
-    } else if (route is ShellRoute) {
-      // ShellRoute has a builder and routes
-      routePath = null; // ShellRoute does not have a path
-      routeName = null;
-      pageBuilder = route.builder?.toString();
-      childrenRoutes = route.routes;
-    } else    // Fallback for other RouteBase types
-      try {
-        childrenRoutes = route.routes;
-      } catch (_) {}
-
-
-    final path = parentPath + '/' + (routePath ?? '').replaceAll('//', '/');
-    final routeInfo = <String, dynamic>{
-      'type': route.runtimeType.toString(),
-      'path': path,
-      'name': routeName,
-      'page': pageBuilder,
-    };
-    if (childrenRoutes != null && childrenRoutes.isNotEmpty) {
-      routeInfo['children'] = _serializeGoRouter(childrenRoutes, path);
-    }
-    result.add(routeInfo);
-  }
-
-  return result;
-}
-
-// ==== AutoRoute support ====
-
-dynamic _findAutoRouter(final BuildContext context) {
-  // fallback using dynamic context
-  return (context as dynamic).router;
-}
-
-List<Map<String, dynamic>> _serializeAutoRouter(final dynamic router, [final String parentPath = '']) {
-  final List<Map<String, dynamic>> result = [];
-
-  final stack = (router is Map && router['stack'] is List)
-      ? router['stack'] as List
-      : <dynamic>[]; // fallback: do not access .stack if not a Map
-
-  for (final route in stack) {
-    dynamic routeData;
-    if (route is Map) {
-      routeData = route['data'];
-    } else if (route != null && route is Map && route['data'] != null) {
-      routeData = route['data'];
-    } else {
-      routeData = null;
-    }
-    String routeDataName = 'unknown';
-    if (routeData != null && routeData is Map && routeData['name'] != null) {
-      routeDataName = routeData['name'].toString();
-    }
-    final path = parentPath + '/' + routeDataName;
-    String? routeName;
-    String? page;
-    if (routeData is Map) {
-      routeName = routeData['name']?.toString();
-      page = routeData['route']?.toString();
-    } else if (routeData != null) {
-      try {
-        // ignore: avoid_dynamic_calls
-        if (routeData.name != null) routeName = routeData.name.toString();
-      } catch (_) {}
-      try {
-        // ignore: avoid_dynamic_calls
-        if (routeData.route != null) page = routeData.route.toString();
-      } catch (_) {}
-    }
-    final routeInfo = <String, dynamic>{
-      'path': path,
-      'name': routeName,
-      'page': page,
-    };
-    // Children
-    List<dynamic>? children;
-    if (route is Map && route.containsKey('children')) {
-      children = route['children'] as List<dynamic>?;
-    } else if (route != null) {
-      try {
-        // ignore: avoid_dynamic_calls
-        if (route.children != null) children = route.children as List<dynamic>?;
-      } catch (_) {}
-    }
-    if (children != null && children.isNotEmpty) {
-      routeInfo['children'] = _serializeAutoRouter(children, path);
-    }
-    result.add(routeInfo);
-  }
-
-  return result;
-}
-
-BuildContext? findRouterContext(final Element root) {
-  BuildContext? found;
-  void visitor(final Element element) {
-    if (found != null) return;
-    if (element.widget is Router) {
-      found = element;
-      return;
-    }
-    element.visitChildren(visitor);
-  }
-  root.visitChildren(visitor);
-  return found;
 }
 
 /// {@template on_get_widget_properties_entry}
@@ -1732,33 +1622,20 @@ extension type PopScreenEntry._(MCPCallEntry entry) implements MCPCallEntry {
         bool success = false;
         String? error;
 
-        // --- GoRouter ---
+        // --- customRouterConfig ---
         try {
-          final routerContext = findRouterContext(root);
-          if (routerContext != null) {
-            final delegate = (routerContext.widget as Router).routerDelegate;
-            if (delegate is GoRouterDelegate) {
-              if (delegate is dynamic && delegate.canPop != null && delegate.canPop()) {
-                delegate.pop();
-                usedNavigator = 'GoRouter';
-                success = true;
-              }
-            } else if (delegate.runtimeType.toString().contains('AutoRouterDelegate')) {
-              // --- AutoRouter ---
-              try {
-                final autoRouter = _findAutoRouter(findRouterContext(root)!);
-                if (autoRouter != null && (autoRouter as dynamic).canPop()) {
-                  (autoRouter as dynamic).pop();
-                  usedNavigator = 'AutoRouter';
-                  success = true;
-                }
-              } catch (e) {
-                error = 'AutoRouter pop failed: $e';
-              }
+          final customRouterConfig = RouterConfigStorage.customRouterConfig;
+          if (customRouterConfig != null) {
+            try {
+              (customRouterConfig as dynamic).pop();
+              usedNavigator = 'customRouterConfig';
+              success = true;
+            } catch (_) {
+              // ignore and fallback to Navigator
             }
           }
         } catch (e) {
-          error = 'Router pop failed: $e';
+          error = 'customRouterConfig pop failed: $e';
         }
 
         // --- Navigator fallback ---
@@ -1793,7 +1670,7 @@ extension type PopScreenEntry._(MCPCallEntry entry) implements MCPCallEntry {
       },
       definition: MCPToolDefinition(
         name: 'pop_screen',
-        description: 'Pop the current screen (Navigator.pop, GoRouter, AutoRouter).',
+        description: 'Pop the current screen (Navigator.pop, customRouterConfig).',
         inputSchema: ObjectSchema(properties: {}),
       ),
     );
@@ -1817,51 +1694,89 @@ extension type NavigateToRouteEntry._(MCPCallEntry entry) implements MCPCallEntr
         if (root == null) {
           return MCPCallResult(message: 'No root element found.', parameters: {});
         }
-        // 1. Try to find MaterialApp and use routerConfig for navigation
-        dynamic routerConfig;
-        void findMaterialApp(final Element element) {
-          if (routerConfig != null) return;
-          if (element.widget is MaterialApp) {
-            routerConfig = (element.widget as MaterialApp).routerConfig;
-            return;
+        String? usedSystem;
+        String? usedMethod;
+        bool success = false;
+        String? error;
+
+        // 1. Try customRouterConfig с последовательным вызовом методов напрямую
+        try {
+          final customRouterConfig = RouterConfigStorage.customRouterConfig;
+          if (customRouterConfig != null) {
+            try {
+              (customRouterConfig as dynamic).go(route);
+              usedSystem = 'customRouterConfig';
+              usedMethod = 'go';
+              success = true;
+            } catch (_) {}
+            if (!success) {
+              try {
+                (customRouterConfig as dynamic).pushNamed(route);
+                usedSystem = 'customRouterConfig';
+                usedMethod = 'pushNamed';
+                success = true;
+              } catch (_) {}
+            }
+            if (!success) {
+              try {
+                (customRouterConfig as dynamic).navigateNamed(route);
+                usedSystem = 'customRouterConfig';
+                usedMethod = 'navigateNamed';
+                success = true;
+              } catch (_) {}
+            }
+            if (!success) {
+              try {
+                (customRouterConfig as dynamic).push(route);
+                usedSystem = 'customRouterConfig';
+                usedMethod = 'push';
+                success = true;
+              } catch (_) {}
+            }
           }
-          element.visitChildren(findMaterialApp);
+        } catch (e) {
+          error = 'customRouterConfig navigation failed: $e';
         }
-        root.visitChildren(findMaterialApp);
-        if (routerConfig != null) {
+
+        // 2. Fallback: Try Navigator.pushNamed
+        if (!success) {
           try {
-            // Attempt to navigate using routerConfig as GoRouter
-            // TODO: Add type-safe routerConfig.go(route) support if needed in the future.
-            return MCPCallResult(
-              message: 'Navigated using MaterialApp routerConfig',
-              parameters: {'success': true, 'system': 'MaterialApp.routerConfig'},
-            );
+            BuildContext? foundContext;
+            void findContext(Element element) {
+              if (foundContext != null) return;
+              if (element is StatefulElement) {
+                foundContext = element;
+                return;
+              }
+              element.visitChildren(findContext);
+            }
+            root.visitChildren(findContext);
+            if (foundContext != null) {
+              Navigator.of(foundContext!).pushNamed(route);
+              usedSystem = 'Navigator';
+              usedMethod = 'pushNamed';
+              success = true;
+            }
           } catch (e) {
-            // If navigation fails, fall back to customRouterConfig
+            error = 'Navigator.pushNamed failed: $e';
           }
         }
-        // TODO: Support RouterConfigStorage if defined in the project.
-         if (RouterConfigStorage.customRouterConfig != null) {
-           try {
-             // ignore: avoid_dynamic_calls
-             RouterConfigStorage.customRouterConfig.go(route);
-             return MCPCallResult(
-               message: 'Navigated using customRouterConfig',
-               parameters: {'success': true, 'system': 'customRouterConfig'},
-             );
-           } catch (e) {
-             // If navigation fails, proceed to failure
-           }
-        }
-        // 3. If neither routerConfig nor customRouterConfig is available, return failure
+
         return MCPCallResult(
-          message: 'Failed to navigate to route: No router configuration found',
-          parameters: {'success': false},
+          message: success
+              ? 'Navigated to "$route" using $usedSystem ($usedMethod)'
+              : 'Failed to navigate to "$route".' + (error != null ? ' Error: $error' : ''),
+          parameters: {
+            'success': success,
+            'usedSystem': usedSystem,
+            'usedMethod': usedMethod,
+            if (error != null) 'error': error,
+          },
         );
       },
       definition: MCPToolDefinition(
         name: 'navigate_to_route',
-        description: 'Navigate to a route by string (GoRouter, AutoRoute, Navigator).',
+        description: 'Navigate to a route by string (universal: go_router, auto_route, Navigator, etc).',
         inputSchema: ObjectSchema(
           properties: {
             'route': StringSchema(description: 'The route string to navigate to'),
